@@ -19,7 +19,7 @@ def listar_comandas_abertas():
     rows = cursor.fetchall()
     conn.close()
 
-    return rows
+    return [dict(r) for r in rows]
 
 
 @router.post("/", response_model=ComandaResponse)
@@ -55,7 +55,7 @@ def abrir_comanda(comanda: ComandaCreate):
     row = cursor.fetchone()
     conn.close()
 
-    return row
+    return dict(row)
 
 
 @router.get("/{numero}", response_model=ComandaResponse)
@@ -72,7 +72,7 @@ def buscar_comanda_por_numero(numero: int):
     if not row:
         raise HTTPException(status_code=404, detail="Comanda não encontrada")
 
-    return row
+    return dict(row)
 
 
 @router.post("/{numero}/fechar", response_model=ComandaResponse)
@@ -110,4 +110,4 @@ def fechar_comanda(numero: int):
     updated = cursor.fetchone()
     conn.close()
 
-    return updated
+    return dict(updated)

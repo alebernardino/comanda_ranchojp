@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api import comandas
+from app.api import comandas, produtos
 
 app = FastAPI(
     title="Comanda Rancho JP",
@@ -8,6 +8,8 @@ app = FastAPI(
 )
 
 app.include_router(comandas.router)
+app.include_router(produtos.router)
+
 
 
 @app.get("/")
