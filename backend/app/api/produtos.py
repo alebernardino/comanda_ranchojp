@@ -38,7 +38,8 @@ def listar_produtos(
 
     rows = cursor.fetchall()
     conn.close()
-    return rows
+    return [dict(r) for r in rows]
+
 
 
 @router.post("/", response_model=ProdutoResponse)
@@ -75,7 +76,7 @@ def criar_produto(produto: ProdutoCreate):
     row = cursor.fetchone()
     conn.close()
 
-    return row
+    return dict(row)
 
 
 @router.post("/{produto_id}/ativar", response_model=ProdutoResponse)
@@ -108,4 +109,5 @@ def _set_status(produto_id: int, ativo: bool):
     if not row:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
 
-    return row
+    return dict(row)
+
