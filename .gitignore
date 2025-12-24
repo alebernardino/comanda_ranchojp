@@ -24,3 +24,14 @@ build/
 # ===== Sistema =====
 .DS_Store
 Thumbs.db
+
+# ===== Logs =====
+*.log
+
+# ===== Coverage / testes =====
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ===== Cache frontend =====
+.cache/
