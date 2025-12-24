@@ -1,10 +1,13 @@
 from fastapi import FastAPI
+from app.api import comandas
 
 app = FastAPI(
     title="Comanda Rancho JP",
     description="Sistema de comandas para restaurante (offline)",
     version="0.1.0"
 )
+
+app.include_router(comandas.router)
 
 
 @app.get("/")

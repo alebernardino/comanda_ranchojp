@@ -4,18 +4,19 @@ from datetime import datetime
 
 
 class ComandaBase(BaseModel):
+    numero: int
     nome: Optional[str] = None
 
 
 class ComandaCreate(ComandaBase):
-    mesa_id: int
+    pass
 
 
 class ComandaResponse(ComandaBase):
     id: int
-    mesa_id: int
     status: str
     criada_em: datetime
+    finalizada_em: Optional[datetime] = None
 
     class Config:
         from_attributes = True

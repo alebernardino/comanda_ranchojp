@@ -12,12 +12,11 @@ CREATE TABLE IF NOT EXISTS mesas (
 -- =========================
 CREATE TABLE IF NOT EXISTS comandas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    mesa_id INTEGER NOT NULL,
+    numero INTEGER NOT NULL UNIQUE,
     nome TEXT,
     status TEXT NOT NULL DEFAULT 'aberta',
     criada_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    finalizada_em DATETIME,
-    FOREIGN KEY (mesa_id) REFERENCES mesas(id)
+    finalizada_em DATETIME
 );
 
 -- =========================
@@ -34,19 +33,14 @@ CREATE TABLE IF NOT EXISTS produtos (
 -- =========================
 -- TABELA: itens_comanda
 -- =========================
-CREATE TABLE IF NOT EXISTS itens_comanda (
+CREATE TABLE IF NOT EXISTS comandas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    comanda_id INTEGER NOT NULL,
-    produto_id INTEGER,
-    codigo TEXT NOT NULL,
-    descricao TEXT NOT NULL,
-    quantidade REAL NOT NULL,
-    valor REAL NOT NULL,
-    subtotal REAL NOT NULL,
-    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (comanda_id) REFERENCES comandas(id)
+    numero INTEGER NOT NULL UNIQUE,
+    nome TEXT,
+    status TEXT NOT NULL DEFAULT 'aberta',
+    criada_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    finalizada_em DATETIME
 );
-
 -- =========================
 -- TABELA: pagamentos
 -- =========================
