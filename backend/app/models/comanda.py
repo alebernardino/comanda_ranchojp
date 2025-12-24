@@ -1,22 +1,18 @@
 from pydantic import BaseModel
-from typing import Optional
 from datetime import datetime
+from typing import Optional
 
 
-class ComandaBase(BaseModel):
+class ComandaCreate(BaseModel):
     numero: int
     nome: Optional[str] = None
 
 
-class ComandaCreate(ComandaBase):
-    pass
-
-
-class ComandaResponse(ComandaBase):
+class ComandaResponse(ComandaCreate):
     id: int
     status: str
     criada_em: datetime
-    finalizada_em: Optional[datetime] = None
+    finalizada_em: Optional[datetime]
 
     class Config:
         from_attributes = True

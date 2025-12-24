@@ -1,19 +1,15 @@
 from pydantic import BaseModel
-from typing import Optional
 from datetime import datetime
+from typing import Optional
 
 
-class PagamentoBase(BaseModel):
+class PagamentoCreate(BaseModel):
     forma: str
     valor: float
     detalhe: Optional[str] = None
 
 
-class PagamentoCreate(PagamentoBase):
-    comanda_id: int
-
-
-class PagamentoResponse(PagamentoBase):
+class PagamentoResponse(PagamentoCreate):
     id: int
     criado_em: datetime
 

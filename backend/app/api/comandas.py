@@ -81,16 +81,43 @@ def fechar_comanda(numero: int):
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT * FROM comandas WHERE numero = ? AND status = 'aberta'",
+        "SELECT id, status FROM comandas WHERE numero = ?",
         (numero,),
     )
-    row = cursor.fetchone()
+    comanda = cursor.fetchone()
 
-    if not row:
+    if not comanda:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Comanda não encontrada")
+
+    if comanda["status"] != "aberta":
         conn.close()
         raise HTTPException(
             status_code=400,
-            detail="Comanda não encontrada ou já finalizada"
+            detail="Comanda já está finalizada"
+        )
+
+    comanda_id = comanda["id"]
+
+    # Total itens
+    cursor.execute(
+        "SELECT COALESCE(SUM(subtotal), 0) as total_itens FROM itens_comanda WHERE comanda_id = ?",
+        (comanda_id,),
+    )
+    total_itens = cursor.fetchone()["total_itens"]
+
+    # Total pagamentos
+    cursor.execute(
+        "SELECT COALESCE(SUM(valor), 0) as total_pago FROM pagamentos WHERE comanda_id = ?",
+        (comanda_id,),
+    )
+    total_pago = cursor.fetchone()["total_pago"]
+
+    if total_pago < total_itens:
+        conn.close()
+        raise HTTPException(
+            status_code=400,
+            detail="Pagamento insuficiente para fechar a comanda"
         )
 
     cursor.execute(
@@ -98,16 +125,63 @@ def fechar_comanda(numero: int):
         UPDATE comandas
         SET status = 'finalizada',
             finalizada_em = ?
-        WHERE numero = ?
+        WHERE id = ?
         """,
-        (datetime.now(), numero),
+        (datetime.now(), comanda_id),
     )
     conn.commit()
 
     cursor.execute(
-        "SELECT * FROM comandas WHERE numero = ?", (numero,)
+        "SELECT * FROM comandas WHERE id = ?",
+        (comanda_id,),
     )
     updated = cursor.fetchone()
     conn.close()
 
     return dict(updated)
+
+
+@router.get("/{numero}/resumo")
+def resumo_comanda(numero: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Buscar comanda
+    cursor.execute(
+        "SELECT id, status FROM comandas WHERE numero = ?",
+        (numero,),
+    )
+    comanda = cursor.fetchone()
+
+    if not comanda:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Comanda não encontrada")
+
+    comanda_id = comanda["id"]
+
+    # Total de itens
+    cursor.execute(
+        "SELECT COALESCE(SUM(subtotal), 0) as total_itens FROM itens_comanda WHERE comanda_id = ?",
+        (comanda_id,),
+    )
+    total_itens = cursor.fetchone()["total_itens"]
+
+    # Total de pagamentos
+    cursor.execute(
+        "SELECT COALESCE(SUM(valor), 0) as total_pago FROM pagamentos WHERE comanda_id = ?",
+        (comanda_id,),
+    )
+    total_pago = cursor.fetchone()["total_pago"]
+
+    saldo = total_pago - total_itens
+
+    conn.close()
+
+    return {
+        "numero": numero,
+        "status": comanda["status"],
+        "total_itens": round(total_itens, 2),
+        "total_pago": round(total_pago, 2),
+        "saldo": round(saldo, 2),
+        "pode_fechar": saldo >= 0
+    }
