@@ -27,23 +27,66 @@ carregarComanda();
 const buscaCodigo = document.getElementById("buscaCodigo");
 const buscaDescricao = document.getElementById("buscaDescricao");
 const listaProdutos = document.getElementById("listaProdutos");
-const modalProduto = document.getElementById("modalProduto");
-const novoCodigo = document.getElementById("novoCodigo");
-const novaDescricao = document.getElementById("novaDescricao");
-const valorNovoProduto = document.getElementById("valorNovoProduto");
-
-const btnSalvarProduto = document.getElementById("salvarProduto");
-const btnCancelarProduto = document.getElementById("cancelarProduto");
 const qtdProduto = document.getElementById("qtdProduto");
 const valorProduto = document.getElementById("valorProduto");
 const btnAddItem = document.getElementById("btnAddItem");
-
 const tabelaItensBody = document.querySelector("#tabelaItens tbody");
 const totalComandaDiv = document.getElementById("totalComanda");
+const btnSair = document.getElementById("btnSair");
+const btnImprimir = document.getElementById("btnImprimir");
+const btnPagamento = document.getElementById("btnPagamento");
+const containerComanda = document.getElementById("containerComanda");
+
+const codigoParam = params.get("codigo");
+if (codigoParam) {
+  buscaCodigo.value = codigoParam;
+  filtrarProdutos();
+}
 
 
 let produtoSelecionado = null;
 let produtos = [];
+
+btnSair.addEventListener("click", () => {
+  // if (confirm("Deseja sair da comanda?")) {
+    window.location.href = "index.html";
+  // }
+});
+
+btnImprimir.addEventListener("click", () => {
+  window.print();
+});
+
+btnPagamento.addEventListener("click", () => {
+  // if (!confirm("Ir para pagamento da comanda?")) return;
+  // versão simples: redireciona
+  window.location.href = `pagamento.html?numero=${numero}`;
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "F1") {
+    btnSair.click();
+  }
+
+  if (e.key === "F8") {
+    btnPagamento.click();
+  }
+
+  if (e.key === "F2") {
+    btnImprimir.click();
+  }
+});
+
+function abrirCadastroProduto(codigo = "") {
+  containerComanda.classList.add("hidden");
+  containerCadastroProduto.classList.remove("hidden");
+
+  novoCodigo.value = codigo;
+  novaDescricao.value = "";
+  valorNovoProduto.value = "";
+
+  setTimeout(() => novoCodigo.focus(), 50);
+}
 
 async function carregarProdutos() {
   const res = await fetch(`${API_URL}/produtos`);
@@ -115,40 +158,45 @@ function selecionarProduto(produto) {
   listaProdutos.innerHTML = "";
 }
 
-qtdProduto.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
+function mostrarOpcaoAdicionarProduto(codigo) {
+  listaProdutos.innerHTML = "";
 
-    if (!qtdProduto.value || Number(qtdProduto.value) <= 0) {
-      alert("Quantidade inválida");
-      return;
-    }
+  const div = document.createElement("div");
+  div.className = "produto-nao-encontrado";
 
-    valorProduto.focus();
-    valorProduto.select(); // 🔥 seleciona tudo
-  }
-});
+  div.innerHTML = `
+    Produto não encontrado
+    <button id="btnAddProduto">+</button>
+  `;
+
+  listaProdutos.appendChild(div);
+
+  document.getElementById("btnAddProduto")
+    .addEventListener("click", () => {
+      window.location.href = `cadastro_produto.html?codigo=${codigo}`;
+    });
+}
 
 async function adicionarItem() {
   if (!produtoSelecionado) {
     alert("Selecione um produto");
     return;
   }
-
+  
   const qtd = Number(qtdProduto.value);
   const valorStr = valorProduto.value.replace(",", ".");
   const valor = Number(valorStr);
-
+  
   if (isNaN(qtd) || qtd <= 0) {
     alert("Quantidade inválida");
     return;
   }
-
+  
   if (isNaN(valor) || valor <= 0) {
     alert("Valor inválido");
     return;
   }
-
+  
   const payload = {
     codigo: String(produtoSelecionado.codigo),
     descricao: String(produtoSelecionado.descricao),
@@ -163,23 +211,37 @@ async function adicionarItem() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
-
+  
   if (!res.ok) {
     alert("Erro ao adicionar item");
     return;
   }
-
+  
   // limpa campos e volta para o código
   buscaCodigo.value = "";
   buscaDescricao.value = "";
   qtdProduto.value = "";
   valorProduto.value = "";
   produtoSelecionado = null;
-
+  
   buscaCodigo.focus();
-
+  
   await carregarItensComanda();
 }
+
+qtdProduto.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+
+    if (!qtdProduto.value || Number(qtdProduto.value) <= 0) {
+      alert("Quantidade inválida");
+      return;
+    }
+
+    valorProduto.focus();
+    valorProduto.select(); // 🔥 seleciona tudo
+  }
+});
 
 btnAddItem.addEventListener("click", adicionarItem);
 
@@ -190,34 +252,7 @@ valorProduto.addEventListener("keydown", (e) => {
   }
 });
 
-function mostrarOpcaoAdicionarProduto(codigo) {
-  listaProdutos.innerHTML = "";
-
-  const div = document.createElement("div");
-  div.className = "produto-nao-encontrado";
-
-  div.innerHTML = `
-    Produto não encontrado
-    <button id="btnAddProduto">+</button>
-  `;
-
-  listaProdutos.appendChild(div);
-
-  document
-    .getElementById("btnAddProduto")
-    .addEventListener("click", () => abrirModalProduto(codigo));
-}
-
-function abrirModalProduto(codigo) {
-  novoCodigo.value = codigo;
-  novaDescricao.value = "";
-  valorNovoProduto.value = "";
-  modalProduto.classList.remove("hidden");
-}
-
-function fecharModalProduto() {
-  modalProduto.classList.add("hidden");
-}
+btnCancelarProduto.addEventListener("click", voltarParaComanda);
 
 btnSalvarProduto.addEventListener("click", salvarProduto);
 
@@ -253,8 +288,7 @@ async function salvarProduto() {
     return;
   }
 
-  fecharModalProduto();
-  await carregarProdutos();
+    await carregarProdutos();
 
   // já deixa o produto pronto para lançar na comanda
   buscaCodigo.value = codigo;
@@ -407,37 +441,8 @@ function renderizarTabelaItens(itens) {
   totalComandaDiv.innerHTML = `<strong>TOTAL: R$ ${total.toFixed(2)}</strong>`;
 }
 
-
 carregarItensComanda();
-
 
 buscaCodigo.addEventListener("input", filtrarProdutos);
 buscaDescricao.addEventListener("input", filtrarProdutos);
 btnCancelarProduto.addEventListener("click", fecharModalProduto);
-
-// ENTER navega entre campos do modal de produto
-novoCodigo.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    novaDescricao.focus();
-  }
-});
-
-novaDescricao.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    valorNovoProduto.focus();
-    valorNovoProduto.select();
-  }
-});
-
-valorNovoProduto.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    btnSalvarProduto.click();
-  }
-});
-
-
-
-
