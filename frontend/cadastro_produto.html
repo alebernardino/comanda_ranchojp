@@ -10,18 +10,34 @@
 <body>
 
     <div class="janela-central">
-        <h2>Novo Produto</h2>
+        <h2>Cadastro de produtos</h2>
 
         <div class="form-cadastro">
-            <input id="novoCodigo" placeholder="Código">
-            <input id="novaDescricao" placeholder="Descrição">
-            <input id="valorNovoProduto" placeholder="Valor" type="number" step="0.01">
-
-            <div class="botoes">
+            <div class="campos-linha">
+                <input id="novoCodigo" placeholder="Código" style="width: 100px;">
+                <input id="novaDescricao" placeholder="Descrição" style="flex: 1;">
+                <input id="valorNovoProduto" placeholder="Valor" type="number" step="0.01" style="width: 120px;">
                 <button id="salvarProduto">Salvar</button>
                 <button id="voltar">Voltar</button>
             </div>
         </div>
+
+        <hr>
+
+        <h3>Produtos Cadastrados</h3>
+        <table id="tabelaProdutos">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Descrição</th>
+                    <th>Valor</th>
+                    <th>Ativo</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- JS vai preencher -->
+            </tbody>
+        </table>
     </div>
 
     <script src="js/api.js"></script>

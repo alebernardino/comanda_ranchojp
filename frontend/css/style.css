@@ -104,7 +104,7 @@ table {
 
 th,
 td {
-  padding: 10px;
+  padding: 5px;
   border-bottom: 1px solid #ddd;
   text-align: left;
 }
@@ -176,4 +176,83 @@ th {
   padding: 10px;
   background: #f8f9fa;
   border-radius: 4px;
+}
+
+/* Editável na tabela */
+.input-tabela-valor {
+  width: 80px;
+  padding: 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.input-tabela-valor:hover {
+  border: 1px solid #ccc;
+}
+
+.input-tabela-valor:focus,
+.input-tabela-valor.editando {
+  border: 1px solid #007bff;
+  background: white;
+  cursor: text;
+  outline: none;
+}
+
+.input-tabela-texto {
+  width: 100%;
+  padding: 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.input-tabela-texto:hover {
+  border: 1px solid #ccc;
+}
+
+.input-tabela-texto:focus,
+.input-tabela-texto.editando {
+  border: 1px solid #007bff;
+  background: white;
+  cursor: text;
+  outline: none;
+}
+
+/* Tela de Cadastro */
+.form-cadastro {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+  /* Ocupa largura total */
+  margin-bottom: 20px;
+}
+
+.campos-linha {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.campos-linha input {
+  padding: 10px;
+  font-size: 1em;
+}
+
+.botoes-topo {
+  display: flex;
+  justify-content: flex-end;
+}
+
+#voltar {
+  background-color: #6c757d;
+}
+
+#voltar:hover {
+  background-color: #5a6268;
 }

@@ -354,14 +354,16 @@ function renderizarTabelaItens(itens) {
         valor: i.valor,
         quantidade: i.quantidade,
         subtotal: i.subtotal,
-        ids: [i.id]   // 🔥 AQUI
+        ids: [i.id],
+        itensOriginais: [i] // 🔥 Store raw items
       };
       ordem.push(i.codigo);
       ordem.sort((a, b) => a.localeCompare(b));
     } else {
       mapa[i.codigo].quantidade += i.quantidade;
       mapa[i.codigo].subtotal += i.subtotal;
-      mapa[i.codigo].ids.push(i.id); // 🔥 AQUI
+      mapa[i.codigo].ids.push(i.id);
+      mapa[i.codigo].itensOriginais.push(i); // 🔥 Store raw items
     }
   });
 
@@ -374,20 +376,50 @@ function renderizarTabelaItens(itens) {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
-      <td>${item.codigo}</td>
-      <td>
-      <button class="btn-qtd" data-action="menos">−</button>
-      <span class="qtd-item">${item.quantidade}</span>
-      <button class="btn-qtd" data-action="mais">+</button>
-      </td>
-      <td>${item.descricao}</td>
-      <td>R$ ${item.valor.toFixed(2)}</td>
-      <td>R$ ${item.subtotal.toFixed(2)}</td>
-      <td><button class="btn-remover">🗑️</button></td>
-    `;
+        <td>${item.codigo}</td>
+        <td>
+        <button class="btn-qtd" data-action="menos">−</button>
+        <span class="qtd-item">${item.quantidade}</span>
+        <button class="btn-qtd" data-action="mais">+</button>
+        </td>
+        <td>${item.descricao}</td>
+        <td>
+          <input class="input-tabela-valor" value="${item.valor.toFixed(2)}" readonly>
+        </td>
+        <td>R$ ${item.subtotal.toFixed(2)}</td>
+        <td><button class="btn-remover">🗑️</button></td>
+      `;
 
     const btnMais = tr.querySelector('[data-action="mais"]');
     const btnMenos = tr.querySelector('[data-action="menos"]')
+    const inputValor = tr.querySelector(".input-tabela-valor");
+
+    // Edit Value Logic
+    inputValor.addEventListener("click", () => {
+      inputValor.removeAttribute("readonly");
+      inputValor.select();
+      inputValor.classList.add("editando");
+    });
+
+    inputValor.addEventListener("blur", async () => {
+      inputValor.setAttribute("readonly", true);
+      inputValor.classList.remove("editando");
+
+      const novoValor = Number(inputValor.value.replace(",", "."));
+      if (isNaN(novoValor) || novoValor <= 0) {
+        alert("Valor inválido");
+        inputValor.value = item.valor.toFixed(2); // reset
+        return;
+      }
+
+      if (novoValor !== item.valor) {
+        await atualizarPrecoItens(item.itensOriginais, novoValor);
+      }
+    });
+
+    inputValor.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") inputValor.blur();
+    });
 
     btnMais.addEventListener("click", () => {
       adicionarMaisItem(item);
@@ -406,6 +438,36 @@ function renderizarTabelaItens(itens) {
   totalComandaDiv.innerHTML = `<strong>TOTAL: R$ ${total.toFixed(2)}</strong>`;
 }
 
+async function atualizarPrecoItens(listaItens, novoValor) {
+  if (!confirm(`Alterar o preço desses itens para R$ ${novoValor.toFixed(2)}?`)) {
+    carregarItensComanda(); // reload to reset UI
+    return;
+  }
+
+  try {
+    for (const item of listaItens) {
+      const payload = {
+        codigo: item.codigo,
+        descricao: item.descricao,
+        quantidade: item.quantidade,
+        valor: novoValor
+      };
+
+      const res = await fetch(`${API_URL}/itens/${item.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error("Falha ao atualizar");
+    }
+    await carregarItensComanda();
+  } catch (err) {
+    alert("Erro ao atualizar valores");
+    console.error(err);
+  }
+}
+
 carregarItensComanda();
 
 buscaCodigo.addEventListener("input", filtrarProdutos);
@@ -418,4 +480,13 @@ buscaCodigo.addEventListener("focus", () => {
   renderizarProdutos(produtos);
 });
 buscaDescricao.addEventListener("input", filtrarProdutos);
+
+valorProduto.addEventListener("click", () => {
+  valorProduto.removeAttribute("readonly");
+  valorProduto.select();
+});
+
+valorProduto.addEventListener("blur", () => {
+  valorProduto.setAttribute("readonly", true);
+});
 
