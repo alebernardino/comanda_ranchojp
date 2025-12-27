@@ -1,68 +1,70 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
   <meta charset="UTF-8">
   <title>Comanda</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=2">
 </head>
 
 <body>
 
-<!-- ================= COMANDA ================= -->
-<div id="containerComanda" class="janela-central">
+  <!-- ================= COMANDA ================= -->
+  <div id="containerComanda" class="janela-central">
 
-  <h2 id="tituloComanda">Comanda</h2>
+    <h2 id="tituloComanda">Comanda</h2>
 
-  <div class="pdv-layout">
+    <div class="pdv-layout">
 
-    <!-- COLUNA ESQUERDA -->
-    <div class="pdv-comanda">
+      <!-- COLUNA ESQUERDA -->
+      <div class="pdv-comanda">
 
-      <div class="entrada-produto">
-        <input id="buscaCodigo" placeholder="Código">
-        <input id="buscaDescricao" placeholder="Descrição">
-        <input id="qtdProduto" type="number" step="1" placeholder="Qtd">
-        <input id="valorProduto" type="number" step="0.01" placeholder="Valor">
-        <button id="btnAddItem">Adicionar</button>
+        <div class="entrada-produto">
+          <input id="buscaCodigo" placeholder="Código" autocomplete="off">
+          <input id="buscaDescricao" placeholder="Descrição" autocomplete="off">
+          <input id="qtdProduto" type="number" step="1" placeholder="Qtd">
+          <input id="valorProduto" type="number" step="0.01" placeholder="Valor">
+          <button id="btnAddItem" style="display:none;">Adicionar</button>
+        </div>
+
+        <div id="itensComanda">
+          <table id="tabelaItens">
+            <thead>
+              <tr>
+                <th>Cód</th>
+                <th>Qtd</th>
+                <th>Descrição</th>
+                <th>Valor</th>
+                <th>Subtotal</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+
+          <div id="totalComanda"></div>
+        </div>
+
       </div>
 
-      <div id="itensComanda">
-        <table id="tabelaItens">
-          <thead>
-            <tr>
-              <th>Cód</th>
-              <th>Qtd</th>
-              <th>Descrição</th>
-              <th>Valor</th>
-              <th>Subtotal</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-
-        <div id="totalComanda"></div>
+      <!-- COLUNA DIREITA -->
+      <div class="pdv-produtos">
+        <h3>Produtos</h3>
+        <div id="listaProdutos"></div>
       </div>
 
     </div>
 
-    <!-- COLUNA DIREITA -->
-    <div class="pdv-produtos">
-      <h3>Produtos</h3>
-      <div id="listaProdutos"></div>
+    <div class="pdv-atalhos">
+      <button id="btnSair">Sair (ESC)</button>
+      <button id="btnImprimir">Imprimir (F2)</button>
+      <button id="btnPagamento">Pagamento (F3)</button>
     </div>
 
   </div>
 
-  <div class="pdv-atalhos">
-    <button id="btnSair">Sair</button>
-    <button id="btnImprimir">Imprimir</button>
-    <button id="btnPagamento">Pagamento</button>
-  </div>
-
-</div>
-
-<script src="js/api.js"></script>
-<script src="js/comanda.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/comanda.js?v=3"></script>
 </body>
+
 </html>

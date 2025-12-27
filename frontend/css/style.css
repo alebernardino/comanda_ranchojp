@@ -1,0 +1,179 @@
+/* Global */
+body {
+  font-family: sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
+}
+
+.janela-central {
+  max-width: 1200px;
+  margin: 20px auto;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+h2,
+h3 {
+  color: #333;
+}
+
+/* Layout PDV (Comanda vs Produtos) */
+.pdv-layout {
+  display: flex;
+  gap: 20px;
+}
+
+.pdv-comanda {
+  flex: 2;
+  /* Comanda ocupa mais espaço */
+  display: flex;
+  flex-direction: column;
+}
+
+.pdv-produtos {
+  flex: 1;
+  /* Lista de produtos ocupa menos espaço */
+  background: #eee;
+  padding: 10px;
+  border-radius: 8px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* Input Styles */
+input {
+  padding: 8px;
+  margin: 5px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 5px 0;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+/* Atalhos - Botões grandes */
+.pdv-atalhos {
+  margin-top: 20px;
+  display: flex;
+  gap: 100px;
+  justify-content: flex-start;
+}
+
+.pdv-atalhos button {
+  padding: 15px 30px;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+#btnSair {
+  background-color: #dc3545;
+}
+
+#btnSair:hover {
+  background-color: #a71d2a;
+}
+
+#btnPagamento {
+  background-color: #28a745;
+}
+
+#btnPagamento:hover {
+  background-color: #1e7e34;
+}
+
+/* Tabela */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th,
+td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+th {
+  background-color: #f8f9fa;
+}
+
+/* Lista de Produtos (lateral) */
+.produto-item {
+  background: white;
+  padding: 8px;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+}
+
+.produto-item:hover {
+  background-color: #e2e6ea;
+}
+
+/* Utilitários */
+.hidden {
+  display: none !important;
+}
+
+.entrada-produto {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.botoes {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.btn-qtd {
+  padding: 2px 8px;
+  font-size: 12px;
+  margin: 0 5px;
+}
+
+.qtd-item {
+  font-weight: bold;
+}
+
+.btn-remover {
+  background: none;
+  border: none;
+  color: red;
+  font-size: 18px;
+  padding: 0;
+  margin: 0;
+}
+
+.btn-remover:hover {
+  background: none;
+  color: darkred;
+}
+
+#totalComanda {
+  margin-top: 20px;
+  font-size: 1.2em;
+  text-align: right;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 4px;
+}

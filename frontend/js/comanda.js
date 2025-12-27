@@ -38,10 +38,17 @@ const btnPagamento = document.getElementById("btnPagamento");
 const containerComanda = document.getElementById("containerComanda");
 
 const codigoParam = params.get("codigo");
-if (codigoParam) {
-  buscaCodigo.value = codigoParam;
-  filtrarProdutos();
+
+async function init() {
+  await carregarProdutos();
+
+  if (codigoParam) {
+    buscaCodigo.value = codigoParam;
+    filtrarProdutos();
+  }
 }
+
+init();
 
 
 let produtoSelecionado = null;
@@ -49,7 +56,7 @@ let produtos = [];
 
 btnSair.addEventListener("click", () => {
   // if (confirm("Deseja sair da comanda?")) {
-    window.location.href = "index.html";
+  window.location.href = "index.html";
   // }
 });
 
@@ -64,11 +71,12 @@ btnPagamento.addEventListener("click", () => {
 });
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "F1") {
+  if (e.key === "Escape") {
     btnSair.click();
   }
 
-  if (e.key === "F8") {
+  if (e.key === "F3") {
+    e.preventDefault(); // Evita busca do navegador
     btnPagamento.click();
   }
 
@@ -77,24 +85,16 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-function abrirCadastroProduto(codigo = "") {
-  containerComanda.classList.add("hidden");
-  containerCadastroProduto.classList.remove("hidden");
 
-  novoCodigo.value = codigo;
-  novaDescricao.value = "";
-  valorNovoProduto.value = "";
-
-  setTimeout(() => novoCodigo.focus(), 50);
-}
 
 async function carregarProdutos() {
   const res = await fetch(`${API_URL}/produtos`);
   produtos = await res.json();
+  produtos.sort((a, b) => a.codigo.localeCompare(b.codigo, undefined, { numeric: true }));
   renderizarProdutos(produtos);
 }
 
-carregarProdutos();
+
 
 function renderizarProdutos(lista) {
   listaProdutos.innerHTML = "";
@@ -111,23 +111,6 @@ function filtrarProdutos() {
   const codigo = buscaCodigo.value.trim();
   const descricao = buscaDescricao.value.trim().toLowerCase();
 
-  // 🔹 quando código completo (3 dígitos)
-  if (codigo.length === 3) {
-    const produto = produtos.find(
-      p => String(p.codigo) === codigo
-    );
-
-    if (produto) {
-      selecionarProduto(produto);
-      return;
-    }
-
-    // código completo, mas inexistente
-    mostrarOpcaoAdicionarProduto(codigo);
-    return;
-  }
-
-  // 🔹 busca parcial (enquanto digita)
   let filtrados = produtos;
 
   if (codigo) {
@@ -143,19 +126,42 @@ function filtrarProdutos() {
   }
 
   renderizarProdutos(filtrados);
+
+  // Auto-fill se houver match exato e o foco estiver no código
+  if (document.activeElement === buscaCodigo) {
+    const exactMatch = produtos.find(p => String(p.codigo) === codigo);
+
+    if (exactMatch) {
+      produtoSelecionado = exactMatch;
+      buscaDescricao.value = exactMatch.descricao;
+      valorProduto.value = exactMatch.valor.toFixed(2);
+      qtdProduto.focus(); // Jump to Qtd
+    } else {
+      // Se digitou algo mas não é código válido, limpa
+      produtoSelecionado = null;
+      buscaDescricao.value = "";
+      valorProduto.value = "";
+    }
+  }
+
+  // Se não achou nada na lista e tem código digitado, mostra opção de add
+  if (filtrados.length === 0 && codigo) {
+    mostrarOpcaoAdicionarProduto(codigo);
+  }
 }
 
 function selecionarProduto(produto) {
   produtoSelecionado = produto;
-  
+
   buscaCodigo.value = produto.codigo;
   buscaDescricao.value = produto.descricao;
   valorProduto.value = produto.valor.toFixed(2);
 
   qtdProduto.value = "";
   qtdProduto.focus();
-  
-  listaProdutos.innerHTML = "";
+
+  // listaProdutos.innerHTML = "";
+  renderizarProdutos([produto]);
 }
 
 function mostrarOpcaoAdicionarProduto(codigo) {
@@ -173,7 +179,7 @@ function mostrarOpcaoAdicionarProduto(codigo) {
 
   document.getElementById("btnAddProduto")
     .addEventListener("click", () => {
-      window.location.href = `cadastro_produto.html?codigo=${codigo}`;
+      window.location.href = `cadastro_produto.html?codigo=${codigo}&numero=${numero}`;
     });
 }
 
@@ -182,21 +188,26 @@ async function adicionarItem() {
     alert("Selecione um produto");
     return;
   }
-  
+
+  // Se quantidade vazia, assume 1
+  if (!qtdProduto.value) {
+    qtdProduto.value = "1";
+  }
+
   const qtd = Number(qtdProduto.value);
   const valorStr = valorProduto.value.replace(",", ".");
   const valor = Number(valorStr);
-  
+
   if (isNaN(qtd) || qtd <= 0) {
     alert("Quantidade inválida");
     return;
   }
-  
+
   if (isNaN(valor) || valor <= 0) {
     alert("Valor inválido");
     return;
   }
-  
+
   const payload = {
     codigo: String(produtoSelecionado.codigo),
     descricao: String(produtoSelecionado.descricao),
@@ -211,35 +222,28 @@ async function adicionarItem() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
-  
+
   if (!res.ok) {
     alert("Erro ao adicionar item");
     return;
   }
-  
+
   // limpa campos e volta para o código
   buscaCodigo.value = "";
   buscaDescricao.value = "";
   qtdProduto.value = "";
   valorProduto.value = "";
   produtoSelecionado = null;
-  
+
   buscaCodigo.focus();
-  
+
   await carregarItensComanda();
 }
 
 qtdProduto.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
-
-    if (!qtdProduto.value || Number(qtdProduto.value) <= 0) {
-      alert("Quantidade inválida");
-      return;
-    }
-
-    valorProduto.focus();
-    valorProduto.select(); // 🔥 seleciona tudo
+    adicionarItem();
   }
 });
 
@@ -252,48 +256,9 @@ valorProduto.addEventListener("keydown", (e) => {
   }
 });
 
-btnCancelarProduto.addEventListener("click", voltarParaComanda);
 
-btnSalvarProduto.addEventListener("click", salvarProduto);
 
-async function salvarProduto() {
-  const codigo = novoCodigo.value.trim();
-  const descricao = novaDescricao.value.trim();
 
-  if (!codigo || !descricao) {
-    alert("Preencha todos os campos");
-    return;
-  }
-
-  const valorStr = valorNovoProduto.value.replace(",", ".");
-  const valor = Number(valorStr);
-
-  if (isNaN(valor) || valor <= 0) {
-    alert("Valor inválido");
-    return;
-  }
-
-  const res = await fetch(`${API_URL}/produtos`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      codigo,
-      descricao,
-      valor
-    })
-  });
-
-  if (!res.ok) {
-    alert("Erro ao salvar produto");
-    return;
-  }
-
-    await carregarProdutos();
-
-  // já deixa o produto pronto para lançar na comanda
-  buscaCodigo.value = codigo;
-  filtrarProdutos();
-}
 
 
 const itensComandaDiv = document.getElementById("itensComanda");
@@ -354,7 +319,7 @@ async function adicionarMaisItem(item) {
 }
 
 async function removerUmItem(item) {
-  if (item.quantidade <=1) {
+  if (item.quantidade <= 1) {
     alert("Use o botão 🗑️ para remover o item.");
     return;
   }
@@ -430,7 +395,7 @@ function renderizarTabelaItens(itens) {
 
     btnMenos.addEventListener("click", () => {
       removerUmItem(item);
-    }); 
+    });
 
     tr.querySelector(".btn-remover")
       .addEventListener("click", () => removerItensProduto(item.ids));
@@ -444,5 +409,13 @@ function renderizarTabelaItens(itens) {
 carregarItensComanda();
 
 buscaCodigo.addEventListener("input", filtrarProdutos);
+buscaCodigo.addEventListener("focus", () => {
+  buscaCodigo.value = "";
+  buscaDescricao.value = "";
+  valorProduto.value = "";
+  qtdProduto.value = "";
+  produtoSelecionado = null;
+  renderizarProdutos(produtos);
+});
 buscaDescricao.addEventListener("input", filtrarProdutos);
-btnCancelarProduto.addEventListener("click", fecharModalProduto);
+

@@ -25,14 +25,15 @@ async function salvarProduto() {
     return;
   }
 
-  const res = await fetch("http://127.0.0.1:8000/produtos", {
+  const res = await fetch(`${API_URL}/produtos/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ codigo, descricao, valor })
   });
 
   if (!res.ok) {
-    alert("Erro ao salvar produto");
+    const err = await res.json();
+    alert(err.detail || "Erro ao salvar produto");
     return;
   }
 
