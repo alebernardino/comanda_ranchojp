@@ -1,3 +1,6 @@
+from pydantic import BaseModel
+from datetime import datetime
+
 from fastapi import APIRouter, HTTPException
 from typing import List
 
@@ -9,6 +12,21 @@ from app.models.item_comanda import (
 
 router = APIRouter(tags=["Itens da Comanda"])
 
+class ItemComandaCreate(BaseModel):
+    codigo: str
+    descricao: str
+    quantidade: float
+    valor: float
+
+class ItemComandaResponse(ItemComandaCreate):
+    id: int
+    subtotal: float
+    criado_em: datetime
+
+    class Config:
+        from_attributes = True
+
+print("FIELDS ItemComandaCreate:", ItemComandaCreate.model_fields)
 
 @router.get(
     "/comandas/{numero}/itens",

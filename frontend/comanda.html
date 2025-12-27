@@ -12,18 +12,19 @@
 <div class="layout">
 
   <!-- ESQUERDA -->
-  <div class="col-esq">
-    <input id="buscaProduto" placeholder="Código ou descrição">
+<div class="col-esq">
+  <input id="buscaCodigo" placeholder="Código do produto">
+  <input id="buscaDescricao" placeholder="Descrição do produto">
 
-    <input id="qtdProduto" type="number" step="0.01" placeholder="Qtd">
-    <input id="valorProduto" type="number" step="0.01" placeholder="Valor">
+  <input id="qtdProduto" type="number" step="0.01" placeholder="Qtd">
+  <input id="valorProduto" type="text" inputmode="decimal" placeholder="Valor">
 
-    <button id="btnAddItem">Adicionar item</button>
+  <button id="btnAddItem">Adicionar item</button>
 
-    <div id="itensComanda"></div>
+  <div id="itensComanda"></div>
 
-    <button id="btnFechar">Fechar Comanda</button>
-  </div>
+  <button id="btnFechar">Fechar Comanda</button>
+</div>
 
   <!-- DIREITA -->
   <div class="col-dir">
@@ -40,7 +41,7 @@
 
     <input id="novoCodigo" placeholder="Código">
     <input id="novaDescricao" placeholder="Descrição">
-    <input id="novoValor" type="number" step="0.01" placeholder="Valor">
+    <input id="valorNovoProduto" type="text" placeholder="Valor" inputmode="decimal"> 
 
     <button id="salvarProduto">Salvar</button>
     <button id="cancelarProduto">Cancelar</button>
