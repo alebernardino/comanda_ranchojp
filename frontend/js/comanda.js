@@ -225,7 +225,7 @@ async function salvarProduto() {
   const codigo = novoCodigo.value.trim();
   const descricao = novaDescricao.value.trim();
 
-  if (codigo === "" || descricao === "") {
+  if (!codigo || !descricao) {
     alert("Preencha todos os campos");
     return;
   }
@@ -242,9 +242,8 @@ async function salvarProduto() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      codigo: produtoSelecionado.codigo,
-      descricao: produtoSelecionado.descricao,
-      quantidade: qtd,
+      codigo,
+      descricao,
       valor
     })
   });
@@ -257,9 +256,11 @@ async function salvarProduto() {
   fecharModalProduto();
   await carregarProdutos();
 
+  // já deixa o produto pronto para lançar na comanda
   buscaCodigo.value = codigo;
   filtrarProdutos();
 }
+
 
 const itensComandaDiv = document.getElementById("itensComanda");
 
@@ -414,6 +415,28 @@ buscaCodigo.addEventListener("input", filtrarProdutos);
 buscaDescricao.addEventListener("input", filtrarProdutos);
 btnCancelarProduto.addEventListener("click", fecharModalProduto);
 
+// ENTER navega entre campos do modal de produto
+novoCodigo.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    novaDescricao.focus();
+  }
+});
+
+novaDescricao.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    valorNovoProduto.focus();
+    valorNovoProduto.select();
+  }
+});
+
+valorNovoProduto.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    btnSalvarProduto.click();
+  }
+});
 
 
 
