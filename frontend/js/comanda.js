@@ -38,6 +38,10 @@ const qtdProduto = document.getElementById("qtdProduto");
 const valorProduto = document.getElementById("valorProduto");
 const btnAddItem = document.getElementById("btnAddItem");
 
+const tabelaItensBody = document.querySelector("#tabelaItens tbody");
+const totalComandaDiv = document.getElementById("totalComanda");
+
+
 let produtoSelecionado = null;
 let produtos = [];
 
@@ -174,7 +178,7 @@ async function adicionarItem() {
 
   buscaCodigo.focus();
 
-  carregarItensComanda(); // quando você já tiver isso
+  await carregarItensComanda();
 }
 
 btnAddItem.addEventListener("click", adicionarItem);
@@ -257,7 +261,67 @@ async function salvarProduto() {
   filtrarProdutos();
 }
 
+const itensComandaDiv = document.getElementById("itensComanda");
 
+async function carregarItensComanda() {
+  const res = await fetch(`${API_URL}/comandas/${numero}/itens`);
+
+  if (!res.ok) {
+    console.error("Erro ao carregar itens da comanda");
+    return;
+  }
+
+  const itens = await res.json();
+  renderizarTabelaItens(itens); // ✅ USAR A TABELA
+}
+
+
+function renderizarTabelaItens(itens) {
+  tabelaItensBody.innerHTML = "";
+
+  const mapa = {};
+  const ordem = [];
+
+  // agrupa por código
+  itens.forEach(item => {
+    if (!mapa[item.codigo]) {
+      mapa[item.codigo] = {
+        ...item,
+        quantidade: item.quantidade,
+        subtotal: item.subtotal
+      };
+      ordem.push(item.codigo);
+    } else {
+      mapa[item.codigo].quantidade += item.quantidade;
+      mapa[item.codigo].subtotal += item.subtotal;
+    }
+  });
+
+  let total = 0;
+
+  ordem.forEach(codigo => {
+    const item = mapa[codigo];
+    total += item.subtotal;
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${item.codigo}</td>
+      <td>${item.descricao}</td>
+      <td>${item.quantidade}</td>
+      <td>R$ ${item.valor.toFixed(2)}</td>
+      <td>R$ ${item.subtotal.toFixed(2)}</td>
+    `;
+
+    tabelaItensBody.appendChild(tr);
+  });
+
+  totalComandaDiv.innerHTML = `
+    <strong>TOTAL: R$ ${total.toFixed(2)}</strong>
+  `;
+}
+
+carregarItensComanda();
 
 
 buscaCodigo.addEventListener("input", filtrarProdutos);
