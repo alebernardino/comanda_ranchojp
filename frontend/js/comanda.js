@@ -276,24 +276,92 @@ async function carregarItensComanda() {
 }
 
 
+async function removerItensProduto(ids) {
+  if (!Array.isArray(ids) || ids.length === 0) {
+    console.error("IDs inválidos para remoção", ids);
+    return;
+  }
+
+  if (!confirm("Remover este produto da comanda?")) return;
+
+  for (const id of ids) {
+    const res = await fetch(`${API_URL}/itens/${id}`, {
+      method: "DELETE"
+    });
+
+    if (!res.ok) {
+      alert("Erro ao remover item");
+      return;
+    }
+  }
+
+  await carregarItensComanda();
+}
+
+async function adicionarMaisItem(item) {
+  const res = await fetch(`${API_URL}/comandas/${numero}/itens`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      codigo: item.codigo,
+      descricao: item.descricao,
+      quantidade: 1,
+      valor: item.valor
+    })
+  });
+
+  if (!res.ok) {
+    alert("Erro ao adicionar item");
+    return;
+  }
+
+  await carregarItensComanda();
+}
+
+async function removerUmItem(item) {
+  if (item.quantidade <=1) {
+    alert("Use o botão 🗑️ para remover o item.");
+    return;
+  }
+  // pega um ID daquele produto
+  const idParaRemover = item.ids[0];
+
+  if (!idParaRemover) return;
+
+  const res = await fetch(`${API_URL}/itens/${idParaRemover}`, {
+    method: "DELETE"
+  });
+
+  if (!res.ok) {
+    alert("Erro ao remover item");
+    return;
+  }
+
+  await carregarItensComanda();
+}
+
 function renderizarTabelaItens(itens) {
   tabelaItensBody.innerHTML = "";
 
   const mapa = {};
   const ordem = [];
 
-  // agrupa por código
-  itens.forEach(item => {
-    if (!mapa[item.codigo]) {
-      mapa[item.codigo] = {
-        ...item,
-        quantidade: item.quantidade,
-        subtotal: item.subtotal
+  itens.forEach(i => {
+    if (!mapa[i.codigo]) {
+      mapa[i.codigo] = {
+        codigo: i.codigo,
+        descricao: i.descricao,
+        valor: i.valor,
+        quantidade: i.quantidade,
+        subtotal: i.subtotal,
+        ids: [i.id]   // 🔥 AQUI
       };
-      ordem.push(item.codigo);
+      ordem.push(i.codigo);
+      ordem.sort((a, b) => a.localeCompare(b));
     } else {
-      mapa[item.codigo].quantidade += item.quantidade;
-      mapa[item.codigo].subtotal += item.subtotal;
+      mapa[i.codigo].quantidade += i.quantidade;
+      mapa[i.codigo].subtotal += i.subtotal;
+      mapa[i.codigo].ids.push(i.id); // 🔥 AQUI
     }
   });
 
@@ -307,19 +375,37 @@ function renderizarTabelaItens(itens) {
 
     tr.innerHTML = `
       <td>${item.codigo}</td>
+      <td>
+      <button class="btn-qtd" data-action="menos">−</button>
+      <span class="qtd-item">${item.quantidade}</span>
+      <button class="btn-qtd" data-action="mais">+</button>
+      </td>
       <td>${item.descricao}</td>
-      <td>${item.quantidade}</td>
       <td>R$ ${item.valor.toFixed(2)}</td>
       <td>R$ ${item.subtotal.toFixed(2)}</td>
+      <td><button class="btn-remover">🗑️</button></td>
     `;
+
+    const btnMais = tr.querySelector('[data-action="mais"]');
+    const btnMenos = tr.querySelector('[data-action="menos"]')
+
+    btnMais.addEventListener("click", () => {
+      adicionarMaisItem(item);
+    });
+
+    btnMenos.addEventListener("click", () => {
+      removerUmItem(item);
+    }); 
+
+    tr.querySelector(".btn-remover")
+      .addEventListener("click", () => removerItensProduto(item.ids));
 
     tabelaItensBody.appendChild(tr);
   });
 
-  totalComandaDiv.innerHTML = `
-    <strong>TOTAL: R$ ${total.toFixed(2)}</strong>
-  `;
+  totalComandaDiv.innerHTML = `<strong>TOTAL: R$ ${total.toFixed(2)}</strong>`;
 }
+
 
 carregarItensComanda();
 
