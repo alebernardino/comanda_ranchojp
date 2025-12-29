@@ -1,3 +1,5 @@
+import { formatarMoeda } from "./utils.js";
+
 // pega numero da comanda da URL
 const params = new URLSearchParams(window.location.search);
 const numero = params.get("numero");
