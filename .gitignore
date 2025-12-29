@@ -8,7 +8,7 @@ env/
 .env
 
 # ===== Banco de dados =====
-*.db
+#*.db
 *.sqlite
 *.sqlite3
 
