@@ -516,3 +516,21 @@ th {
 #voltar:hover {
   background-color: #5a6268;
 }
+
+/* Métodos de pagamento – 2 linhas com 3 botões */
+.metodos-pagamento {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+/* Botões de método */
+.metodo-btn {
+  min-height: 56px;
+  font-weight: bold;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}

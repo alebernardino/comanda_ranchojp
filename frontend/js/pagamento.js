@@ -21,6 +21,8 @@ const metodosButtons = document.querySelectorAll(".metodo-btn");
 
 let formaSelecionada = "Dinheiro";
 let saldoDevedorGlobal = 0;
+let totalItensGlobal = 0;
+let totalPagoGlobal = 0;
 
 // Inicialização
 function init() {
@@ -28,6 +30,11 @@ function init() {
     carregarResumo();
     carregarPagamentos();
     valorPagamentoInput.focus();
+
+    // 👉 foco no primeiro botão de método
+    if (metodosButtons.length > 0) {
+        metodosButtons[0].focus();
+    }
 }
 
 init();
@@ -43,12 +50,17 @@ async function carregarResumo() {
         if (!res.ok) throw new Error("Erro ao carregar resumo");
         const data = await res.json();
 
-        totalItensEl.innerText = `R$ ${formatarMoeda(data.total_itens)}`;
-        totalPagoEl.innerText = `R$ ${formatarMoeda(data.total_pago)}`;
+        totalItensGlobal = data.total_itens;
+        totalPagoGlobal = data.total_pago;
 
-        const saldo = data.total_itens - data.total_pago;
+        totalItensEl.innerText = `R$ ${formatarMoeda(totalItensGlobal)}`;
+        totalPagoEl.innerText = `R$ ${formatarMoeda(totalPagoGlobal)}`;
+
+        const saldo = totalItensGlobal - totalPagoGlobal;
         saldoDevedorGlobal = saldo > 0 ? saldo : 0;
+
         saldoDevedorEl.innerText = `R$ ${formatarMoeda(saldoDevedorGlobal)}`;
+
 
         // Atualiza valor padrão do input se houver saldo
         if (saldoDevedorGlobal > 0 && valorPagamentoInput.value === "") {
@@ -143,7 +155,7 @@ async function lancarPagamento() {
 
 async function removerPagamento(id) {
     console.log("Tentando remover pagamento ID:", id);
-    if (!confirm("Remover este pagamento?")) return;
+    // if (!confirm("Remover este pagamento?")) return;
 
     try {
         const res = await fetch(`${API_URL}/pagamentos/${id}`, {
@@ -160,7 +172,24 @@ async function removerPagamento(id) {
 }
 
 async function finalizarComanda() {
-    if (!confirm("Deseja finalizar e fechar esta comanda?")) return;
+
+    // 👉 pagamento a maior
+    if (saldoDevedorGlobal === 0 && totalPagoGlobal > totalItensGlobal) {
+
+        const diferenca = totalPagoGlobal - totalItensGlobal;
+
+        const confirmar = confirm(
+            `ATENÇÃO!\n\n` +
+            `A comanda foi paga com valor MAIOR que o total.\n\n` +
+            `Valor pago a mais: R$ ${formatarMoeda(diferenca)}\n\n` +
+            `Deseja finalizar mesmo assim?`
+        );
+
+        if (!confirmar) return;
+
+    } else {
+        if (!confirm("Deseja finalizar e fechar esta comanda?")) return;
+    }
 
     try {
         const res = await fetch(`${API_URL}/comandas/${numero}/fechar`, {
@@ -179,6 +208,7 @@ async function finalizarComanda() {
         alert(err.message);
     }
 }
+
 
 // Listeners
 btnLancarPagamento.addEventListener("click", lancarPagamento);

@@ -69,8 +69,8 @@
         }
 
         .metodos-pagamento {
-            display: flex;
-            /* Mudado para flex horizontal */
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 6px;
             justify-content: space-between;
         }
@@ -97,7 +97,7 @@
         /* Cores Premium por Tipo */
         .metodo-btn[data-forma="Dinheiro"] {
             border-color: #d1fae5;
-            color: #059669;
+            /* color: #059669; */
         }
 
         .metodo-btn[data-forma="Pix"] {
@@ -237,10 +237,13 @@
             <div class="col-form">
                 <div class="form-pagamento">
                     <div class="metodos-pagamento" id="metodosPagamento">
-                        <button class="metodo-btn active" data-forma="Dinheiro">💵 Dinheiro</button>
-                        <button class="metodo-btn" data-forma="Pix">💠 Pix</button>
                         <button class="metodo-btn" data-forma="Cartão Crédito">💳 Crédito</button>
                         <button class="metodo-btn" data-forma="Cartão Débito">🏦 Débito</button>
+                        <button class="metodo-btn" data-forma="Pix">💠 Pix</button>
+
+                        <button class="metodo-btn active" data-forma="Dinheiro">💵 Dinheiro</button>
+                        <button class="metodo-btn" data-forma="Abatimento"> Abatimento</button>
+                        <button class="metodo-btn" data-forma="Voucher"> Voucher</button>
                     </div>
 
                     <div class="valor-input-container">
