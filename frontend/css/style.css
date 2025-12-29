@@ -1,3 +1,7 @@
+* {
+  box-sizing: border-box;
+}
+
 /* Global */
 body {
   font-family: sans-serif;
@@ -21,6 +25,50 @@ h3 {
   margin: 5px 0;
   font-size: 1.2em;
 }
+
+/* Comanda Header with Info Fields */
+.comanda-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.comanda-info {
+  display: flex;
+  gap: 15px;
+  flex: 1;
+}
+
+.info-field {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.info-field label {
+  font-weight: bold;
+  font-size: 0.9em;
+  color: #555;
+  white-space: nowrap;
+}
+
+.info-field input {
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9em;
+  min-width: 150px;
+}
+
+.info-field input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
 
 /* Layout PDV (Comanda vs Produtos) */
 .pdv-layout {
@@ -104,8 +152,42 @@ input {
   font-size: 0.9em;
 }
 
+/* Esconder setas de aumento/diminuição em inputs numéricos */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: none;
+}
+
+/* Botão Remover Genérico */
+.btn-remover {
+  background-color: #dc3545 !important;
+  color: white !important;
+  border: none !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  font-weight: bold !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 24px !important;
+  height: 24px !important;
+}
+
+.btn-remover:hover {
+  background-color: #c82333 !important;
+}
+
+
 button {
-  padding: 6px 12px;
   background-color: #007bff;
   color: white;
   border: none;
@@ -231,6 +313,8 @@ th {
   top: 0;
   z-index: 10;
   box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+  padding: 4px 4px;
+  /* Increased vertical padding to match produtos-header */
 }
 
 /* Lista de Produtos (lateral) */

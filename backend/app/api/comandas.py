@@ -40,10 +40,10 @@ def abrir_comanda(comanda: ComandaCreate):
 
     cursor.execute(
         """
-        INSERT INTO comandas (numero, nome, status)
-        VALUES (?, ?, 'aberta')
+        INSERT INTO comandas (numero, nome, telefone, status)
+        VALUES (?, ?, ?, 'aberta')
         """,
-        (comanda.numero, comanda.nome),
+        (comanda.numero, comanda.nome, comanda.telefone),
     )
     conn.commit()
 
@@ -73,6 +73,45 @@ def buscar_comanda_por_numero(numero: int):
         raise HTTPException(status_code=404, detail="Comanda não encontrada")
 
     return dict(row)
+
+
+@router.put("/{numero}", response_model=ComandaResponse)
+def atualizar_comanda(numero: int, comanda: ComandaCreate):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Verifica se a comanda existe
+    cursor.execute(
+        "SELECT id FROM comandas WHERE numero = ?", (numero,)
+    )
+    row = cursor.fetchone()
+    
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Comanda não encontrada")
+    
+    comanda_id = row["id"]
+
+    # Atualiza nome e telefone
+    cursor.execute(
+        """
+        UPDATE comandas
+        SET nome = ?, telefone = ?
+        WHERE id = ?
+        """,
+        (comanda.nome, comanda.telefone, comanda_id),
+    )
+    conn.commit()
+
+    # Retorna a comanda atualizada
+    cursor.execute(
+        "SELECT * FROM comandas WHERE id = ?", (comanda_id,)
+    )
+    updated = cursor.fetchone()
+    conn.close()
+
+    return dict(updated)
+
 
 
 @router.post("/{numero}/fechar", response_model=ComandaResponse)

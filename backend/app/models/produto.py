@@ -1,12 +1,10 @@
 from pydantic import BaseModel
 
-
 class ProdutoBase(BaseModel):
     codigo: str
     descricao: str
     valor: float
     ativo: bool = True
-
 
 class ProdutoCreate(ProdutoBase):
     pass

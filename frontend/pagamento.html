@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Pagamento - Comanda</title>
+    <link rel="stylesheet" href="css/style.css?v=3">
+    <style>
+        .pagamento-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 5px;
+        }
+
+        .resumo-comanda {
+            background: #fdfdfd;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #eee;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .resumo-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.95em;
+            color: #666;
+        }
+
+        .resumo-item span:last-child {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .total-pagar {
+            font-size: 1.4em;
+            font-weight: 800;
+            color: #e63946;
+            border-top: 1px dashed #eee;
+            padding-top: 8px;
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .lista-pagamentos {
+            margin-top: 15px;
+        }
+
+        .lista-pagamentos h3 {
+            font-size: 1em;
+            color: #444;
+            margin-bottom: 8px;
+            border-left: 3px solid #007bff;
+            padding-left: 8px;
+        }
+
+        .form-pagamento {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #eee;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .metodos-pagamento {
+            display: flex;
+            /* Mudado para flex horizontal */
+            gap: 6px;
+            justify-content: space-between;
+        }
+
+        .metodo-btn {
+            flex: 1;
+            padding: 8px 4px;
+            border: 2px solid #f0f0f0;
+            background: #fff;
+            cursor: pointer;
+            text-align: center;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.8em;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            color: #555;
+            white-space: nowrap;
+        }
+
+        /* Cores Premium por Tipo */
+        .metodo-btn[data-forma="Dinheiro"] {
+            border-color: #d1fae5;
+            color: #059669;
+        }
+
+        .metodo-btn[data-forma="Pix"] {
+            border-color: #e0f2fe;
+            color: #0284c7;
+        }
+
+        .metodo-btn[data-forma="Cartão Crédito"] {
+            border-color: #f3e8ff;
+            color: #9333ea;
+        }
+
+        .metodo-btn[data-forma="Cartão Débito"] {
+            border-color: #fef3c7;
+            color: #d97706;
+        }
+
+        .metodo-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .metodo-btn.active {
+            transform: scale(1.02);
+        }
+
+        .metodo-btn.active[data-forma="Dinheiro"] {
+            background: #059669;
+            color: white;
+            border-color: #059669;
+        }
+
+        .metodo-btn.active[data-forma="Pix"] {
+            background: #0284c7;
+            color: white;
+            border-color: #0284c7;
+        }
+
+        .metodo-btn.active[data-forma="Cartão Crédito"] {
+            background: #9333ea;
+            color: white;
+            border-color: #9333ea;
+        }
+
+        .metodo-btn.active[data-forma="Cartão Débito"] {
+            background: #d97706;
+            color: white;
+            border-color: #d97706;
+        }
+
+        .valor-input-container {
+            margin-top: 5px;
+        }
+
+        .valor-input-container label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 0.85em;
+            text-transform: uppercase;
+        }
+
+        #valorPagamento {
+            width: 100%;
+            box-sizing: border-box;
+            /* Garante que padding e border não aumentem a largura total */
+            height: 38px;
+            font-size: 1.3em;
+            font-weight: 700;
+            text-align: right;
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid #007bff;
+            background: #f0f7ff;
+            color: #0056b3;
+            display: block;
+        }
+
+        .status-comanda {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.65em;
+            letter-spacing: 0.5px;
+        }
+
+        .status-aberta {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-finalizada {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        #btnLancarPagamento {
+            background: #007bff;
+            color: white;
+            font-size: 0.95em;
+            padding: 10px;
+            font-weight: 700;
+            border-radius: 6px;
+        }
+
+        .btn-finalizar {
+            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+            font-size: 1.1em;
+            padding: 12px;
+            margin-top: 10px;
+            width: 100%;
+            border-radius: 6px;
+            box-shadow: 0 3px 8px rgba(40, 167, 69, 0.2);
+        }
+
+
+        .btn-finalizar:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="containerPagamento" class="janela-central">
+
+        <div class="comanda-header">
+            <h2 id="tituloPagamento">Pagamento Comanda</h2>
+            <div id="statusComanda" class="status-comanda status-aberta">Aberta</div>
+        </div>
+
+        <div class="pagamento-grid">
+
+            <!-- COLUNA ESQUERDA: Formulário de Pagamento -->
+            <div class="col-form">
+                <div class="form-pagamento">
+                    <div class="metodos-pagamento" id="metodosPagamento">
+                        <button class="metodo-btn active" data-forma="Dinheiro">💵 Dinheiro</button>
+                        <button class="metodo-btn" data-forma="Pix">💠 Pix</button>
+                        <button class="metodo-btn" data-forma="Cartão Crédito">💳 Crédito</button>
+                        <button class="metodo-btn" data-forma="Cartão Débito">🏦 Débito</button>
+                    </div>
+
+                    <div class="valor-input-container">
+                        <label>Valor a Lançar</label>
+                        <input type="number" id="valorPagamento" step="0.01" placeholder="0,00">
+                    </div>
+
+                    <button id="btnLancarPagamento">Lançar Pagamento (Enter)</button>
+                </div>
+            </div>
+
+            <!-- COLUNA DIREITA: Resumo e Pagamentos Realizados -->
+            <div class="col-resumo">
+                <div class="resumo-comanda">
+                    <div class="resumo-item">
+                        <span>Total Comanda</span>
+                        <span id="totalItens">R$ 0,00</span>
+                    </div>
+                    <div class="resumo-item">
+                        <span>Total Pago</span>
+                        <span id="totalPago" style="color: #007bff;">R$ 0,00</span>
+                    </div>
+                    <div class="total-pagar">
+                        <span>A PAGAR</span>
+                        <span id="saldoDevedor">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <button id="btnFinalizarComanda" class="btn-finalizar" disabled>
+                    Finalizar Comanda (F1)
+                </button>
+
+                <div class="lista-pagamentos">
+                    <h3>Pagamentos Lançados</h3>
+                    <table id="tabelaPagamentos">
+                        <thead>
+                            <tr>
+                                <th>Forma</th>
+                                <th>Valor</th>
+                                <th style="width: 40px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Inserido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="pdv-atalhos">
+            <button id="btnVoltar" style="background-color: #6c757d;">Voltar (Esc)</button>
+        </div>
+
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/pagamento.js?v=1"></script>
+</body>
+
+</html>

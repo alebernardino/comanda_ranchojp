@@ -6,6 +6,7 @@ from typing import Optional
 class ComandaCreate(BaseModel):
     numero: int
     nome: Optional[str] = None
+    telefone: Optional[str] = None
 
 
 class ComandaResponse(ComandaCreate):

@@ -7,12 +7,14 @@ if (!numero) {
   window.location.href = "index.html";
 }
 
-// Função para formatar valores monetários no padrão brasileiro (vírgula)
+// Função para formatar valores monetários no padrão brasileiro (ponto para milhar, vírgula para decimal)
 function formatarValor(valor) {
-  return valor.toFixed(2).replace('.', ',');
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 const titulo = document.getElementById("tituloComanda");
+const nomeComanda = document.getElementById("nomeComanda");
+const telefoneComanda = document.getElementById("telefoneComanda");
 
 async function carregarComanda() {
   const res = await fetch(`${API_URL}/comandas/${numero}`);
@@ -25,7 +27,36 @@ async function carregarComanda() {
 
   const comanda = await res.json();
   titulo.innerText = `Comanda ${comanda.numero}`;
+  nomeComanda.value = comanda.nome || "";
+  telefoneComanda.value = comanda.telefone || "";
 }
+
+// Função para atualizar nome e telefone da comanda
+async function atualizarComanda() {
+  const payload = {
+    numero: parseInt(numero),
+    nome: nomeComanda.value.trim() || null,
+    telefone: telefoneComanda.value.trim() || null
+  };
+
+  try {
+    const res = await fetch(`${API_URL}/comandas/${numero}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      console.error("Erro ao atualizar comanda");
+    }
+  } catch (err) {
+    console.error("Erro ao salvar dados da comanda:", err);
+  }
+}
+
+// Auto-save quando o usuário sair dos campos
+nomeComanda.addEventListener("blur", atualizarComanda);
+telefoneComanda.addEventListener("blur", atualizarComanda);
 
 carregarComanda();
 
@@ -75,20 +106,7 @@ btnPagamento.addEventListener("click", () => {
   window.location.href = `pagamento.html?numero=${numero}`;
 });
 
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") {
-    btnSair.click();
-  }
-
-  if (e.key === "F3") {
-    e.preventDefault(); // Evita busca do navegador
-    btnPagamento.click();
-  }
-
-  if (e.key === "F2") {
-    btnImprimir.click();
-  }
-});
+// Tecla de atalho global para retorno ao index se necessário (já tratado nos botões)
 
 
 
@@ -390,8 +408,6 @@ function renderizarTabelaItens(itens) {
         <td>
           <div class="qtd-container">
             <span class="qtd-item">${item.quantidade}</span>
-            <button class="btn-qtd" data-action="menos">−</button>
-            <button class="btn-qtd" data-action="mais">+</button>
             <button class="btn-remover">×</button>
           </div>
         </td>
@@ -403,8 +419,6 @@ function renderizarTabelaItens(itens) {
         <td></td>
       `;
 
-    const btnMais = tr.querySelector('[data-action="mais"]');
-    const btnMenos = tr.querySelector('[data-action="menos"]')
     const inputValor = tr.querySelector(".input-tabela-valor");
 
     // Edit Value Logic
@@ -437,14 +451,6 @@ function renderizarTabelaItens(itens) {
 
     inputValor.addEventListener("keydown", (e) => {
       if (e.key === "Enter") inputValor.blur();
-    });
-
-    btnMais.addEventListener("click", () => {
-      adicionarMaisItem(item);
-    });
-
-    btnMenos.addEventListener("click", () => {
-      removerUmItem(item);
     });
 
     tr.querySelector(".btn-remover")
@@ -506,26 +512,7 @@ valorProduto.addEventListener("blur", () => {
 // Flag para evitar múltiplas chamadas de impressão
 let isPrinting = false;
 
-// Event listeners dos botões de ação
-btnPagamento.addEventListener("click", () => {
-  alert("Função de pagamento em desenvolvimento");
-});
-
-btnImprimir.addEventListener("click", () => {
-  if (!isPrinting) {
-    isPrinting = true;
-    window.print();
-    // Reset flag após um pequeno delay
-    setTimeout(() => {
-      isPrinting = false;
-    }, 1000);
-  }
-});
-
-btnSair.addEventListener("click", () => {
-  window.location.href = "index.html";
-});
-
+// Event listeners dos botões de ação (já definidos acima)
 // Atalhos de teclado
 document.addEventListener("keydown", (e) => {
   // F1 - Pagamento
@@ -546,6 +533,10 @@ document.addEventListener("keydown", (e) => {
   else if (e.key === "F8") {
     e.preventDefault();
     e.stopPropagation();
+    btnSair.click();
+  }
+  // Escape - Sair
+  else if (e.key === "Escape") {
     btnSair.click();
   }
 });

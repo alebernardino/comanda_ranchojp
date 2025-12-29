@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS comandas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     numero INTEGER NOT NULL UNIQUE,
     nome TEXT,
+    telefone TEXT,
     status TEXT NOT NULL DEFAULT 'aberta',
     criada_em DATETIME DEFAULT CURRENT_TIMESTAMP,
     finalizada_em DATETIME
@@ -33,7 +34,7 @@ CREATE TABLE IF NOT EXISTS itens_comanda (
     valor REAL NOT NULL,
     subtotal REAL NOT NULL,
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (comanda_id) REFERENCES comandas(id)
+    FOREIGN KEY (comanda_id) REFERENCES comandas (id)
 );
 
 -- =========================
@@ -46,5 +47,5 @@ CREATE TABLE IF NOT EXISTS pagamentos (
     valor REAL NOT NULL,
     detalhe TEXT,
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (comanda_id) REFERENCES comandas(id)
+    FOREIGN KEY (comanda_id) REFERENCES comandas (id)
 );
