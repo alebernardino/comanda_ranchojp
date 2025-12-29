@@ -7,6 +7,11 @@ if (!numero) {
   window.location.href = "index.html";
 }
 
+// Função para formatar valores monetários no padrão brasileiro (vírgula)
+function formatarValor(valor) {
+  return valor.toFixed(2).replace('.', ',');
+}
+
 const titulo = document.getElementById("tituloComanda");
 
 async function carregarComanda() {
@@ -102,7 +107,11 @@ function renderizarProdutos(lista) {
   lista.forEach(p => {
     const div = document.createElement("div");
     div.className = "produto-item";
-    div.innerText = `${p.codigo} - ${p.descricao} (R$ ${p.valor.toFixed(2)})`;
+    div.innerHTML = `
+      <span class="produto-cod">${p.codigo}</span>
+      <span class="produto-desc">${p.descricao}</span>
+      <span class="produto-valor">R$ ${formatarValor(p.valor)}</span>
+    `;
     listaProdutos.appendChild(div);
   });
 }
@@ -134,7 +143,7 @@ function filtrarProdutos() {
     if (exactMatch) {
       produtoSelecionado = exactMatch;
       buscaDescricao.value = exactMatch.descricao;
-      valorProduto.value = exactMatch.valor.toFixed(2);
+      valorProduto.value = formatarValor(exactMatch.valor);
       qtdProduto.focus(); // Jump to Qtd
     } else {
       // Se digitou algo mas não é código válido, limpa
@@ -155,7 +164,7 @@ function selecionarProduto(produto) {
 
   buscaCodigo.value = produto.codigo;
   buscaDescricao.value = produto.descricao;
-  valorProduto.value = produto.valor.toFixed(2);
+  valorProduto.value = formatarValor(produto.valor);
 
   qtdProduto.value = "";
   qtdProduto.focus();
@@ -377,17 +386,21 @@ function renderizarTabelaItens(itens) {
 
     tr.innerHTML = `
         <td>${item.codigo}</td>
-        <td>
-        <button class="btn-qtd" data-action="menos">−</button>
-        <span class="qtd-item">${item.quantidade}</span>
-        <button class="btn-qtd" data-action="mais">+</button>
-        </td>
         <td>${item.descricao}</td>
         <td>
-          <input class="input-tabela-valor" value="${item.valor.toFixed(2)}" readonly>
+          <div class="qtd-container">
+            <span class="qtd-item">${item.quantidade}</span>
+            <button class="btn-qtd" data-action="menos">−</button>
+            <button class="btn-qtd" data-action="mais">+</button>
+            <button class="btn-remover">×</button>
+          </div>
         </td>
-        <td>R$ ${item.subtotal.toFixed(2)}</td>
-        <td><button class="btn-remover">🗑️</button></td>
+        <td>
+          <span class="currency-symbol">R$</span>
+          <input class="input-tabela-valor" value="${formatarValor(item.valor)}" readonly>
+        </td>
+        <td>R$ ${formatarValor(item.subtotal)}</td>
+        <td></td>
       `;
 
     const btnMais = tr.querySelector('[data-action="mais"]');
@@ -406,13 +419,18 @@ function renderizarTabelaItens(itens) {
       inputValor.classList.remove("editando");
 
       const novoValor = Number(inputValor.value.replace(",", "."));
+
       if (isNaN(novoValor) || novoValor <= 0) {
         alert("Valor inválido");
-        inputValor.value = item.valor.toFixed(2); // reset
+        inputValor.value = formatarValor(item.valor); // reset
         return;
       }
 
-      if (novoValor !== item.valor) {
+      // Compara com tolerância para evitar problemas de precisão
+      const valorOriginal = parseFloat(item.valor.toFixed(2));
+      const valorNovo = parseFloat(novoValor.toFixed(2));
+
+      if (valorNovo !== valorOriginal) {
         await atualizarPrecoItens(item.itensOriginais, novoValor);
       }
     });
@@ -435,15 +453,10 @@ function renderizarTabelaItens(itens) {
     tabelaItensBody.appendChild(tr);
   });
 
-  totalComandaDiv.innerHTML = `<strong>TOTAL: R$ ${total.toFixed(2)}</strong>`;
+  totalComandaDiv.innerHTML = `<strong>TOTAL: R$ ${formatarValor(total)}</strong>`;
 }
 
 async function atualizarPrecoItens(listaItens, novoValor) {
-  if (!confirm(`Alterar o preço desses itens para R$ ${novoValor.toFixed(2)}?`)) {
-    carregarItensComanda(); // reload to reset UI
-    return;
-  }
-
   try {
     for (const item of listaItens) {
       const payload = {
@@ -490,3 +503,49 @@ valorProduto.addEventListener("blur", () => {
   valorProduto.setAttribute("readonly", true);
 });
 
+// Flag para evitar múltiplas chamadas de impressão
+let isPrinting = false;
+
+// Event listeners dos botões de ação
+btnPagamento.addEventListener("click", () => {
+  alert("Função de pagamento em desenvolvimento");
+});
+
+btnImprimir.addEventListener("click", () => {
+  if (!isPrinting) {
+    isPrinting = true;
+    window.print();
+    // Reset flag após um pequeno delay
+    setTimeout(() => {
+      isPrinting = false;
+    }, 1000);
+  }
+});
+
+btnSair.addEventListener("click", () => {
+  window.location.href = "index.html";
+});
+
+// Atalhos de teclado
+document.addEventListener("keydown", (e) => {
+  // F1 - Pagamento
+  if (e.key === "F1") {
+    e.preventDefault();
+    e.stopPropagation();
+    btnPagamento.click();
+  }
+  // F2 - Imprimir
+  else if (e.key === "F2") {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isPrinting) {
+      btnImprimir.click();
+    }
+  }
+  // F8 - Fechar
+  else if (e.key === "F8") {
+    e.preventDefault();
+    e.stopPropagation();
+    btnSair.click();
+  }
+});
