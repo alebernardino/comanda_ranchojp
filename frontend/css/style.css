@@ -233,7 +233,7 @@ button:hover {
 
 /* Container dos itens com scroll */
 #itensComanda {
-  max-height: 350px;
+  max-height: 400px;
   overflow-y: auto;
   position: relative;
 }
@@ -361,7 +361,7 @@ th {
 .entrada-produto {
   display: flex;
   gap: 5px;
-  flex-wrap: wrap;
+  /* flex-wrap: wrap; */
   align-items: flex-end;
 }
 

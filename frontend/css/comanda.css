@@ -86,3 +86,37 @@
     width: 60px;
     text-align: center;
 }
+
+#qtdProduto {
+    width: 100px;
+    /* ajuste como quiser */
+    text-align: left;
+}
+
+#nomeComanda {
+    width: 200px;
+    text-align: left;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+#telefoneComanda {
+    width: 150px;
+    text-align: left;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+#tituloComanda {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 2em;
+}
+
+#valorPorPessoa {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #007bff;
+    min-width: 120px;
+}
