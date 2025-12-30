@@ -1,5 +1,3 @@
-import { formatarMoeda } from "./utils.js";
-
 const params = new URLSearchParams(window.location.search);
 const numero = params.get("numero");
 

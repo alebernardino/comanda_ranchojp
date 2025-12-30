@@ -1,0 +1,88 @@
+/* ===== Divisão da conta ===== */
+.pdv-divisao {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.atalhos-principais {
+    display: flex;
+    gap: 10px;
+}
+
+.atalhos-divisao {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 2px solid #e0e0e0;
+    padding-left: 15px;
+}
+
+.dividir-total {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: bold;
+}
+
+.dividir-total input {
+    width: 60px;
+    text-align: center;
+}
+
+/* ===== Modal ===== */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 420px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.valor-divisao {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #007bff;
+    min-width: 120px;
+}
+
+.modal-comanda {
+    width: 90%;
+    max-width: 900px;
+}
+
+.tabela-divisao {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.tabela-divisao th,
+.tabela-divisao td {
+    padding: 4px 6px;
+    border-bottom: 1px solid #ddd;
+}
+
+.tabela-divisao input {
+    width: 60px;
+    text-align: center;
+}

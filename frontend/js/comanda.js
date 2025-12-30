@@ -1,8 +1,18 @@
-import { formatarMoeda } from "./utils.js";
-
 // pega numero da comanda da URL
 const params = new URLSearchParams(window.location.search);
 const numero = params.get("numero");
+const qtdPessoasInput = document.getElementById("qtdPessoas");
+const valorPorPessoaDiv = document.getElementById("valorPorPessoa");
+
+const btnDividirItem = document.getElementById("btnDividirItem");
+const modalDividirItem = document.getElementById("modalDividirItem");
+const tbodyDivisaoItens = document.getElementById("tbodyDivisaoItens");
+const btnCancelarDivisao = document.getElementById("btnCancelarDivisao");
+const btnConfirmarDivisao = document.getElementById("btnConfirmarDivisao");
+
+
+let totalComandaGlobal = 0;
+
 
 if (!numero) {
   alert("Comanda não informada");
@@ -113,7 +123,7 @@ btnPagamento.addEventListener("click", () => {
 
 
 async function carregarProdutos() {
-  const res = await fetch(`${API_URL}/produtos`);
+  const res = await fetch(`${API_URL}/produtos/`);
   produtos = await res.json();
   produtos.sort((a, b) => a.codigo.localeCompare(b.codigo, undefined, { numeric: true }));
   renderizarProdutos(produtos);
@@ -462,7 +472,23 @@ function renderizarTabelaItens(itens) {
   });
 
   totalComandaDiv.innerHTML = `<strong>TOTAL: R$ ${formatarValor(total)}</strong>`;
+  totalComandaGlobal = total;
+  atualizarDivisaoTotal();
 }
+
+function atualizarDivisaoTotal() {
+  const qtd = parseInt(qtdPessoasInput.value);
+
+  if (isNaN(qtd) || qtd < 2 || totalComandaGlobal === 0) {
+    valorPorPessoaDiv.innerText = "R$ 0,00";
+    return;
+  }
+
+  const valor = totalComandaGlobal / qtd;
+  valorPorPessoaDiv.innerText = `R$ ${formatarValor(valor)}`;
+}
+
+qtdPessoasInput.addEventListener("input", atualizarDivisaoTotal);
 
 async function atualizarPrecoItens(listaItens, novoValor) {
   try {
@@ -542,3 +568,74 @@ document.addEventListener("keydown", (e) => {
     btnSair.click();
   }
 });
+
+
+btnDividirItem.addEventListener("click", async () => {
+  modalDividirItem.classList.remove("hidden");
+  await carregarItensDivisao();
+});
+
+btnCancelarDivisao.addEventListener("click", () => {
+  modalDividirItem.classList.add("hidden");
+});
+
+async function carregarItensDivisao() {
+  tbodyDivisaoItens.innerHTML = "";
+
+  const res = await fetch(`${API_URL}/comandas/${numero}/itens`);
+  if (!res.ok) return;
+
+  const itens = await res.json();
+
+  // agrupar como você já faz na comanda
+  const mapa = {};
+
+  itens.forEach(i => {
+    if (!mapa[i.codigo]) {
+      mapa[i.codigo] = {
+        codigo: i.codigo,
+        descricao: i.descricao,
+        valor: i.valor,
+        quantidade: i.quantidade,
+        subtotal: i.subtotal
+      };
+    } else {
+      mapa[i.codigo].quantidade += i.quantidade;
+      mapa[i.codigo].subtotal += i.subtotal;
+    }
+  });
+
+  Object.values(mapa).forEach(item => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${item.codigo}</td>
+      <td>${item.descricao}</td>
+      <td>${item.quantidade}</td>
+      <td>
+        <input type="number"
+               min="0"
+               max="${item.quantidade}"
+               value="0"
+               data-valor="${item.valor}"
+               class="qtd-pessoa">
+      </td>
+      <td>R$ ${formatarValor(item.valor)}</td>
+      <td class="subtotal-pessoa">R$ 0,00</td>
+    `;
+
+    const inputQtd = tr.querySelector(".qtd-pessoa");
+    const subtotalEl = tr.querySelector(".subtotal-pessoa");
+
+    inputQtd.addEventListener("input", () => {
+      const qtd = Number(inputQtd.value);
+      const valor = Number(inputQtd.dataset.valor);
+      const subtotal = qtd * valor;
+      subtotalEl.innerText = `R$ ${formatarValor(subtotal)}`;
+    });
+
+    tbodyDivisaoItens.appendChild(tr);
+  });
+}
+
+
