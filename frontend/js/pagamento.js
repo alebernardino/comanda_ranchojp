@@ -19,7 +19,7 @@ const btnFinalizarComanda = document.getElementById("btnFinalizarComanda");
 const btnVoltar = document.getElementById("btnVoltar");
 const metodosButtons = document.querySelectorAll(".metodo-btn");
 
-let formaSelecionada = "Dinheiro";
+let formaSelecionada = "Cartão Crédito";
 let saldoDevedorGlobal = 0;
 let totalItensGlobal = 0;
 let totalPagoGlobal = 0;
@@ -29,9 +29,17 @@ function init() {
     tituloPagamento.innerText = `Pagamento Comanda ${numero}`;
     carregarResumo();
     carregarPagamentos();
-    valorPagamentoInput.focus();
 
-    // 👉 foco no primeiro botão de método
+    // 👉 Inicializa o estado visual baseado na formaSelecionada inicial
+    metodosButtons.forEach(btn => {
+        if (btn.dataset.forma === formaSelecionada) {
+            btn.classList.add("active");
+        } else {
+            btn.classList.remove("active");
+        }
+    });
+
+    // 👉 Foco inicial no primeiro botão de método (Crédito)
     if (metodosButtons.length > 0) {
         metodosButtons[0].focus();
     }
@@ -105,16 +113,25 @@ function renderizarPagamentos(pagamentos) {
 
 // Eventos de Seleção de Método
 metodosButtons.forEach(btn => {
+    // Clique do Mouse
     btn.addEventListener("click", () => {
-        metodosButtons.forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        formaSelecionada = btn.dataset.forma;
-
+        selecionarMetodo(btn);
         // Foca e seleciona o valor para facilitar a edição rápida
         valorPagamentoInput.focus();
         valorPagamentoInput.select();
     });
+
+    // Navegação via TAB
+    btn.addEventListener("focus", () => {
+        selecionarMetodo(btn);
+    });
 });
+
+function selecionarMetodo(btn) {
+    metodosButtons.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    formaSelecionada = btn.dataset.forma;
+}
 
 async function lancarPagamento() {
     const valor = parseFloat(valorPagamentoInput.value);

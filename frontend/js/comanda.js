@@ -1,9 +1,9 @@
 // pega numero da comanda da URL
 const params = new URLSearchParams(window.location.search);
 const numero = params.get("numero");
+
 const qtdPessoasInput = document.getElementById("qtdPessoas");
 const valorPorPessoaDiv = document.getElementById("valorPorPessoa");
-
 const btnDividirItem = document.getElementById("btnDividirItem");
 const modalDividirItem = document.getElementById("modalDividirItem");
 const tbodyDivisaoItens = document.getElementById("tbodyDivisaoItens");
@@ -477,18 +477,18 @@ function renderizarTabelaItens(itens) {
 }
 
 function atualizarDivisaoTotal() {
-  const qtd = parseInt(qtdPessoasInput.value);
+  const qtd = parseInt(qtdPessoasInput.value, 10);
 
-  if (isNaN(qtd) || qtd < 2 || totalComandaGlobal === 0) {
+  if (!qtd || qtd < 1 || totalComandaGlobal <= 0) {
     valorPorPessoaDiv.innerText = "R$ 0,00";
     return;
   }
 
   const valor = totalComandaGlobal / qtd;
-  valorPorPessoaDiv.innerText = `R$ ${formatarValor(valor)}`;
-}
 
-qtdPessoasInput.addEventListener("input", atualizarDivisaoTotal);
+  valorPorPessoaDiv.innerText =
+    `R$ ${valor.toFixed(2).replace(".", ",")}`;
+}
 
 async function atualizarPrecoItens(listaItens, novoValor) {
   try {
@@ -637,5 +637,19 @@ async function carregarItensDivisao() {
     tbodyDivisaoItens.appendChild(tr);
   });
 }
+
+const inputPessoasComanda = document.getElementById("pessoasComanda");
+
+// Sincroniza "Pessoas na comanda" com "Dividir total por"
+inputPessoasComanda.addEventListener("input", () => {
+  const valor = parseInt(inputPessoasComanda.value, 10);
+  if (!isNaN(valor) && valor >= 1) {
+    qtdPessoasInput.value = valor;
+    atualizarDivisaoTotal();
+  }
+});
+
+// Permite edição independente no "Dividir total por"
+qtdPessoasInput.addEventListener("input", atualizarDivisaoTotal);
 
 

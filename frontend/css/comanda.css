@@ -59,10 +59,26 @@
 }
 
 .valor-divisao {
-    font-weight: bold;
+    font-weight: 700;
     font-size: 1.1em;
-    color: #007bff;
+    color: var(--primary);
     min-width: 120px;
+}
+
+#btnCancelarDivisao {
+    background: var(--secondary);
+}
+
+#btnCancelarDivisao:hover {
+    background: var(--secondary-dark);
+}
+
+#btnConfirmarDivisao {
+    background: var(--success);
+}
+
+#btnConfirmarDivisao:hover {
+    background: var(--success-dark);
 }
 
 .modal-comanda {
@@ -115,8 +131,18 @@
 }
 
 #valorPorPessoa {
-    font-weight: bold;
-    font-size: 1.1em;
-    color: #007bff;
+    font-weight: 800;
+    font-size: 1.25em;
+    color: var(--primary);
     min-width: 120px;
+    background: #eff6ff;
+    padding: 4px 12px;
+    border-radius: var(--radius);
+}
+
+#pessoasComanda {
+    width: 100px;
+    text-align: left;
+    font-weight: bold;
+    font-size: 1.2em;
 }
