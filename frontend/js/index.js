@@ -261,7 +261,16 @@ function filtrarProdutosModal() {
   const filtrados = produtosCache.filter(p => (cod === "" || String(p.codigo).startsWith(cod)) && (desc === "" || p.descricao.toLowerCase().includes(desc)));
   renderizarProdutosModal(filtrados);
 
-  // Apenas busca o produto selecionado internamente sem forçar foco durante a digitação
+  // Se o código tem 3 dígitos e encontramos um match exato, selecionamos e focamos na Qtd
+  if (cod.length === 3) {
+    const match = produtosCache.find(p => String(p.codigo) === cod);
+    if (match) {
+      selecionarProduto(match);
+      return;
+    }
+  }
+
+  // Comportamento padrão de busca parcial
   const match = produtosCache.find(p => String(p.codigo) === cod);
   if (match) {
     produtoSelecionado = match;
@@ -501,6 +510,17 @@ function filtrarERenderizarProdutosPage() {
   const fCod = prodPageCodigo ? prodPageCodigo.value.trim() : "";
   const fDesc = prodPageDescricao ? prodPageDescricao.value.toLowerCase().trim() : "";
 
+  // Validação de código duplicado ao atingir 3 dígitos
+  if (fCod.length === 3) {
+    const existe = produtosCache.find(p => String(p.codigo) === fCod);
+    if (existe) {
+      alert(`O código ${fCod} já está em uso pelo produto: ${existe.descricao}`);
+      if (prodPageCodigo) prodPageCodigo.value = "";
+      filtrarERenderizarProdutosPage();
+      return;
+    }
+  }
+
   let filtrados = produtosCache.filter(p => {
     const matchCod = !fCod || p.codigo.includes(fCod);
     const matchDesc = !fDesc || p.descricao.toLowerCase().includes(fDesc);
@@ -722,11 +742,6 @@ function configListeners() {
   if (qtdProduto) qtdProduto.onkeydown = e => { if (e.key === "Enter") adicionarItemComanda(); };
   if (valorProduto) valorProduto.onkeydown = e => { if (e.key === "Enter") adicionarItemComanda(); };
 
-  if (btnAddItem) {
-    btnAddItem.style.display = "inline-flex";
-    btnAddItem.onclick = adicionarItemComanda;
-  }
-
   if (btnDividirItemModal) btnDividirItemModal.onclick = abrirModalDividirItem;
   if (btnImprimirModal) btnImprimirModal.onclick = () => window.print();
 
@@ -775,6 +790,16 @@ function configListeners() {
   if (prodPageDescricao) prodPageDescricao.oninput = filtrarERenderizarProdutosPage;
 
   if (novoCodigoInput) {
+    novoCodigoInput.oninput = () => {
+      const cod = novoCodigoInput.value.trim();
+      if (cod.length === 3) {
+        const existe = produtosCache.find(p => String(p.codigo) === cod);
+        if (existe) {
+          alert(`O código ${cod} já está em uso pelo produto: ${existe.descricao}`);
+          novoCodigoInput.value = "";
+        }
+      }
+    };
     novoCodigoInput.onblur = () => {
       const cod = novoCodigoInput.value.trim();
       if (cod && !/^\d{3}$/.test(cod)) {

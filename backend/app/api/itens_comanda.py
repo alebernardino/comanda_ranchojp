@@ -83,26 +83,49 @@ def adicionar_item(numero: int, item: ItemComandaCreate):
             detail="Comanda não encontrada ou não está aberta"
         )
 
-    subtotal = item.quantidade * item.valor
-
+    # Verifica se já existe o mesmo produto (mesmo código e valor) na comanda
     cursor.execute(
         """
-        INSERT INTO itens_comanda
-        (comanda_id, codigo, descricao, quantidade, valor, subtotal)
-        VALUES (?, ?, ?, ?, ?, ?)
+        SELECT id, quantidade, subtotal 
+        FROM itens_comanda 
+        WHERE comanda_id = ? AND codigo = ? AND valor = ?
         """,
-        (
-            comanda["id"],
-            item.codigo,
-            item.descricao,
-            item.quantidade,
-            item.valor,
-            subtotal,
-        ),
+        (comanda["id"], item.codigo, item.valor),
     )
-    conn.commit()
+    item_existente = cursor.fetchone()
 
-    item_id = cursor.lastrowid
+    if item_existente:
+        nova_quantidade = item_existente["quantidade"] + item.quantidade
+        novo_subtotal = nova_quantidade * item.valor
+        cursor.execute(
+            """
+            UPDATE itens_comanda 
+            SET quantidade = ?, subtotal = ? 
+            WHERE id = ?
+            """,
+            (nova_quantidade, novo_subtotal, item_existente["id"]),
+        )
+        item_id = item_existente["id"]
+    else:
+        subtotal = item.quantidade * item.valor
+        cursor.execute(
+            """
+            INSERT INTO itens_comanda
+            (comanda_id, codigo, descricao, quantidade, valor, subtotal)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                comanda["id"],
+                item.codigo,
+                item.descricao,
+                item.quantidade,
+                item.valor,
+                subtotal,
+            ),
+        )
+        item_id = cursor.lastrowid
+
+    conn.commit()
 
     cursor.execute(
         """
