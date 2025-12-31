@@ -242,7 +242,6 @@ async function finalizarComanda() {
             throw new Error(error.detail || "Erro ao finalizar comanda");
         }
 
-        alert("Comanda finalizada com sucesso!");
         window.location.href = "index.html";
 
     } catch (err) {

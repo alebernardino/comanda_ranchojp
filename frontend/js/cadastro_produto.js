@@ -29,10 +29,24 @@ carregarProdutosCadastrados().catch(err => {
 btnSalvar.addEventListener("click", salvarProduto);
 btnVoltar.addEventListener("click", voltar);
 
+if (novoCodigo) {
+  novoCodigo.onblur = () => {
+    const cod = novoCodigo.value.trim();
+    if (cod && !/^\d{3}$/.test(cod)) {
+      alert("O código do produto deve ter exatamente 3 dígitos numéricos (ex: 001, 123)");
+      setTimeout(() => novoCodigo.focus(), 10);
+    }
+  };
+}
+
 async function salvarProduto() {
   const codigo = novoCodigo.value.trim();
   const descricao = novaDescricao.value.trim();
   const valor = Number(valorNovoProduto.value.replace(",", "."));
+
+  if (!/^\d{3}$/.test(codigo)) {
+    return alert("O código do produto deve ter exatamente 3 dígitos numéricos (ex: 001, 123)");
+  }
 
   if (!codigo || !descricao || isNaN(valor) || valor <= 0) {
     alert("Preencha corretamente todos os campos");
@@ -95,7 +109,12 @@ async function carregarProdutosCadastrados() {
         <td><input class="input-tabela-texto" value="${p.codigo}" data-field="codigo" readonly></td>
         <td><input class="input-tabela-texto" value="${p.descricao}" data-field="descricao" readonly></td>
         <td><input class="input-tabela-valor" value="${p.valor.toFixed(2)}" data-field="valor" readonly></td>
-        <td style="text-align:center;"><input type="checkbox" ${p.ativo ? "checked" : ""} data-field="ativo" style="cursor:pointer;"></td>
+        <td style="text-align:center;">
+          <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
+            <input type="checkbox" ${p.ativo ? "checked" : ""} data-field="ativo" style="cursor:pointer;">
+            <button onclick="excluirProdutoNaPagina(${p.id})" style="background:#fee2e2; border:none; color:#ef4444; width:24px; height:24px; border-radius:50%; font-size:1.1rem; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;" title="Excluir">×</button>
+          </div>
+        </td>
       `;
       // Listeners for text/valor inputs
       const textInputs = tr.querySelectorAll('input:not([type="checkbox"]):not([data-field="codigo"])');
@@ -193,5 +212,16 @@ async function atualizarProduto(produtoOriginal, campo, novoValor) {
   } catch (error) {
     console.error(error);
     alert("Erro de conexão");
+  }
+}
+
+async function excluirProdutoNaPagina(id) {
+  if (!confirm("Tem certeza que deseja excluir este produto permanentemente?")) return;
+  const res = await fetch(`${API_URL}/produtos/${id}`, { method: "DELETE" });
+  if (!res.ok) {
+    const err = await res.json();
+    alert(err.detail || "Erro ao excluir produto");
+  } else {
+    await carregarProdutosCadastrados();
   }
 }

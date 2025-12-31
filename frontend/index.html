@@ -1,22 +1,758 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
   <meta charset="UTF-8">
-  <title>Comandas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rancho JP - Sistema de Comandas</title>
+  <link rel="stylesheet" href="css/style.css?v=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --sidebar-width: 260px;
+      --stats-sidebar-width: 240px;
+    }
+
+    body {
+      display: flex;
+      min-height: 100vh;
+      background-color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    /* Sidebar Glassmorphism */
+    .btn-toggle {
+      position: absolute;
+      top: 20px;
+      z-index: 1100;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(4px);
+      border: 1px solid #e2e8f0;
+      color: #1e293b;
+      font-size: 0.9rem;
+      font-weight: 800;
+      cursor: pointer;
+      width: 28px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .sidebar .btn-toggle {
+      right: -28px;
+      border-radius: 0 10px 10px 0;
+      border-left: none;
+    }
+
+    .sidebar-right .btn-toggle {
+      left: -28px;
+      border-radius: 10px 0 0 10px;
+      border-right: none;
+    }
+
+    .btn-toggle:hover {
+      background: #38bdf8;
+      color: white;
+      border-color: #38bdf8;
+      width: 32px;
+      /* Pequeno efeito de expansão */
+    }
+
+    .sidebar {
+      position: relative;
+      width: var(--sidebar-width);
+      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar.collapsed {
+      width: 0;
+    }
+
+    .sidebar-content {
+      width: var(--sidebar-width);
+      min-width: var(--sidebar-width);
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow-x: hidden;
+      box-sizing: border-box;
+      transition: opacity 0.2s ease;
+    }
+
+    .sidebar.collapsed .sidebar-content {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .sidebar-brand {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 40px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #38bdf8;
+      padding-left: 10px;
+    }
+
+    .sidebar-brand i {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      background: #38bdf8;
+      border-radius: 8px;
+    }
+
+    .nav-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      color: #94a3b8;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+    }
+
+    .nav-item.active {
+      background: #38bdf8;
+      color: #0f172a;
+    }
+
+    .nav-icon {
+      font-size: 1.2rem;
+    }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 20px 40px;
+    }
+
+    .page-header {
+      position: sticky;
+      top: 0;
+      background: #f8fafc;
+      padding: 15px 0;
+      margin-bottom: 20px;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .page-title h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.2rem;
+      color: #1e293b;
+      margin: 0;
+    }
+
+    .page-title p {
+      color: #64748b;
+      margin: 5px 0 0 0;
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 5px;
+    }
+
+    .btn-quick {
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-add-comanda {
+      background: #38bdf8;
+      color: #0f172a;
+    }
+
+    .quick-input-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      background: white;
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s ease;
+    }
+
+    .quick-input-group:focus-within {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+    }
+
+    .quick-input-group input {
+      border: none;
+      padding: 8px 12px;
+      width: 200px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #1e293b;
+      background: transparent;
+    }
+
+    .quick-input-group input:focus {
+      outline: none;
+      box-shadow: none;
+    }
+
+    .quick-input-group button {
+      margin: 0;
+    }
+
+    /* Grid de Comandas */
+    .comandas-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 4px;
+    }
+
+    .comanda-card {
+      aspect-ratio: 2 / 0.7;
+      background: white;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid #f1f5f9;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      position: relative;
+      overflow: hidden;
+      padding: 2px;
+    }
+
+    .comanda-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      z-index: 2;
+    }
+
+    .comanda-card span {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+
+    /* Estados das Comandas */
+    .comanda-card.disponivel {
+      color: #10b981;
+      /* Verde */
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+
+    .comanda-card.ocupada {
+      color: #ef4444;
+      /* Vermelho */
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+
+    .comanda-card.ocupada::after {
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.45rem;
+      font-weight: 800;
+      background: #ef4444;
+      color: white;
+      padding: 0px 4px;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+
+    /* Right Sidebar Stats */
+    .sidebar-right {
+      position: relative;
+      width: var(--stats-sidebar-width);
+      background: #f8fafc;
+      border-left: 1px solid #e2e8f0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      z-index: 90;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar-right.collapsed {
+      width: 0;
+      border: none;
+    }
+
+    .sidebar-content-right {
+      width: var(--stats-sidebar-width);
+      min-width: var(--stats-sidebar-width);
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-x: hidden;
+      box-sizing: border-box;
+      transition: opacity 0.2s ease;
+    }
+
+    .sidebar-right.collapsed .sidebar-content-right {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .stats-overview {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 15px;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid #f1f5f9;
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .stat-info h4 {
+      margin: 0;
+      font-size: 0.75rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+    }
+
+    .stat-info p {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #1e293b;
+    }
+  </style>
 </head>
+
 <body>
 
-  <h2>Abrir Comanda</h2>
+  <aside class="sidebar">
+    <button id="btnToggleSidebar" class="btn-toggle" title="Alternar Menu">
+      &lt;
+    </button>
+    <div class="sidebar-content">
+      <div class="sidebar-brand">
+        <div
+          style="background: #38bdf8; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #0f172a; font-size: 1.2rem; font-weight: 900;">
+          R</div>
+        Rancho JP
+      </div>
 
-  <input
-    id="numeroComanda"
-    type="number"
-    placeholder="Número da comanda"
-    autofocus
-  >
+      <nav class="nav-menu">
+        <a href="#" class="nav-item active" id="navDashboard">
+          <span class="nav-icon">📊</span>
+          Dashboard
+        </a>
+        <a href="#" class="nav-item" id="navProdutosSessao">
+          <span class="nav-icon">📦</span>
+          Cadastro de Produtos
+        </a>
+        <a href="#" class="nav-item">
+          <span class="nav-icon">📈</span>
+          Relatórios
+        </a>
+        <a href="#" class="nav-item">
+          <span class="nav-icon">👥</span>
+          Colaboradores
+        </a>
+      </nav>
 
-  <button id="btnAbrir">Abrir</button>
+      <div class="sidebar-footer"
+        style="padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 20px;">
+        <p style="font-size: 0.75rem; color: #64748b; margin: 0;">Rancho JP v2.0</p>
+      </div>
+    </div>
+  </aside>
 
-  <script src="js/index.js"></script>
+  <main class="main-content">
+    <div id="sectionComandas">
+      <header class="page-header">
+        <div style="display: flex; align-items: center; gap: 15px;">
+          <div class="page-title">
+            <h1 id="mainTitle">Painel de Comandas</h1>
+          </div>
+        </div>
+        <div class="quick-actions" id="headerActions">
+          <div class="quick-input-group">
+            <input type="number" id="quickNumero" placeholder="Nº Comanda">
+            <button class="btn-quick btn-add-comanda" id="btnConfirmarQuick">
+              Abrir
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="comandas-grid" id="comandasGrid">
+        <!-- Grid preenchido via JS -->
+      </div>
+    </div>
+
+    <!-- SESSÃO DE GERENCIAMENTO DE PRODUTOS (SUBSTITUI O GRID) -->
+    <div id="sectionProdutos" class="hidden" style="padding: 20px;">
+
+
+      <div class="card"
+        style="background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3 style="margin: 0; font-size: 1.1rem; color: #1e293b;">Novo Produto / Filtro</h3>
+          <button onclick="limparFiltrosSessao()"
+            style="background: #f1f5f9; color: #64748b; padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; border: 1px solid #e2e8f0; font-weight: 700;">LIMPAR
+            CAMPOS</button>
+        </div>
+        <div class="form-cadastro"
+          style="display: flex; flex-direction: row; gap: 15px; align-items: flex-end; background: transparent; border: none; padding: 0; margin-bottom: 0;">
+          <div style="flex: 0 0 120px;">
+            <label
+              style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Código
+              (3 dgt)</label>
+            <input id="prodPageCodigo" placeholder="000" style="width: 100%;" maxlength="3">
+          </div>
+          <div style="flex: 1;">
+            <label
+              style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Descrição
+              do Produto</label>
+            <input id="prodPageDescricao" placeholder="Ex: X-Salada, Coca-Cola..." style="width: 100%;">
+          </div>
+          <div style="flex: 0 0 150px;">
+            <label
+              style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Valor
+              (R$)</label>
+            <input id="prodPageValor" placeholder="0,00" type="number" step="0.01" style="width: 100%;">
+          </div>
+          <button id="btnSalvarProdutoPage" style="background: #10b981; padding: 12px 24px; font-weight: 700;">Salvar
+            Produto</button>
+        </div>
+      </div>
+
+      <div class="card"
+        style="background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); overflow: hidden;">
+
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+            <tr>
+              <th onclick="ordenarProdutos('grupo')"
+                style="padding: 15px; text-align: center; width: 110px; cursor: pointer; user-select: none;">Grupo
+              </th>
+              <th onclick="ordenarProdutos('codigo')"
+                style="padding: 15px; text-align: left; width: 100px; cursor: pointer; user-select: none;">Código
+              </th>
+              <th onclick="ordenarProdutos('descricao')"
+                style="padding: 15px; text-align: left; cursor: pointer; user-select: none;">Descrição</th>
+              <th onclick="ordenarProdutos('valor')"
+                style="padding: 15px; text-align: right; width: 120px; cursor: pointer; user-select: none;">Valor
+              </th>
+              <th style="padding: 15px; text-align: center; width: 100px;">Status</th>
+              <th style="padding: 15px; text-align: center; width: 100px;">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaProdutosPageBody">
+            <!-- Preenchido via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <aside class="sidebar-right">
+    <button id="btnToggleRightSidebar" class="btn-toggle" title="Alternar Resumo">
+      &gt;
+    </button>
+    <div class="sidebar-content-right">
+      <div style="margin-bottom: 20px;">
+        <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; color: #1e293b; margin: 0;">Resumo Hoje</h3>
+        <p style="font-size: 0.75rem; color: #64748b; margin: 5px 0 0 0;">Dados em tempo real</p>
+      </div>
+
+      <div class="stats-overview">
+        <div class="stat-card">
+          <div class="stat-icon" style="background: #f0fdf4; color: #10b981;">✅</div>
+          <div class="stat-info">
+            <h4>Disponíveis</h4>
+            <p id="stats-livres">--</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: #fef2f2; color: #ef4444;">🔥</div>
+          <div class="stat-info">
+            <h4>Em Uso</h4>
+            <p id="stats-ocupadas">--</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Modal Rápido Removido - Agora integrado no Header -->
+
+  <!-- MODAL DE ATENDIMENTO (COMANDA) -->
+  <div id="modalComanda" class="modal hidden">
+    <div class="modal-content">
+      <div class="comanda-header">
+        <h2 id="tituloComanda">Comanda</h2>
+        <div class="comanda-info">
+          <div class="info-field">
+            <label>Nome:</label>
+            <input type="text" id="nomeComanda" placeholder="Nome do cliente" autocomplete="off">
+          </div>
+          <div class="info-field">
+            <label>Telefone:</label>
+            <input type="text" id="telefoneComanda" placeholder="Telefone" autocomplete="off">
+          </div>
+          <div class="info-field">
+            <label>Pessoas:</label>
+            <input type="text" id="pessoasComanda" placeholder="Qtde" style="min-width: 60px;">
+          </div>
+        </div>
+        <button id="btnFecharModalComanda"
+          style="background: #ef4444; border-radius: 50%; width: 36px; height: 36px; padding: 0; min-width: 36px;">×</button>
+      </div>
+
+      <div class="pdv-layout">
+        <!-- COLUNA ESQUERDA -->
+        <div class="pdv-comanda">
+          <div class="entrada-produto">
+            <input id="buscaCodigo" placeholder="Código" autocomplete="off" style="width: 80px;">
+            <input id="buscaDescricao" placeholder="Descrição" autocomplete="off" style="flex: 1;">
+            <input id="qtdProduto" type="number" step="1" placeholder="Qtd" style="width: 70px;">
+            <input id="valorProduto" type="number" step="0.01" placeholder="Valor" readonly style="width: 90px;">
+            <button id="btnAddItem" style="display:none;">Adicionar</button>
+          </div>
+
+          <div id="itensComanda">
+            <table id="tabelaItens">
+              <thead>
+                <tr>
+                  <th>Cód</th>
+                  <th>Descrição</th>
+                  <th>Qtd</th>
+                  <th>R$ Valor</th>
+                  <th>R$ Subtotal</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+            <div id="totalComanda"></div>
+          </div>
+        </div>
+
+        <!-- COLUNA DIREITA -->
+        <div class="pdv-produtos">
+          <div class="produtos-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; gap: 20px;">
+              <span>COD</span>
+              <span>Produtos</span>
+              <span>Valor</span>
+            </div>
+            <button id="btnAbrirModalCadastroComanda"
+              style="background: #3b82f6; padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; margin: 0;">+
+              Novo</button>
+          </div>
+          <div id="listaProdutos"></div>
+        </div>
+      </div>
+
+      <div class="pdv-atalhos" style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+        <button id="btnImprimirModal">Imprimir (F2)</button>
+        <button id="btnDividirItemModal">Dividir por item</button>
+        <label style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+          Dividir total por:
+          <input type="number" id="qtdPessoas" min="1" value="1" style="width: 60px;">
+          <span id="valorPorPessoa" style="color: #ef4444;">R$ 0,00</span>
+        </label>
+        <button id="btnPagamentoModal" style="background: #10b981;">Pagamento (F1)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DIVIDIR POR ITEM -->
+  <div id="modalDividirItem" class="modal hidden">
+    <div class="modal-content">
+      <h3>Dividir por item</h3>
+      <div style="max-height: 400px; overflow-y: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #f1f5f9;">
+              <th style="padding: 10px;">Cód</th>
+              <th>Descrição</th>
+              <th style="text-align: center;">Qtd Total</th>
+              <th style="text-align: center;">Qtd Restante</th>
+              <th style="text-align: center;">Pagar</th>
+              <th>Valor</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyDivisaoItens"></tbody>
+        </table>
+      </div>
+      <div class="modal-actions" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-size: 1.25rem; font-weight: 800; color: #3b82f6;">
+          TOTAL SELECIONADO: <span id="totalSelecionadoItem">R$ 0,00</span>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button onclick="document.getElementById('modalDividirItem').classList.add('hidden')">Fechar</button>
+          <button id="btnAdicionarAoPagamento" style="background: #10b981;">Gerar Pagamento</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE PAGAMENTO -->
+  <div id="modalPagamento" class="modal hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h2 id="tituloPagamentoModal">Pagamento Comanda</h2>
+        <button id="btnFecharModalPagamento"
+          style="background: #ef4444; border-radius: 50%; width: 36px; height: 36px; padding: 0; min-width: 36px;">×</button>
+      </div>
+      <div class="pagamento-grid">
+        <div class="col-form">
+          <div class="form-pagamento" style="border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px;">
+            <div class="metodos-pagamento"
+              style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;">
+              <button class="metodo-btn active" data-forma="Cartão Crédito">💳 Crédito</button>
+              <button class="metodo-btn" data-forma="Cartão Débito">🏦 Débito</button>
+              <button class="metodo-btn" data-forma="Pix">💠 Pix</button>
+              <button class="metodo-btn" data-forma="Dinheiro">💵 Dinheiro</button>
+              <button class="metodo-btn" data-forma="Abatimento">📉 Abatimento</button>
+              <button class="metodo-btn" data-forma="Voucher">🎫 Voucher</button>
+            </div>
+            <div class="valor-input-container">
+              <label style="display: block; font-weight: 700; margin-bottom: 5px;">VALOR A LANÇAR</label>
+              <input type="number" id="valorPagamentoInput" step="0.01"
+                style="width: 100%; font-size: 1.5rem; font-weight: 800; text-align: right; color: #3b82f6;">
+            </div>
+            <button id="btnLancarPagamentoModal"
+              style="width: 100%; margin-top: 15px; height: 50px; font-size: 1.1rem;">Lançar Pagamento (Enter)</button>
+          </div>
+        </div>
+        <div class="col-resumo">
+          <div class="lista-pagamentos"
+            style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; min-height: 200px; max-height: 300px; overflow-y: auto;">
+            <table id="tabelaPagamentosModal" style="width: 100%;">
+              <thead>
+                <tr style="font-size: 0.75rem; color: #64748b; text-transform: uppercase;">
+                  <th style="text-align: left;">Forma</th>
+                  <th style="text-align: right;">Valor</th>
+                  <th style="width: 40px;"></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="resumo-comanda-pagamento" style="margin-top: 15px;">
+            <div class="resumo-item-pag"><span>Total Comanda</span> <span id="pag-total-comanda">R$ 0,00</span></div>
+            <div class="resumo-item-pag"><span>Total Pago</span> <span id="pag-total-pago" style="color: #3b82f6;">R$
+                0,00</span></div>
+            <div class="total-pagar-pag"><span>A PAGAR</span> <span id="pag-saldo-devedor">R$ 0,00</span></div>
+          </div>
+          <button id="btnFinalizarComandaModal" class="btn-finalizar"
+            style="background: #22c55e; height: 55px; font-size: 1.2rem; margin-top: 15px;">Finalizar Comanda
+            (F1)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CADASTRO PRODUTO -->
+  <div id="modalCadastroProduto" class="modal hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h2>Cadastro de Produtos</h2>
+        <button id="btnFecharModalCadastro"
+          style="background: #ef4444; border-radius: 50%; width: 36px; height: 36px; padding: 0; min-width: 36px;">×</button>
+      </div>
+      <div class="form-cadastro">
+        <div class="campos-linha">
+          <input id="novoCodigo" placeholder="Código" style="width: 100px;">
+          <input id="novaDescricao" placeholder="Descrição" style="flex: 1;">
+          <input id="valorNovoProduto" placeholder="Valor" type="number" step="0.01" style="width: 120px;">
+          <button id="btnSalvarProdutoModal" style="background: #10b981;">Salvar Produto</button>
+        </div>
+      </div>
+      <div style="max-height: 50vh; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 12px;">
+        <table id="tabelaProdutosModal" style="width: 100%;">
+          <thead style="background: #f8fafc; position: sticky; top: 0;">
+            <tr>
+              <th style="padding: 12px; border-radius: 12px 0 0 0;">Grupo</th>
+              <th>Cód</th>
+              <th>Descrição</th>
+              <th>Valor</th>
+              <th style="text-align: center;">Ativo</th>
+              <th style="text-align: center; border-radius: 0 12px 0 0;">Excluir</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js?v=2"></script>
+  <script src="js/utils.js?v=2"></script>
+  <script src="js/index.js?v=2"></script>
 </body>
+
 </html>

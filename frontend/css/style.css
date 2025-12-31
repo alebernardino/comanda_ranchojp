@@ -193,26 +193,39 @@ input[type=number] {
 }
 
 /* Botão Remover Genérico */
-.btn-remover {
+.btn-remover,
+.btn-remover-mini {
   background-color: #dc3545 !important;
   color: white !important;
   border: none !important;
-  padding: 2px 6px !important;
   border-radius: 4px !important;
   cursor: pointer !important;
   font-weight: bold !important;
-  font-size: 14px !important;
-  line-height: 1 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+  line-height: 1 !important;
+}
+
+.btn-remover {
+  padding: 2px 6px !important;
+  font-size: 14px !important;
   min-width: 24px !important;
   height: 24px !important;
 }
 
-.btn-remover:hover {
+.btn-remover-mini {
+  padding: 1px 4px !important;
+  font-size: 12px !important;
+  min-width: 18px !important;
+  height: 18px !important;
+}
+
+.btn-remover:hover,
+.btn-remover-mini:hover {
   background-color: #c82333 !important;
 }
+
 
 
 button {
@@ -415,7 +428,7 @@ th {
   color: #28a745;
 }
 
-/* Utilitários */
+/* Utilitários e Modais Globais */
 .hidden {
   display: none !important;
 }
@@ -431,6 +444,67 @@ th {
   display: flex;
   gap: 10px;
   margin-top: 10px;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: var(--transition);
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  position: relative;
+  animation: modalIn 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Modais com tamanhos fixos */
+#modalComanda .modal-content {
+  width: 1300px;
+  max-width: 98vw;
+  height: 900px;
+  max-height: 95vh;
+}
+
+#modalPagamento .modal-content,
+#modalCadastroProduto .modal-content,
+#modalDividirItem .modal-content {
+  width: 1000px;
+  max-width: 95vw;
+  height: 700px;
+  max-height: 90vh;
+}
+
+
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 25px;
 }
 
 /* Container da quantidade com botões horizontais */
@@ -579,20 +653,131 @@ th {
   background-color: #5a6268;
 }
 
-/* Métodos de pagamento – 2 linhas com 3 botões */
-.metodos-pagamento {
+/* --- ESTILOS ADICIONAIS PARA MODAIS (PAGAMENTO E CADASTRO) --- */
+
+/* Pagamento */
+.pagamento-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 10px;
 }
 
-/* Botões de método */
-.metodo-btn {
-  min-height: 56px;
-  font-weight: bold;
+.resumo-comanda-pagamento {
+  background: #fdfdfd;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.resumo-item-pag {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 1rem;
+  color: #475569;
+}
+
+.resumo-item-pag span:last-child {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.total-pagar-pag {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #ef4444;
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 10px;
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Cadastro de Produtos */
+.form-cadastro {
+  background: #f8fafc;
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+
+.campos-linha {
+  display: flex;
+  gap: 10px;
   align-items: center;
-  justify-content: center;
-  white-space: nowrap;
+}
+
+/* Status na tabela de produtos */
+.status-badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.modal-comanda .modal-content {
+  max-height: 95vh;
+  overflow-y: auto;
+}
+
+/* Reutilizando cores de botões de pagamento do pagamento.html */
+.metodo-btn[data-forma="Dinheiro"] {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.metodo-btn[data-forma="Pix"] {
+  background: #e0f2fe;
+  color: #075985;
+  border: 1px solid #bae6fd;
+}
+
+.metodo-btn[data-forma="Cartão Crédito"] {
+  background: #f3e8ff;
+  color: #6b21a8;
+  border: 1px solid #e9d5ff;
+}
+
+.metodo-btn[data-forma="Cartão Débito"] {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.metodo-btn[data-forma="Abatimento"],
+.metodo-btn[data-forma="Voucher"] {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.metodo-btn.active {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-width: 2px;
+}
+
+.metodo-btn.active[data-forma="Dinheiro"] {
+  background: #22c55e !important;
+  color: white !important;
+}
+
+.metodo-btn.active[data-forma="Pix"] {
+  background: #0ea5e9 !important;
+  color: white !important;
+}
+
+.metodo-btn.active[data-forma="Cartão Crédito"] {
+  background: #a855f7 !important;
+  color: white !important;
+}
+
+.metodo-btn.active[data-forma="Cartão Débito"] {
+  background: #f59e0b !important;
+  color: white !important;
 }

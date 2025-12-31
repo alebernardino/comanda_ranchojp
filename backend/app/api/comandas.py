@@ -13,8 +13,19 @@ def listar_comandas_abertas():
     conn = get_connection()
     cursor = conn.cursor()
 
+    # Só considera "aberta" (ocupada no grid) se tiver nome, telefone ou itens
     cursor.execute(
-        "SELECT * FROM comandas WHERE status = 'aberta' ORDER BY numero"
+        """
+        SELECT c.* 
+        FROM comandas c
+        WHERE c.status = 'aberta'
+        AND (
+            (c.nome IS NOT NULL AND c.nome != '')
+            OR (c.telefone IS NOT NULL AND c.telefone != '')
+            OR EXISTS (SELECT 1 FROM itens_comanda ic WHERE ic.comanda_id = c.id)
+        )
+        ORDER BY c.numero
+        """
     )
     rows = cursor.fetchall()
     conn.close()
@@ -29,15 +40,42 @@ def abrir_comanda(comanda: ComandaCreate):
 
     # Verifica se número da comanda já existe
     cursor.execute(
-        "SELECT id FROM comandas WHERE numero = ?", (comanda.numero,)
+        "SELECT id, status FROM comandas WHERE numero = ?", (comanda.numero,)
     )
-    if cursor.fetchone():
-        conn.close()
-        raise HTTPException(
-            status_code=400,
-            detail="Já existe comanda com esse número"
-        )
+    existente = cursor.fetchone()
+    
+    if existente:
+        if existente["status"] == "aberta":
+            conn.close()
+            raise HTTPException(
+                status_code=400,
+                detail="Já existe uma comanda ABERTA com esse número"
+            )
+        else:
+            # Reabre a comanda existente (finalizada)
+            comanda_id = existente["id"]
+            
+            # Limpa itens e pagamentos antigos
+            cursor.execute("DELETE FROM itens_comanda WHERE comanda_id = ?", (comanda_id,))
+            cursor.execute("DELETE FROM pagamentos WHERE comanda_id = ?", (comanda_id,))
+            
+            # Reset status e dados
+            cursor.execute(
+                """
+                UPDATE comandas 
+                SET status = 'aberta', nome = ?, telefone = ?, finalizada_em = NULL, criada_em = ?
+                WHERE id = ?
+                """,
+                (comanda.nome, comanda.telefone, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), comanda_id)
+            )
+            conn.commit()
+            
+            cursor.execute("SELECT * FROM comandas WHERE id = ?", (comanda_id,))
+            row = cursor.fetchone()
+            conn.close()
+            return dict(row)
 
+    # Cria nova
     cursor.execute(
         """
         INSERT INTO comandas (numero, nome, telefone, status)

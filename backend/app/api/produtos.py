@@ -20,9 +20,8 @@ def listar_produtos(
             """
             SELECT id, codigo, descricao, valor, ativo
             FROM produtos
-            WHERE ativo = 1
-              AND (codigo LIKE ? OR descricao LIKE ?)
-            ORDER BY descricao
+            WHERE (codigo LIKE ? OR descricao LIKE ?)
+            ORDER BY codigo
             """,
             (like, like),
         )
@@ -31,8 +30,7 @@ def listar_produtos(
             """
             SELECT id, codigo, descricao, valor, ativo
             FROM produtos
-            WHERE ativo = 1
-            ORDER BY descricao
+            ORDER BY codigo
             """
         )
 
@@ -46,6 +44,14 @@ def listar_produtos(
 def criar_produto(produto: ProdutoCreate):
     conn = get_connection()
     cursor = conn.cursor()
+
+    # Valida código (3 dígitos)
+    if not (produto.codigo.isdigit() and len(produto.codigo) == 3):
+        conn.close()
+        raise HTTPException(
+            status_code=400,
+            detail="O código do produto deve ter exatamente 3 dígitos numéricos"
+        )
 
     # Verifica duplicidade de código
     cursor.execute(
@@ -90,6 +96,14 @@ def atualizar_produto(produto_id: int, produto: ProdutoCreate):
     if not cursor.fetchone():
         conn.close()
         raise HTTPException(status_code=404, detail="Produto não encontrado")
+
+    # Valida código (3 dígitos)
+    if not (produto.codigo.isdigit() and len(produto.codigo) == 3):
+        conn.close()
+        raise HTTPException(
+            status_code=400,
+            detail="O código do produto deve ter exatamente 3 dígitos numéricos"
+        )
 
     # Verifica duplicidade de código (se mudou o código)
     cursor.execute(
@@ -151,3 +165,35 @@ def _set_status(produto_id: int, ativo: bool):
 
     return dict(row)
 
+    return dict(row)
+
+
+@router.delete("/{produto_id}")
+def excluir_produto(produto_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Verifica se o produto existe
+    cursor.execute("SELECT id FROM produtos WHERE id = ?", (produto_id,))
+    if not cursor.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+
+    # Verifica se há itens de comanda vinculados a este produto (pelo código)
+    # Nota: Como o sistema usa o código (string) para vincular itens, 
+    # precisamos verificar se o código deste produto está em uso.
+    cursor.execute("SELECT codigo FROM produtos WHERE id = ?", (produto_id,))
+    cod = cursor.fetchone()["codigo"]
+    
+    cursor.execute("SELECT id FROM itens_comanda WHERE codigo = ?", (cod,))
+    if cursor.fetchone():
+        conn.close()
+        raise HTTPException(
+            status_code=400, 
+            detail="Não é possível excluir: existem comandas vinculadas a este código de produto. Sugerimos desativar."
+        )
+
+    cursor.execute("DELETE FROM produtos WHERE id = ?", (produto_id,))
+    conn.commit()
+    conn.close()
+    return {"status": "sucesso", "detail": "Produto excluído com sucesso"}
