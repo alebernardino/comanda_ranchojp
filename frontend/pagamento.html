@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>Pagamento - Comanda</title>
     <link rel="stylesheet" href="css/style.css?v=3">
+    <link rel="stylesheet" href="css/comanda.css">
     <style>
         .pagamento-grid {
             display: grid;
@@ -50,11 +51,12 @@
         }
 
         .lista-pagamentos h3 {
-            font-size: 1em;
-            color: #444;
-            margin-bottom: 8px;
-            border-left: 3px solid #007bff;
-            padding-left: 8px;
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 12px;
+            border-left: 4px solid #007bff;
+            padding-left: 10px;
+            font-weight: 700;
         }
 
         .form-pagamento {
@@ -265,6 +267,41 @@
             background-color: #ccc;
             cursor: not-allowed;
         }
+
+        .lista-pagamentos {
+            min-height: 300px;
+            border: 1px solid #f0f0f0;
+            border-radius: 6px;
+            padding: 8px;
+            background: #fafafa;
+            /* margin-bottom: 10px; */
+        }
+
+        #tabelaPagamentos tr {
+            height: 48px;
+            transition: background 0.2s;
+        }
+
+        #tabelaPagamentos tr:hover {
+            background-color: #f0f7ff;
+        }
+
+        #tabelaPagamentos td {
+            vertical-align: middle;
+            font-size: 12px;
+            font-weight: 500;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        #tabelaPagamentos th {
+            background-color: #f8fafc;
+            color: #64748b;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75em;
+            letter-spacing: 0.5px;
+            padding: 12px 8px;
+        }
     </style>
 </head>
 
@@ -298,11 +335,31 @@
                     </div>
 
                     <button id="btnLancarPagamento">Lançar Pagamento (Enter)</button>
+                    <button id="btnDividirItem" class="btn-info"
+                        style="background-color: var(--info); margin-top: 5px; width: 100%;">
+                        Dividir por Item
+                    </button>
                 </div>
             </div>
 
             <!-- COLUNA DIREITA: Resumo e Pagamentos Realizados -->
             <div class="col-resumo">
+                <div class="lista-pagamentos">
+                    <h3>Pagamentos Lançados</h3>
+                    <table id="tabelaPagamentos">
+                        <thead>
+                            <tr>
+                                <th>Forma</th>
+                                <th>Valor</th>
+                                <th style="width: 40px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Inserido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
                 <div class="resumo-comanda">
                     <div class="resumo-item">
                         <span>Total Comanda</span>
@@ -322,21 +379,6 @@
                     Finalizar Comanda (F1)
                 </button>
 
-                <div class="lista-pagamentos">
-                    <h3>Pagamentos Lançados</h3>
-                    <table id="tabelaPagamentos">
-                        <thead>
-                            <tr>
-                                <th>Forma</th>
-                                <th>Valor</th>
-                                <th style="width: 40px;"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Inserido via JS -->
-                        </tbody>
-                    </table>
-                </div>
             </div>
 
         </div>
@@ -345,6 +387,51 @@
             <button id="btnVoltar" style="background-color: #6c757d;">Voltar (Esc)</button>
         </div>
 
+    </div>
+
+    <!-- MODAL DIVIDIR POR ITEM -->
+    <div id="modalDividirItem" class="modal hidden">
+        <div class="modal-content modal-comanda">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0;">Pagamento por Item</h3>
+                <button id="btnFecharModalItem"
+                    style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666; padding: 0;">&times;</button>
+            </div>
+
+            <div class="modal-table-container">
+                <table class="tabela-divisao">
+                    <thead>
+                        <tr>
+                            <th>Cód</th>
+                            <th>Descrição</th>
+                            <th style="text-align: center;">Qtd Total</th>
+                            <th style="text-align: center;">Qtd Restante</th>
+                            <th style="text-align: center;">Pagar</th>
+                            <th>Valor</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyDivisaoItens"></tbody>
+                </table>
+            </div>
+
+            <div class="modal-actions"
+                style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                <div style="font-size: 1.25em; font-weight: 800; color: var(--primary);">
+                    VALOR TOTAL: <span id="totalPagoItem">R$ 0,00</span>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button id="btnFecharModalItemSecundario"
+                        style="background-color: #6c757d; font-size: 1em; padding: 10px 20px;">
+                        Fechar
+                    </button>
+                    <button id="btnAdicionarValorItem"
+                        style="background-color: var(--success); font-size: 1.1em; padding: 12px 24px;">
+                        Preencher Valor do Pagamento
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="js/api.js"></script>

@@ -19,10 +19,33 @@ const btnFinalizarComanda = document.getElementById("btnFinalizarComanda");
 const btnVoltar = document.getElementById("btnVoltar");
 const metodosButtons = document.querySelectorAll(".metodo-btn");
 
+let totalPagoGlobal = 0;
 let formaSelecionada = "Cartão Crédito";
 let saldoDevedorGlobal = 0;
 let totalItensGlobal = 0;
-let totalPagoGlobal = 0;
+
+// Elementos Modal Dividir por Item
+const btnDividirItem = document.getElementById("btnDividirItem");
+const modalDividirItem = document.getElementById("modalDividirItem");
+const btnFecharModalItem = document.getElementById("btnFecharModalItem");
+const btnFecharModalItemSecundario = document.getElementById("btnFecharModalItemSecundario");
+const tbodyDivisaoItens = document.getElementById("tbodyDivisaoItens");
+const totalPagoItemEl = document.getElementById("totalPagoItem");
+const btnAdicionarValorItem = document.getElementById("btnAdicionarValorItem");
+
+const valorParam = params.get("valor");
+const itensParam = params.get("itens");
+let itensSelecionadosParaPagamento = null;
+
+if (itensParam) {
+    try {
+        itensSelecionadosParaPagamento = JSON.parse(decodeURIComponent(itensParam));
+    } catch (e) {
+        console.error("Erro ao decodificar itens do URL", e);
+    }
+}
+
+let itensAgrupadosDivisao = [];
 
 // Inicialização
 function init() {
@@ -38,6 +61,10 @@ function init() {
             btn.classList.remove("active");
         }
     });
+
+    if (valorParam) {
+        valorPagamentoInput.value = parseFloat(valorParam).toFixed(2);
+    }
 
     // 👉 Foco inicial no primeiro botão de método (Crédito)
     if (metodosButtons.length > 0) {
@@ -65,8 +92,8 @@ async function carregarResumo() {
         saldoDevedorEl.innerText = `R$ ${formatarMoeda(saldoDevedorGlobal)}`;
 
 
-        // Atualiza valor padrão do input se houver saldo
-        if (saldoDevedorGlobal > 0 && valorPagamentoInput.value === "") {
+        // Atualiza valor padrão do input se houver saldo e não veio valor no param
+        if (!valorParam && saldoDevedorGlobal > 0 && (valorPagamentoInput.value === "" || valorPagamentoInput.value === "0.00")) {
             valorPagamentoInput.value = saldoDevedorGlobal.toFixed(2);
         }
 
@@ -146,7 +173,8 @@ async function lancarPagamento() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 forma: formaSelecionada,
-                valor: valor
+                valor: valor,
+                itens: itensSelecionadosParaPagamento
             })
         });
 
@@ -156,6 +184,7 @@ async function lancarPagamento() {
         }
 
         valorPagamentoInput.value = "";
+        itensSelecionadosParaPagamento = null; // Limpa após sucesso
         await carregarResumo();
         await carregarPagamentos();
         valorPagamentoInput.focus();
@@ -233,6 +262,161 @@ valorPagamentoInput.addEventListener("keydown", (e) => {
 
 // Atalhos de Teclado
 document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") btnVoltar.click();
+    if (e.key === "Escape") {
+        if (!modalDividirItem.classList.contains("hidden")) {
+            fecharModalItem();
+        } else {
+            btnVoltar.click();
+        }
+    }
     if (e.key === "F1" && !btnFinalizarComanda.disabled) finalizarComanda();
 });
+
+// --- Lógica Modal Dividir por Item ---
+
+btnDividirItem.addEventListener("click", abrirModalItem);
+btnFecharModalItem.addEventListener("click", fecharModalItem);
+btnFecharModalItemSecundario.addEventListener("click", fecharModalItem);
+btnAdicionarValorItem.addEventListener("click", aplicarValorItem);
+
+function abrirModalItem() {
+    modalDividirItem.classList.remove("hidden");
+    carregarItensDivisao();
+}
+
+function fecharModalItem() {
+    modalDividirItem.classList.add("hidden");
+}
+
+async function carregarItensDivisao() {
+    try {
+        const res = await fetch(`${API_URL}/comandas/${numero}/itens`);
+        if (!res.ok) throw new Error("Erro ao carregar itens");
+        const itens = await res.json();
+
+        const mapa = {};
+        itens.forEach(i => {
+            if (!mapa[i.codigo]) {
+                mapa[i.codigo] = {
+                    codigo: i.codigo,
+                    descricao: i.descricao,
+                    valor: i.valor,
+                    total_quantidade: i.quantidade,
+                    total_paga: i.quantidade_paga || 0,
+                    itens_originais: [{ id: i.id, quantidade: i.quantidade, quantidade_paga: i.quantidade_paga || 0 }]
+                };
+            } else {
+                mapa[i.codigo].total_quantidade += i.quantidade;
+                mapa[i.codigo].total_paga += i.quantidade_paga || 0;
+                mapa[i.codigo].itens_originais.push({ id: i.id, quantidade: i.quantidade, quantidade_paga: i.quantidade_paga || 0 });
+            }
+        });
+
+        itensAgrupadosDivisao = Object.values(mapa);
+        renderizarItensDivisao(itensAgrupadosDivisao);
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function renderizarItensDivisao(itens) {
+    tbodyDivisaoItens.innerHTML = "";
+    itens.forEach(item => {
+        const disponivel = item.total_quantidade - item.total_paga;
+        if (disponivel <= 0) return; // Não mostra itens já totalmente pagos
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${item.codigo}</td>
+            <td>${item.descricao}</td>
+            <td style="text-align: center;">${item.total_quantidade}</td>
+            <td style="text-align: center;" class="qtd-restante">${Math.floor(disponivel)}</td>
+            <td style="text-align: center;">
+                <input type="number" min="0" max="${disponivel}" value="0" step="1"
+                       class="qtd-pagar" data-valor="${item.valor}" data-disponivel="${disponivel}"
+                       style="width: 60px; text-align: center;">
+            </td>
+            <td>R$ ${formatarMoeda(item.valor)}</td>
+            <td class="subtotal-item">R$ ${formatarMoeda(0)}</td>
+        `;
+
+        const inputQtd = tr.querySelector(".qtd-pagar");
+        const restanteEl = tr.querySelector(".qtd-restante");
+        const subtotalEl = tr.querySelector(".subtotal-item");
+
+        inputQtd.addEventListener("input", () => {
+            let qtd = Math.floor(parseFloat(inputQtd.value) || 0);
+            const disponivel = parseFloat(inputQtd.dataset.disponivel);
+            const valor = parseFloat(inputQtd.dataset.valor);
+
+            if (qtd < 0) qtd = 0;
+            if (qtd > disponivel) qtd = disponivel;
+            inputQtd.value = qtd;
+
+            const restante = disponivel - qtd;
+            restanteEl.innerText = Math.floor(restante);
+
+            const subtotal = qtd * valor;
+            subtotalEl.innerText = `R$ ${formatarMoeda(subtotal)}`;
+            subtotalEl.dataset.valorRaw = subtotal;
+
+            item.selecionado = qtd; // Salva o que foi digitado
+            atualizarTotalSelecionado();
+        });
+
+        tbodyDivisaoItens.appendChild(tr);
+    });
+    atualizarTotalSelecionado();
+}
+
+function atualizarTotalSelecionado() {
+    let total = 0;
+    const subtotais = tbodyDivisaoItens.querySelectorAll(".subtotal-item");
+    subtotais.forEach(el => {
+        total += parseFloat(el.dataset.valorRaw || 0);
+    });
+    totalPagoItemEl.innerText = `R$ ${formatarMoeda(total)}`;
+    btnAdicionarValorItem.dataset.totalRaw = total;
+}
+
+async function aplicarValorItem() {
+    const total = parseFloat(btnAdicionarValorItem.dataset.totalRaw || 0);
+    if (total <= 0) {
+        alert("Selecione pelo menos um item para pagar");
+        return;
+    }
+
+    // Calcula o breakdown para enviar ao backend
+    const breakdown = [];
+
+    itensAgrupadosDivisao.forEach(item => {
+        let selecionado = item.selecionado || 0;
+        if (selecionado > 0) {
+            // Distribui entre os itens originais (IDs reais no banco)
+            item.itens_originais.forEach(orig => {
+                if (selecionado <= 0) return;
+
+                const disponivelNoItem = orig.quantidade - orig.quantidade_paga;
+                if (disponivelNoItem > 0) {
+                    const pagarAgora = Math.min(selecionado, disponivelNoItem);
+                    if (pagarAgora > 0) {
+                        breakdown.push({ id: orig.id, quantidade: pagarAgora });
+                        selecionado -= pagarAgora;
+                    }
+                }
+            });
+        }
+    });
+
+    itensSelecionadosParaPagamento = breakdown;
+
+    // Define o valor no input
+    valorPagamentoInput.value = total.toFixed(2);
+
+    // Fecha o modal
+    fecharModalItem();
+
+    // Foca no campo de valor
+    valorPagamentoInput.focus();
+    valorPagamentoInput.select();
+}

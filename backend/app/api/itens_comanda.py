@@ -21,6 +21,7 @@ class ItemComandaCreate(BaseModel):
 class ItemComandaResponse(ItemComandaCreate):
     id: int
     subtotal: float
+    quantidade_paga: float
     criado_em: datetime
 
     class Config:
@@ -48,7 +49,7 @@ def listar_itens_da_comanda(numero: int):
 
     cursor.execute(
         """
-        SELECT id, codigo, descricao, quantidade, valor, subtotal, criado_em
+        SELECT id, codigo, descricao, quantidade, valor, subtotal, quantidade_paga, criado_em
         FROM itens_comanda
         WHERE comanda_id = ?
         ORDER BY criado_em
@@ -105,7 +106,7 @@ def adicionar_item(numero: int, item: ItemComandaCreate):
 
     cursor.execute(
         """
-        SELECT id, codigo, descricao, quantidade, valor, subtotal, criado_em
+        SELECT id, codigo, descricao, quantidade, valor, subtotal, quantidade_paga, criado_em
         FROM itens_comanda
         WHERE id = ?
         """,
@@ -154,7 +155,7 @@ def atualizar_item(item_id: int, item: ItemComandaCreate):
 
     cursor.execute(
         """
-        SELECT id, codigo, descricao, quantidade, valor, subtotal, criado_em
+        SELECT id, codigo, descricao, quantidade, valor, subtotal, quantidade_paga, criado_em
         FROM itens_comanda
         WHERE id = ?
         """,

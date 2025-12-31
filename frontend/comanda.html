@@ -105,23 +105,32 @@
 
       <h3>Dividir por item</h3>
 
-      <table class="tabela-divisao">
-        <thead>
-          <tr>
-            <th>Cód</th>
-            <th>Descrição</th>
-            <th>Qtd</th>
-            <th>Qtd Pessoa</th>
-            <th>Valor</th>
-            <th>Subtotal</th>
-          </tr>
-        </thead>
-        <tbody id="tbodyDivisaoItens"></tbody>
-      </table>
+      <div class="modal-table-container">
+        <table class="tabela-divisao">
+          <thead>
+            <tr>
+              <th>Cód</th>
+              <th>Descrição</th>
+              <th style="text-align: center;">Qtd Total</th>
+              <th style="text-align: center;">Qtd Restante</th>
+              <th style="text-align: center;">Pagar</th>
+              <th>Valor</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyDivisaoItens"></tbody>
+        </table>
+      </div>
 
-      <div class="modal-actions">
-        <button id="btnCancelarDivisao">Cancelar</button>
-        <button id="btnConfirmarDivisao">Confirmar</button>
+      <div class="modal-actions" style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+        <div style="font-size: 1.25em; font-weight: 800; color: var(--primary);">
+          TOTAL SELECIONADO: <span id="totalSelecionadoItem">R$ 0,00</span>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button id="btnFecharModalItem" style="background-color: #6c757d;">Fechar</button>
+          <button id="btnAdicionarAoPagamento" style="background-color: var(--success);">Adicionar Valor ao
+            Pagamento</button>
+        </div>
       </div>
 
     </div>

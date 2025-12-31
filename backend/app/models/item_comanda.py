@@ -11,6 +11,7 @@ class ItemComandaCreate(BaseModel):
 class ItemComandaResponse(ItemComandaCreate):
     id: int
     subtotal: float
+    quantidade_paga: float
     criado_em: datetime
 
     class Config:

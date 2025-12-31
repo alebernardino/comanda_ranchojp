@@ -46,9 +46,18 @@
     background: #fff;
     padding: 20px;
     border-radius: 8px;
-    width: 420px;
-    max-height: 80vh;
+    width: 700px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-table-container {
     overflow-y: auto;
+    flex: 1;
+    margin: 10px 0;
+    border: 1px solid #eee;
+    border-radius: 4px;
 }
 
 .modal-actions {
@@ -94,8 +103,20 @@
 
 .tabela-divisao th,
 .tabela-divisao td {
-    padding: 4px 6px;
-    border-bottom: 1px solid #ddd;
+    padding: 10px 8px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+}
+
+.tabela-divisao th {
+    position: sticky;
+    top: 0;
+    background: #f8fafc;
+    z-index: 10;
+    box-shadow: 0 1px 0 #ddd;
+    font-size: 0.8em;
+    text-transform: uppercase;
+    color: #64748b;
 }
 
 .tabela-divisao input {

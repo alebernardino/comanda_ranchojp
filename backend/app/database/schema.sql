@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS itens_comanda (
     quantidade REAL NOT NULL,
     valor REAL NOT NULL,
     subtotal REAL NOT NULL,
+    quantidade_paga REAL DEFAULT 0,
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (comanda_id) REFERENCES comandas (id)
 );

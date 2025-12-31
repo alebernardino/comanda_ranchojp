@@ -7,12 +7,12 @@ const valorPorPessoaDiv = document.getElementById("valorPorPessoa");
 const btnDividirItem = document.getElementById("btnDividirItem");
 const modalDividirItem = document.getElementById("modalDividirItem");
 const tbodyDivisaoItens = document.getElementById("tbodyDivisaoItens");
-const btnCancelarDivisao = document.getElementById("btnCancelarDivisao");
-const btnConfirmarDivisao = document.getElementById("btnConfirmarDivisao");
+const btnFecharModalItem = document.getElementById("btnFecharModalItem");
+const btnAdicionarAoPagamento = document.getElementById("btnAdicionarAoPagamento");
+const totalSelecionadoItemEl = document.getElementById("totalSelecionadoItem");
 
 
 let totalComandaGlobal = 0;
-
 
 if (!numero) {
   alert("Comanda não informada");
@@ -397,7 +397,7 @@ function renderizarTabelaItens(itens) {
         itensOriginais: [i] // 🔥 Store raw items
       };
       ordem.push(i.codigo);
-      ordem.sort((a, b) => a.localeCompare(b));
+      ordem.sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
     } else {
       mapa[i.codigo].quantidade += i.quantidade;
       mapa[i.codigo].subtotal += i.subtotal;
@@ -575,8 +575,40 @@ btnDividirItem.addEventListener("click", async () => {
   await carregarItensDivisao();
 });
 
-btnCancelarDivisao.addEventListener("click", () => {
+let itensAgrupadosDivisao = [];
+
+btnFecharModalItem.addEventListener("click", () => {
   modalDividirItem.classList.add("hidden");
+});
+
+btnAdicionarAoPagamento.addEventListener("click", () => {
+  const total = parseFloat(btnAdicionarAoPagamento.dataset.totalRaw || 0);
+  if (total <= 0) {
+    alert("Selecione pelo menos um item");
+    return;
+  }
+
+  // Calcula o breakdown para enviar ao pagamento.js
+  const breakdown = [];
+  itensAgrupadosDivisao.forEach(item => {
+    let selecionado = item.selecionado || 0;
+    if (selecionado > 0) {
+      item.itens_originais.forEach(orig => {
+        if (selecionado <= 0) return;
+        const disponivelNoItem = orig.quantidade - orig.quantidade_paga;
+        if (disponivelNoItem > 0) {
+          const pagarAgora = Math.min(selecionado, disponivelNoItem);
+          if (pagarAgora > 0) {
+            breakdown.push({ id: orig.id, quantidade: pagarAgora });
+            selecionado -= pagarAgora;
+          }
+        }
+      });
+    }
+  });
+
+  const itensJson = encodeURIComponent(JSON.stringify(breakdown));
+  window.location.href = `pagamento.html?numero=${numero}&valor=${total.toFixed(2)}&itens=${itensJson}`;
 });
 
 async function carregarItensDivisao() {
@@ -596,46 +628,80 @@ async function carregarItensDivisao() {
         codigo: i.codigo,
         descricao: i.descricao,
         valor: i.valor,
-        quantidade: i.quantidade,
-        subtotal: i.subtotal
+        total_quantidade: i.quantidade,
+        total_paga: i.quantidade_paga || 0,
+        itens_originais: [{ id: i.id, quantidade: i.quantidade, quantidade_paga: i.quantidade_paga || 0 }]
       };
     } else {
-      mapa[i.codigo].quantidade += i.quantidade;
-      mapa[i.codigo].subtotal += i.subtotal;
+      mapa[i.codigo].total_quantidade += i.quantidade;
+      mapa[i.codigo].total_paga += i.quantidade_paga || 0;
+      mapa[i.codigo].itens_originais.push({ id: i.id, quantidade: i.quantidade, quantidade_paga: i.quantidade_paga || 0 });
     }
   });
 
-  Object.values(mapa).forEach(item => {
+  itensAgrupadosDivisao = Object.values(mapa); // Salva para uso no clique de adicionar
+  itensAgrupadosDivisao.forEach(item => {
+    const disponivel = item.total_quantidade - item.total_paga;
+    if (disponivel <= 0) return;
+
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
       <td>${item.codigo}</td>
       <td>${item.descricao}</td>
-      <td>${item.quantidade}</td>
-      <td>
+      <td style="text-align: center;">${item.total_quantidade}</td>
+      <td style="text-align: center;" class="qtd-restante">${disponivel}</td>
+      <td style="text-align: center;">
         <input type="number"
                min="0"
-               max="${item.quantidade}"
+               max="${disponivel}"
                value="0"
+               step="1"
                data-valor="${item.valor}"
-               class="qtd-pessoa">
+               data-total="${disponivel}"
+               class="qtd-pagar">
       </td>
       <td>R$ ${formatarValor(item.valor)}</td>
-      <td class="subtotal-pessoa">R$ 0,00</td>
+      <td class="subtotal-item">R$ 0,00</td>
     `;
 
-    const inputQtd = tr.querySelector(".qtd-pessoa");
-    const subtotalEl = tr.querySelector(".subtotal-pessoa");
+    const inputQtd = tr.querySelector(".qtd-pagar");
+    const restanteEl = tr.querySelector(".qtd-restante");
+    const subtotalEl = tr.querySelector(".subtotal-item");
 
     inputQtd.addEventListener("input", () => {
-      const qtd = Number(inputQtd.value);
+      let qtd = Math.floor(Number(inputQtd.value) || 0);
+      const total = Number(inputQtd.dataset.total);
       const valor = Number(inputQtd.dataset.valor);
+
+      if (qtd < 0) qtd = 0;
+      if (qtd > total) qtd = total;
+      inputQtd.value = qtd;
+
+      const restante = total - qtd;
+      restanteEl.innerText = Math.floor(restante);
+
       const subtotal = qtd * valor;
       subtotalEl.innerText = `R$ ${formatarValor(subtotal)}`;
+      subtotalEl.dataset.valorRaw = subtotal;
+
+      item.selecionado = qtd; // Salva para o breakdown
+      atualizarTotalSelecionado();
     });
 
     tbodyDivisaoItens.appendChild(tr);
   });
+  atualizarTotalSelecionado();
+}
+
+function atualizarTotalSelecionado() {
+  let total = 0;
+  const subtotais = tbodyDivisaoItens.querySelectorAll(".subtotal-item");
+  subtotais.forEach(el => {
+    total += parseFloat(el.dataset.valorRaw || 0);
+  });
+  totalSelecionadoItemEl.innerText = `R$ ${formatarValor(total)}`;
+  btnAdicionarAoPagamento.dataset.totalRaw = total;
 }
 
 const inputPessoasComanda = document.getElementById("pessoasComanda");

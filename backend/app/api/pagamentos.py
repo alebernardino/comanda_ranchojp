@@ -77,6 +77,19 @@ def adicionar_pagamento(numero: int, pagamento: PagamentoCreate):
             pagamento.detalhe,
         ),
     )
+    
+    # Se houver detalhamento de itens pagos, atualiza a tabela itens_comanda
+    if pagamento.itens:
+        for item_pago in pagamento.itens:
+            cursor.execute(
+                """
+                UPDATE itens_comanda
+                SET quantidade_paga = quantidade_paga + ?
+                WHERE id = ?
+                """,
+                (item_pago["quantidade"], item_pago["id"]),
+            )
+            
     conn.commit()
 
     pagamento_id = cursor.lastrowid
