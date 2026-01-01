@@ -136,7 +136,13 @@ function atualizarStats(abertas) {
 
 async function abrirComanda(numero) {
   if (!numero) return;
+  // Se mudou de comanda, limpa seleção anterior
+  if (currentComandaNumero !== numero) {
+    itensSelecionadosParaPagamento = null;
+    sessionStorage.removeItem(`comanda_${numero}_selecao`);
+  }
   currentComandaNumero = numero;
+  itensSelecionadosParaPagamento = JSON.parse(sessionStorage.getItem(`comanda_${numero}_selecao`) || "null");
   try {
     const res = await fetch(`${API_URL}/comandas/`, {
       method: "POST",
@@ -365,15 +371,34 @@ async function abrirModalDividirItem() {
 
   const mapa = {};
   itens.forEach(i => {
+    // Busca se este item físico já está "considerado" na seleção atual
+    const jaConsid = (itensSelecionadosParaPagamento || []).find(x => x.id === i.id)?.quantidade || 0;
+
     if (!mapa[i.codigo]) {
       mapa[i.codigo] = {
-        codigo: i.codigo, descricao: i.descricao, valor: i.valor, total_quantidade: i.quantidade, total_paga: i.quantidade_paga || 0,
-        itens_originais: [{ id: i.id, quantidade: i.quantidade, quantidade_paga: i.quantidade_paga || 0 }]
+        codigo: i.codigo,
+        descricao: i.descricao,
+        valor: i.valor,
+        total_quantidade: i.quantidade,
+        total_paga: i.quantidade_paga || 0,
+        total_considerado: jaConsid,
+        itens_originais: [{
+          id: i.id,
+          quantidade: i.quantidade,
+          quantidade_paga: i.quantidade_paga || 0,
+          quantidade_considerada: jaConsid
+        }]
       };
     } else {
       mapa[i.codigo].total_quantidade += i.quantidade;
       mapa[i.codigo].total_paga += i.quantidade_paga || 0;
-      mapa[i.codigo].itens_originais.push({ id: i.id, quantidade: i.quantidade, quantidade_paga: i.quantidade_paga || 0 });
+      mapa[i.codigo].total_considerado += jaConsid;
+      mapa[i.codigo].itens_originais.push({
+        id: i.id,
+        quantidade: i.quantidade,
+        quantidade_paga: i.quantidade_paga || 0,
+        quantidade_considerada: jaConsid
+      });
     }
   });
 
@@ -386,18 +411,18 @@ function renderizarTabelaDivisao() {
   tbodyDivisaoItens.innerHTML = "";
   itensAgrupadosDivisao.forEach(item => {
     const jaConsiderado = item.total_considerado || 0;
-    const disponivel = item.total_quantidade - item.total_paga - jaConsiderado;
-    if (disponivel <= 0) return;
+    const pagoVisual = item.total_paga + jaConsiderado;
+    const disponivelParaSelecionar = item.total_quantidade - pagoVisual;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td style="padding: 8px;">${item.codigo}</td>
       <td>${item.descricao}</td>
       <td style="text-align: center;">${item.total_quantidade}</td>
-      <td style="text-align: center;">${item.total_paga.toFixed(0)}</td>
-      <td style="text-align: center;" class="qtd-disponivel-modal">${disponivel}</td>
+      <td style="text-align: center;">${pagoVisual.toFixed(0)}</td>
+      <td style="text-align: center;" class="qtd-disponivel-modal">${disponivelParaSelecionar}</td>
       <td style="text-align: center;">
-        <input type="number" value="0" min="0" max="${disponivel}" class="qtd-pagar-item" style="width: 50px; text-align: center; margin: 0;">
+        <input type="number" value="0" min="0" max="${disponivelParaSelecionar}" class="qtd-pagar-item" style="width: 50px; text-align: center; margin: 0;" ${disponivelParaSelecionar <= 0 ? 'disabled' : ''}>
       </td>
       <td>R$ ${formatarMoeda(item.valor)}</td>
       <td class="subtotal-item">R$ 0,00</td>
@@ -409,14 +434,14 @@ function renderizarTabelaDivisao() {
     if (input) {
       input.oninput = () => {
         let val = parseInt(input.value) || 0;
-        if (val > disponivel) val = disponivel;
+        if (val > disponivelParaSelecionar) val = disponivelParaSelecionar;
         if (val < 0) val = 0;
         input.value = val;
         item.selecionado = val;
 
-        // Atualiza Qtd Restante (Disponível - Selecionado Agora)
+        // Atualiza Restante Visualmente (Disponível - Selecionado Agora)
         if (disponivelEl) {
-          disponivelEl.innerText = (disponivel - val).toString();
+          disponivelEl.innerText = (disponivelParaSelecionar - val).toString();
         }
 
         tr.querySelector(".subtotal-item").innerText = `R$ ${formatarMoeda(val * item.valor)}`;
@@ -430,9 +455,12 @@ function renderizarTabelaDivisao() {
 
 function atualizarTotalSelecionadoItem() {
   let total = 0;
-  itensAgrupadosDivisao.forEach(i => { total += (i.selecionado || 0) * i.valor; });
+  itensAgrupadosDivisao.forEach(i => {
+    total += ((i.selecionado || 0) + (i.total_considerado || 0)) * i.valor;
+  });
   if (totalSelecionadoItemEl) totalSelecionadoItemEl.innerText = `R$ ${formatarMoeda(total)}`;
   if (btnAdicionarAoPagamento) btnAdicionarAoPagamento.dataset.totalRaw = total;
+  if (btnAdicionarAoPagamento) btnAdicionarAoPagamento.dataset.totalAcumulado = total;
 }
 
 // --- LOGICA MODAL PAGAMENTO ---
@@ -846,13 +874,6 @@ function configListeners() {
 
       // Abre o modal de pagamento com o que foi acumulado
       abrirModalPagamento(totalAcumuladoFinal, itensSelecionadosParaPagamento);
-
-      // Limpa acumulados do modal de divisão para a próxima vez
-      itensSelecionadosParaPagamento = null;
-      itensAgrupadosDivisao.forEach(i => {
-        i.total_considerado = 0;
-        i.itens_originais.forEach(orig => orig.quantidade_considerada = 0);
-      });
     };
   }
 
@@ -992,6 +1013,8 @@ async function considerarSelecao(silencioso = false) {
   itensAgrupadosDivisao.forEach(i => {
     totalAcumuladoVal += (i.total_considerado || 0) * i.valor;
   });
+
+  sessionStorage.setItem(`comanda_${currentComandaNumero}_selecao`, JSON.stringify(itensSelecionadosParaPagamento));
 
   btnAdicionarAoPagamento.dataset.totalAcumulado = totalAcumuladoVal;
   totalSelecionadoItemEl.innerText = `R$ ${formatarMoeda(totalAcumuladoVal)}`;

@@ -185,17 +185,21 @@ async function lancarPagamento() {
         }
 
         alert("Pagamento lançado!");
-        valorPagamentoInput.value = "";
+        if (valorPagamentoInput) valorPagamentoInput.value = "";
 
-        // Limpa breakdown após lançamento bem sucedido
+        // Limpa breakdown acumulado do session storage e variáveis locais
         itensSelecionadosParaPagamento = null;
+        // Limpa breakdown acumulado após lançar
         if (itensAgrupadosDivisao) {
             itensAgrupadosDivisao.forEach(i => {
                 i.total_considerado = 0;
                 i.itens_originais.forEach(orig => orig.quantidade_considerada = 0);
             });
         }
-        totalPagoItemEl.innerText = "R$ 0,00";
+        // Remove também do session se houver (para esta comanda)
+        sessionStorage.removeItem(`comanda_${numero}_selecao`);
+
+        if (totalPagoItemEl) totalPagoItemEl.innerText = "R$ 0,00";
         btnAdicionarValorItem.dataset.totalRaw = "0";
 
         await carregarResumo();
@@ -315,6 +319,9 @@ async function carregarItensDivisao() {
 
         const mapa = {};
         itens.forEach(i => {
+            // Verifica se está no breakdown que veio pela URL ou se está no sessionStorage
+            const jaConsid = (itensSelecionadosParaPagamento || []).find(x => x.id === i.id)?.quantidade || 0;
+
             if (!mapa[i.codigo]) {
                 mapa[i.codigo] = {
                     codigo: i.codigo,
@@ -322,12 +329,24 @@ async function carregarItensDivisao() {
                     valor: i.valor,
                     total_quantidade: i.quantidade,
                     total_paga: i.quantidade_paga || 0,
-                    itens_originais: [{ id: i.id, quantidade: i.quantidade, quantidade_paga: i.quantidade_paga || 0 }]
+                    total_considerado: jaConsid,
+                    itens_originais: [{
+                        id: i.id,
+                        quantidade: i.quantidade,
+                        quantidade_paga: i.quantidade_paga || 0,
+                        quantidade_considerada: jaConsid
+                    }]
                 };
             } else {
                 mapa[i.codigo].total_quantidade += i.quantidade;
                 mapa[i.codigo].total_paga += i.quantidade_paga || 0;
-                mapa[i.codigo].itens_originais.push({ id: i.id, quantidade: i.quantidade, quantidade_paga: i.quantidade_paga || 0 });
+                mapa[i.codigo].total_considerado += jaConsid;
+                mapa[i.codigo].itens_originais.push({
+                    id: i.id,
+                    quantidade: i.quantidade,
+                    quantidade_paga: i.quantidade_paga || 0,
+                    quantidade_considerada: jaConsid
+                });
             }
         });
 
@@ -342,20 +361,20 @@ function renderizarItensDivisao(itens) {
     tbodyDivisaoItens.innerHTML = "";
     itens.forEach(item => {
         const jaConsiderado = item.total_considerado || 0;
-        const disponivel = item.total_quantidade - item.total_paga - jaConsiderado;
-        if (disponivel <= 0) return; // Não mostra itens já totalmente pagos ou considerados
+        const pagoVisual = item.total_paga + jaConsiderado;
+        const disponivelParaSelecionar = item.total_quantidade - pagoVisual;
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td>${item.codigo}</td>
             <td>${item.descricao}</td>
             <td style="text-align: center;">${item.total_quantidade}</td>
-            <td style="text-align: center;">${item.total_paga.toFixed(0)}</td>
-            <td style="text-align: center;" class="qtd-restante">${Math.floor(disponivel)}</td>
+            <td style="text-align: center;">${pagoVisual.toFixed(0)}</td>
+            <td style="text-align: center;" class="qtd-restante">${Math.floor(disponivelParaSelecionar)}</td>
             <td style="text-align: center;">
-                <input type="number" min="0" max="${disponivel}" value="0" step="1"
-                       class="qtd-pagar" data-valor="${item.valor}" data-disponivel="${disponivel}"
-                       style="width: 50px; text-align: center; margin: 0;">
+                <input type="number" min="0" max="${disponivelParaSelecionar}" value="0" step="1"
+                       class="qtd-pagar" data-valor="${item.valor}" data-disponivel="${disponivelParaSelecionar}"
+                       style="width: 50px; text-align: center; margin: 0;" ${disponivelParaSelecionar <= 0 ? 'disabled' : ''}>
             </td>
             <td>R$ ${formatarMoeda(item.valor)}</td>
             <td class="subtotal-item">R$ ${formatarMoeda(0)}</td>
@@ -394,9 +413,8 @@ function renderizarItensDivisao(itens) {
 
 function atualizarTotalSelecionado() {
     let total = 0;
-    const subtotais = tbodyDivisaoItens.querySelectorAll(".subtotal-item");
-    subtotais.forEach(el => {
-        total += parseFloat(el.dataset.valorRaw || 0);
+    itensAgrupadosDivisao.forEach(item => {
+        total += ((item.selecionado || 0) + (item.total_considerado || 0)) * item.valor;
     });
     totalPagoItemEl.innerText = `R$ ${formatarMoeda(total)}`;
     btnAdicionarValorItem.dataset.totalRaw = total;

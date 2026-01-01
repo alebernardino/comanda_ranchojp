@@ -12,7 +12,9 @@ const btnAdicionarAoPagamento = document.getElementById("btnAdicionarAoPagamento
 const totalSelecionadoItemEl = document.getElementById("totalSelecionadoItem");
 const btnConsiderarSelecaoItem = document.getElementById("btnConsiderarSelecaoItem");
 
-let itensSelecionadosAcumulados = null;
+// Carrega seleção acumulada do sessionStorage para persistir entre páginas
+let itensSelecionadosAcumulados = JSON.parse(sessionStorage.getItem(`comanda_${numero}_selecao`) || "[]");
+if (itensSelecionadosAcumulados.length === 0) itensSelecionadosAcumulados = null;
 
 
 let totalComandaGlobal = 0;
@@ -618,19 +620,11 @@ btnAdicionarAoPagamento.addEventListener("click", () => {
     return;
   }
 
-  if (totalSelecionadoAgora > 0) {
-    aplicarConsiderar(true);
-  }
-
   const totalFinalParaPagamento = parseFloat(btnAdicionarAoPagamento.dataset.totalAcumulado || 0);
   const itensJson = encodeURIComponent(JSON.stringify(itensSelecionadosAcumulados));
 
-  // Limpa para a próxima vez
-  itensSelecionadosAcumulados = null;
-  itensAgrupadosDivisao.forEach(i => {
-    i.total_considerado = 0;
-    i.itens_originais.forEach(orig => orig.quantidade_considerada = 0);
-  });
+  // Persiste no sessionStorage antes de ir para a página de pagamento
+  sessionStorage.setItem(`comanda_${numero}_selecao`, JSON.stringify(itensSelecionadosAcumulados));
 
   window.location.href = `pagamento.html?numero=${numero}&valor=${totalFinalParaPagamento.toFixed(2)}&itens=${itensJson}`;
 });
@@ -668,6 +662,9 @@ function aplicarConsiderar(silencioso = false) {
     else itensSelecionadosAcumulados.push(b);
   });
 
+  // Salva no sessionStorage
+  sessionStorage.setItem(`comanda_${numero}_selecao`, JSON.stringify(itensSelecionadosAcumulados));
+
   let totalAcumuladoVal = 0;
   itensAgrupadosDivisao.forEach(i => {
     totalAcumuladoVal += (i.total_considerado || 0) * i.valor;
@@ -691,6 +688,8 @@ async function carregarItensDivisao() {
   const mapa = {};
 
   itens.forEach(i => {
+    const jaConsid = (itensSelecionadosAcumulados || []).find(x => x.id === i.id)?.quantidade || 0;
+
     if (!mapa[i.codigo]) {
       mapa[i.codigo] = {
         codigo: i.codigo,
@@ -698,12 +697,24 @@ async function carregarItensDivisao() {
         valor: i.valor,
         total_quantidade: i.quantidade,
         total_paga: i.quantidade_paga || 0,
-        itens_originais: [{ id: i.id, quantidade: i.quantidade, quantidade_paga: i.quantidade_paga || 0 }]
+        total_considerado: jaConsid,
+        itens_originais: [{
+          id: i.id,
+          quantidade: i.quantidade,
+          quantidade_paga: i.quantidade_paga || 0,
+          quantidade_considerada: jaConsid
+        }]
       };
     } else {
       mapa[i.codigo].total_quantidade += i.quantidade;
       mapa[i.codigo].total_paga += i.quantidade_paga || 0;
-      mapa[i.codigo].itens_originais.push({ id: i.id, quantidade: i.quantidade, quantidade_paga: i.quantidade_paga || 0 });
+      mapa[i.codigo].total_considerado += jaConsid;
+      mapa[i.codigo].itens_originais.push({
+        id: i.id,
+        quantidade: i.quantidade,
+        quantidade_paga: i.quantidade_paga || 0,
+        quantidade_considerada: jaConsid
+      });
     }
   });
 
@@ -715,8 +726,8 @@ function renderizarTabelaDivisao(itens) {
   tbodyDivisaoItens.innerHTML = "";
   itens.forEach(item => {
     const jaConsiderado = item.total_considerado || 0;
-    const disponivel = item.total_quantidade - item.total_paga - jaConsiderado;
-    if (disponivel <= 0) return;
+    const pagoVisual = item.total_paga + jaConsiderado;
+    const disponivelParaSelecionar = item.total_quantidade - pagoVisual;
 
     const tr = document.createElement("tr");
 
@@ -724,18 +735,18 @@ function renderizarTabelaDivisao(itens) {
       <td>${item.codigo}</td>
       <td>${item.descricao}</td>
       <td style="text-align: center;">${item.total_quantidade}</td>
-      <td style="text-align: center;">${item.total_paga.toFixed(0)}</td>
-      <td style="text-align: center;" class="qtd-restante">${disponivel}</td>
+      <td style="text-align: center;">${pagoVisual.toFixed(0)}</td>
+      <td style="text-align: center;" class="qtd-restante">${disponivelParaSelecionar}</td>
       <td style="text-align: center;">
         <input type="number"
                min="0"
-               max="${disponivel}"
+               max="${disponivelParaSelecionar}"
                value="0"
                step="1"
                data-valor="${item.valor}"
-               data-total="${disponivel}"
+               data-total="${disponivelParaSelecionar}"
                class="qtd-pagar"
-               style="width: 50px; text-align: center; margin: 0;">
+               style="width: 50px; text-align: center; margin: 0;" ${disponivelParaSelecionar <= 0 ? 'disabled' : ''}>
       </td>
       <td>R$ ${formatarValor(item.valor)}</td>
       <td class="subtotal-item">R$ 0,00</td>
