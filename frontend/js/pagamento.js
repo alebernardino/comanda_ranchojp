@@ -32,6 +32,7 @@ const btnFecharModalItemSecundario = document.getElementById("btnFecharModalItem
 const tbodyDivisaoItens = document.getElementById("tbodyDivisaoItens");
 const totalPagoItemEl = document.getElementById("totalPagoItem");
 const btnAdicionarValorItem = document.getElementById("btnAdicionarValorItem");
+const btnConsiderarSelecao = document.getElementById("btnConsiderarSelecao");
 
 const valorParam = params.get("valor");
 const itensParam = params.get("itens");
@@ -183,8 +184,20 @@ async function lancarPagamento() {
             throw new Error(error.detail || "Erro ao lançar pagamento");
         }
 
+        alert("Pagamento lançado!");
         valorPagamentoInput.value = "";
-        itensSelecionadosParaPagamento = null; // Limpa após sucesso
+
+        // Limpa breakdown após lançamento bem sucedido
+        itensSelecionadosParaPagamento = null;
+        if (itensAgrupadosDivisao) {
+            itensAgrupadosDivisao.forEach(i => {
+                i.total_considerado = 0;
+                i.itens_originais.forEach(orig => orig.quantidade_considerada = 0);
+            });
+        }
+        totalPagoItemEl.innerText = "R$ 0,00";
+        btnAdicionarValorItem.dataset.totalRaw = "0";
+
         await carregarResumo();
         await carregarPagamentos();
         valorPagamentoInput.focus();
@@ -276,7 +289,14 @@ document.addEventListener("keydown", (e) => {
 btnDividirItem.addEventListener("click", abrirModalItem);
 btnFecharModalItem.addEventListener("click", fecharModalItem);
 btnFecharModalItemSecundario.addEventListener("click", fecharModalItem);
+
+const btnFecharModalItemTop = document.getElementById("btnFecharModalItemTop");
+if (btnFecharModalItemTop) {
+    btnFecharModalItemTop.addEventListener("click", fecharModalItem);
+}
+
 btnAdicionarValorItem.addEventListener("click", aplicarValorItem);
+if (btnConsiderarSelecao) btnConsiderarSelecao.addEventListener("click", considerarSelecao);
 
 function abrirModalItem() {
     modalDividirItem.classList.remove("hidden");
@@ -321,19 +341,21 @@ async function carregarItensDivisao() {
 function renderizarItensDivisao(itens) {
     tbodyDivisaoItens.innerHTML = "";
     itens.forEach(item => {
-        const disponivel = item.total_quantidade - item.total_paga;
-        if (disponivel <= 0) return; // Não mostra itens já totalmente pagos
+        const jaConsiderado = item.total_considerado || 0;
+        const disponivel = item.total_quantidade - item.total_paga - jaConsiderado;
+        if (disponivel <= 0) return; // Não mostra itens já totalmente pagos ou considerados
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td>${item.codigo}</td>
             <td>${item.descricao}</td>
             <td style="text-align: center;">${item.total_quantidade}</td>
+            <td style="text-align: center;">${item.total_paga.toFixed(0)}</td>
             <td style="text-align: center;" class="qtd-restante">${Math.floor(disponivel)}</td>
             <td style="text-align: center;">
                 <input type="number" min="0" max="${disponivel}" value="0" step="1"
                        class="qtd-pagar" data-valor="${item.valor}" data-disponivel="${disponivel}"
-                       style="width: 60px; text-align: center;">
+                       style="width: 50px; text-align: center; margin: 0;">
             </td>
             <td>R$ ${formatarMoeda(item.valor)}</td>
             <td class="subtotal-item">R$ ${formatarMoeda(0)}</td>
@@ -343,16 +365,16 @@ function renderizarItensDivisao(itens) {
         const restanteEl = tr.querySelector(".qtd-restante");
         const subtotalEl = tr.querySelector(".subtotal-item");
 
-        inputQtd.addEventListener("input", () => {
+        const atualizarInputLocal = () => {
             let qtd = Math.floor(parseFloat(inputQtd.value) || 0);
-            const disponivel = parseFloat(inputQtd.dataset.disponivel);
+            const disp = parseFloat(inputQtd.dataset.disponivel);
             const valor = parseFloat(inputQtd.dataset.valor);
 
             if (qtd < 0) qtd = 0;
-            if (qtd > disponivel) qtd = disponivel;
+            if (qtd > disp) qtd = disp;
             inputQtd.value = qtd;
 
-            const restante = disponivel - qtd;
+            const restante = disp - qtd;
             restanteEl.innerText = Math.floor(restante);
 
             const subtotal = qtd * valor;
@@ -361,7 +383,9 @@ function renderizarItensDivisao(itens) {
 
             item.selecionado = qtd; // Salva o que foi digitado
             atualizarTotalSelecionado();
-        });
+        };
+
+        inputQtd.addEventListener("input", atualizarInputLocal);
 
         tbodyDivisaoItens.appendChild(tr);
     });
@@ -379,9 +403,31 @@ function atualizarTotalSelecionado() {
 }
 
 async function aplicarValorItem() {
+    const totalConsideradoAgora = parseFloat(btnAdicionarValorItem.dataset.totalRaw || 0);
+
+    // Se não tem nada selecionado agora, mas tem algo já considerado antes, apenas fecha
+    if (totalConsideradoAgora <= 0 && (!itensSelecionadosParaPagamento || itensSelecionadosParaPagamento.length === 0)) {
+        alert("Selecione pelo menos um item para pagar");
+        return;
+    }
+
+    if (totalConsideradoAgora > 0) {
+        // Se tem algo selecionado agora, "considera" antes de fechar
+        await considerarSelecao(true);
+    }
+
+    // Fecha o modal
+    fecharModalItem();
+
+    // Foca no campo de valor
+    valorPagamentoInput.focus();
+    valorPagamentoInput.select();
+}
+
+async function considerarSelecao(pulandoFocus = false) {
     const total = parseFloat(btnAdicionarValorItem.dataset.totalRaw || 0);
     if (total <= 0) {
-        alert("Selecione pelo menos um item para pagar");
+        if (!pulandoFocus) alert("Selecione pelo menos um item");
         return;
     }
 
@@ -395,27 +441,44 @@ async function aplicarValorItem() {
             item.itens_originais.forEach(orig => {
                 if (selecionado <= 0) return;
 
-                const disponivelNoItem = orig.quantidade - orig.quantidade_paga;
+                const disponivelNoItem = orig.quantidade - (orig.quantidade_paga || 0) - (orig.quantidade_considerada || 0);
                 if (disponivelNoItem > 0) {
                     const pagarAgora = Math.min(selecionado, disponivelNoItem);
                     if (pagarAgora > 0) {
                         breakdown.push({ id: orig.id, quantidade: pagarAgora });
+                        orig.quantidade_considerada = (orig.quantidade_considerada || 0) + pagarAgora;
                         selecionado -= pagarAgora;
                     }
                 }
             });
+            item.total_considerado = (item.total_considerado || 0) + (item.selecionado || 0);
+            item.selecionado = 0;
         }
     });
 
-    itensSelecionadosParaPagamento = breakdown;
+    // Acumula no breakdown global
+    if (!itensSelecionadosParaPagamento) itensSelecionadosParaPagamento = [];
+    breakdown.forEach(b => {
+        const existente = itensSelecionadosParaPagamento.find(x => x.id === b.id);
+        if (existente) existente.quantidade += b.quantidade;
+        else itensSelecionadosParaPagamento.push(b);
+    });
 
-    // Define o valor no input
-    valorPagamentoInput.value = total.toFixed(2);
+    // Define o valor no input (acumulando se já houver algo ou se vier do breakdown)
+    // Se itensSelecionadosParaPagamento estava vazio, o valor era o original. 
+    // Para simplificar, vamos recalcular o total do itensSelecionadosParaPagamento
+    let valorTotalBreakdown = 0;
+    itensAgrupadosDivisao.forEach(item => {
+        valorTotalBreakdown += (item.total_considerado || 0) * item.valor;
+    });
 
-    // Fecha o modal
-    fecharModalItem();
+    valorPagamentoInput.value = valorTotalBreakdown.toFixed(2);
 
-    // Foca no campo de valor
-    valorPagamentoInput.focus();
-    valorPagamentoInput.select();
+    // Re-renderiza para limpar os campos 'pagar' e remover itens esgotados
+    renderizarItensDivisao(itensAgrupadosDivisao);
+
+    if (!pulandoFocus) {
+        valorPagamentoInput.focus();
+        valorPagamentoInput.select();
+    }
 }

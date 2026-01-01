@@ -10,6 +10,9 @@ const tbodyDivisaoItens = document.getElementById("tbodyDivisaoItens");
 const btnFecharModalItem = document.getElementById("btnFecharModalItem");
 const btnAdicionarAoPagamento = document.getElementById("btnAdicionarAoPagamento");
 const totalSelecionadoItemEl = document.getElementById("totalSelecionadoItem");
+const btnConsiderarSelecaoItem = document.getElementById("btnConsiderarSelecaoItem");
+
+let itensSelecionadosAcumulados = null;
 
 
 let totalComandaGlobal = 0;
@@ -358,22 +361,29 @@ async function adicionarMaisItem(item) {
 }
 
 async function removerUmItem(item) {
-  if (item.quantidade <= 1) {
-    alert("Use o botão 🗑️ para remover o item.");
-    return;
-  }
-  // pega um ID daquele produto
-  const idParaRemover = item.ids[0];
+  // Encontra o primeiro item que tenha quantidade > 1 para decrementar
+  const itemParaDecrementar = item.itensOriginais.find(i => i.quantidade > 1);
 
-  if (!idParaRemover) return;
+  if (itemParaDecrementar) {
+    const novaQtd = itemParaDecrementar.quantidade - 1;
+    await fetch(`${API_URL}/itens/${itemParaDecrementar.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        codigo: String(itemParaDecrementar.codigo),
+        descricao: String(itemParaDecrementar.descricao),
+        quantidade: novaQtd,
+        valor: itemParaDecrementar.valor
+      })
+    });
+  } else {
+    // Se todos têm quantidade 1, remove o primeiro ID encontrado
+    const idParaRemover = item.ids[0];
+    if (!idParaRemover) return;
 
-  const res = await fetch(`${API_URL}/itens/${idParaRemover}`, {
-    method: "DELETE"
-  });
-
-  if (!res.ok) {
-    alert("Erro ao remover item");
-    return;
+    await fetch(`${API_URL}/itens/${idParaRemover}`, {
+      method: "DELETE"
+    });
   }
 
   await carregarItensComanda();
@@ -419,6 +429,8 @@ function renderizarTabelaItens(itens) {
         <td>${item.descricao}</td>
         <td>
           <div class="qtd-container">
+            <button class="btn-qtd btn-menos">-</button>
+            <button class="btn-qtd btn-mais">+</button>
             <span class="qtd-item">${item.quantidade}</span>
             <button class="btn-remover">×</button>
           </div>
@@ -464,6 +476,12 @@ function renderizarTabelaItens(itens) {
     inputValor.addEventListener("keydown", (e) => {
       if (e.key === "Enter") inputValor.blur();
     });
+
+    tr.querySelector(".btn-menos")
+      .addEventListener("click", () => removerUmItem(item));
+
+    tr.querySelector(".btn-mais")
+      .addEventListener("click", () => adicionarMaisItem(item));
 
     tr.querySelector(".btn-remover")
       .addEventListener("click", () => removerItensProduto(item.ids));
@@ -577,39 +595,89 @@ btnDividirItem.addEventListener("click", async () => {
 
 let itensAgrupadosDivisao = [];
 
+const btnFecharModalItemTop = document.getElementById("btnFecharModalItemTop");
+if (btnFecharModalItemTop) {
+  btnFecharModalItemTop.addEventListener("click", () => {
+    modalDividirItem.classList.add("hidden");
+  });
+}
+
 btnFecharModalItem.addEventListener("click", () => {
   modalDividirItem.classList.add("hidden");
+  // Reset acumulados se fechar sem adicionar ao pagamento? 
+  // Na verdade, melhor manter se o usuário apenas fechou e abriu de novo, mas resetar no init.
 });
 
+if (btnConsiderarSelecaoItem) btnConsiderarSelecaoItem.addEventListener("click", () => aplicarConsiderar(false));
+
 btnAdicionarAoPagamento.addEventListener("click", () => {
-  const total = parseFloat(btnAdicionarAoPagamento.dataset.totalRaw || 0);
-  if (total <= 0) {
+  const totalSelecionadoAgora = parseFloat(btnAdicionarAoPagamento.dataset.totalRaw || 0);
+
+  if (totalSelecionadoAgora <= 0 && (!itensSelecionadosAcumulados || itensSelecionadosAcumulados.length === 0)) {
     alert("Selecione pelo menos um item");
     return;
   }
 
-  // Calcula o breakdown para enviar ao pagamento.js
+  if (totalSelecionadoAgora > 0) {
+    aplicarConsiderar(true);
+  }
+
+  const totalFinalParaPagamento = parseFloat(btnAdicionarAoPagamento.dataset.totalAcumulado || 0);
+  const itensJson = encodeURIComponent(JSON.stringify(itensSelecionadosAcumulados));
+
+  // Limpa para a próxima vez
+  itensSelecionadosAcumulados = null;
+  itensAgrupadosDivisao.forEach(i => {
+    i.total_considerado = 0;
+    i.itens_originais.forEach(orig => orig.quantidade_considerada = 0);
+  });
+
+  window.location.href = `pagamento.html?numero=${numero}&valor=${totalFinalParaPagamento.toFixed(2)}&itens=${itensJson}`;
+});
+
+function aplicarConsiderar(silencioso = false) {
+  const total = parseFloat(btnAdicionarAoPagamento.dataset.totalRaw || 0);
+  if (total <= 0) {
+    if (!silencioso) alert("Selecione pelo menos um item");
+    return;
+  }
+
   const breakdown = [];
   itensAgrupadosDivisao.forEach(item => {
-    let selecionado = item.selecionado || 0;
-    if (selecionado > 0) {
+    let sel = item.selecionado || 0;
+    if (sel > 0) {
       item.itens_originais.forEach(orig => {
-        if (selecionado <= 0) return;
-        const disponivelNoItem = orig.quantidade - orig.quantidade_paga;
-        if (disponivelNoItem > 0) {
-          const pagarAgora = Math.min(selecionado, disponivelNoItem);
-          if (pagarAgora > 0) {
-            breakdown.push({ id: orig.id, quantidade: pagarAgora });
-            selecionado -= pagarAgora;
-          }
+        if (sel <= 0) return;
+        const disp = orig.quantidade - (orig.quantidade_paga || 0) - (orig.quantidade_considerada || 0);
+        if (disp > 0) {
+          const pagar = Math.min(sel, disp);
+          breakdown.push({ id: orig.id, quantidade: pagar });
+          orig.quantidade_considerada = (orig.quantidade_considerada || 0) + pagar;
+          sel -= pagar;
         }
       });
+      item.total_considerado = (item.total_considerado || 0) + (item.selecionado || 0);
+      item.selecionado = 0;
     }
   });
 
-  const itensJson = encodeURIComponent(JSON.stringify(breakdown));
-  window.location.href = `pagamento.html?numero=${numero}&valor=${total.toFixed(2)}&itens=${itensJson}`;
-});
+  if (!itensSelecionadosAcumulados) itensSelecionadosAcumulados = [];
+  breakdown.forEach(b => {
+    const existe = itensSelecionadosAcumulados.find(x => x.id === b.id);
+    if (existe) existe.quantidade += b.quantidade;
+    else itensSelecionadosAcumulados.push(b);
+  });
+
+  let totalAcumuladoVal = 0;
+  itensAgrupadosDivisao.forEach(i => {
+    totalAcumuladoVal += (i.total_considerado || 0) * i.valor;
+  });
+
+  btnAdicionarAoPagamento.dataset.totalAcumulado = totalAcumuladoVal;
+  totalSelecionadoItemEl.innerText = `R$ ${formatarValor(totalAcumuladoVal)}`;
+
+  renderizarTabelaDivisao(itensAgrupadosDivisao);
+}
 
 async function carregarItensDivisao() {
   tbodyDivisaoItens.innerHTML = "";
@@ -640,8 +708,14 @@ async function carregarItensDivisao() {
   });
 
   itensAgrupadosDivisao = Object.values(mapa); // Salva para uso no clique de adicionar
-  itensAgrupadosDivisao.forEach(item => {
-    const disponivel = item.total_quantidade - item.total_paga;
+  renderizarTabelaDivisao(itensAgrupadosDivisao);
+}
+
+function renderizarTabelaDivisao(itens) {
+  tbodyDivisaoItens.innerHTML = "";
+  itens.forEach(item => {
+    const jaConsiderado = item.total_considerado || 0;
+    const disponivel = item.total_quantidade - item.total_paga - jaConsiderado;
     if (disponivel <= 0) return;
 
     const tr = document.createElement("tr");
@@ -650,6 +724,7 @@ async function carregarItensDivisao() {
       <td>${item.codigo}</td>
       <td>${item.descricao}</td>
       <td style="text-align: center;">${item.total_quantidade}</td>
+      <td style="text-align: center;">${item.total_paga.toFixed(0)}</td>
       <td style="text-align: center;" class="qtd-restante">${disponivel}</td>
       <td style="text-align: center;">
         <input type="number"
@@ -659,7 +734,8 @@ async function carregarItensDivisao() {
                step="1"
                data-valor="${item.valor}"
                data-total="${disponivel}"
-               class="qtd-pagar">
+               class="qtd-pagar"
+               style="width: 50px; text-align: center; margin: 0;">
       </td>
       <td>R$ ${formatarValor(item.valor)}</td>
       <td class="subtotal-item">R$ 0,00</td>
@@ -669,7 +745,7 @@ async function carregarItensDivisao() {
     const restanteEl = tr.querySelector(".qtd-restante");
     const subtotalEl = tr.querySelector(".subtotal-item");
 
-    inputQtd.addEventListener("input", () => {
+    const atualizarInputLocal = () => {
       let qtd = Math.floor(Number(inputQtd.value) || 0);
       const total = Number(inputQtd.dataset.total);
       const valor = Number(inputQtd.dataset.valor);
@@ -687,7 +763,9 @@ async function carregarItensDivisao() {
 
       item.selecionado = qtd; // Salva para o breakdown
       atualizarTotalSelecionado();
-    });
+    };
+
+    inputQtd.addEventListener("input", atualizarInputLocal);
 
     tbodyDivisaoItens.appendChild(tr);
   });
@@ -696,12 +774,27 @@ async function carregarItensDivisao() {
 
 function atualizarTotalSelecionado() {
   let total = 0;
-  const subtotais = tbodyDivisaoItens.querySelectorAll(".subtotal-item");
-  subtotais.forEach(el => {
-    total += parseFloat(el.dataset.valorRaw || 0);
+  itensAgrupadosDivisao.forEach(i => {
+    total += (i.total_considerado || 0) * i.valor;
   });
+
+  // Soma o que está selecionado agora nos inputs
+  const inputs = tbodyDivisaoItens.querySelectorAll(".qtd-pagar");
+  inputs.forEach(input => {
+    const qtd = Number(input.value) || 0;
+    const valor = Number(input.dataset.valor);
+    total += qtd * valor;
+  });
+
   totalSelecionadoItemEl.innerText = `R$ ${formatarValor(total)}`;
-  btnAdicionarAoPagamento.dataset.totalRaw = total;
+  // totalRaw guarda apenas o que está selecionado nos inputs agora (para o considerarSelecao)
+  let totalInputs = 0;
+  inputs.forEach(input => {
+    totalInputs += (Number(input.value) || 0) * Number(input.dataset.valor);
+  });
+  btnAdicionarAoPagamento.dataset.totalRaw = totalInputs;
+  // totalAcumulado guarda o total do que será enviado (considerados + inputs atuais)
+  btnAdicionarAoPagamento.dataset.totalAcumulado = total;
 }
 
 const inputPessoasComanda = document.getElementById("pessoasComanda");

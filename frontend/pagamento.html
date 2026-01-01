@@ -392,20 +392,20 @@
     <!-- MODAL DIVIDIR POR ITEM -->
     <div id="modalDividirItem" class="modal hidden">
         <div class="modal-content modal-comanda">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin: 0;">Pagamento por Item</h3>
-                <button id="btnFecharModalItem"
-                    style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666; padding: 0;">&times;</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0;">Dividir Valor por Item</h3>
+                <button id="btnFecharModalItemTop"
+                    style="background: #ef4444; border-radius: 50%; width: 36px; height: 36px; padding: 0; min-width: 36px; color: white; border: none; cursor: pointer;">×</button>
             </div>
-
             <div class="modal-table-container">
                 <table class="tabela-divisao">
                     <thead>
-                        <tr>
-                            <th>Cód</th>
+                        <tr style="background: #f1f5f9;">
+                            <th style="padding: 10px;">Cód</th>
                             <th>Descrição</th>
-                            <th style="text-align: center;">Qtd Total</th>
-                            <th style="text-align: center;">Qtd Restante</th>
+                            <th style="text-align: center;">Total</th>
+                            <th style="text-align: center;">Pago</th>
+                            <th style="text-align: center;">Restante</th>
                             <th style="text-align: center;">Pagar</th>
                             <th>Valor</th>
                             <th>Subtotal</th>
@@ -421,22 +421,22 @@
                     VALOR TOTAL: <span id="totalPagoItem">R$ 0,00</span>
                 </div>
                 <div style="display: flex; gap: 10px;">
-                    <button id="btnFecharModalItemSecundario"
-                        style="background-color: #6c757d; font-size: 1em; padding: 10px 20px;">
-                        Fechar
+                    <button id="btnConsiderarSelecao"
+                        style="background-color: var(--primary); font-size: 1.1em; padding: 12px 24px;">
+                        Considerar Seleção
                     </button>
                     <button id="btnAdicionarValorItem"
                         style="background-color: var(--success); font-size: 1.1em; padding: 12px 24px;">
-                        Preencher Valor do Pagamento
+                        Finalizar e Preencher
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="js/api.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/pagamento.js"></script>
+    <script src="js/api.js?v=2"></script>
+    <script src="js/utils.js?v=2"></script>
+    <script src="js/pagamento.js?v=2"></script>
 
 </body>
 

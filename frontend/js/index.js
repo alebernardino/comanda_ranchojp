@@ -191,8 +191,10 @@ function renderizarTabelaItens(itens) {
       <td>${item.descricao}</td>
       <td>
         <div class="qtd-container">
-           <span class="qtd-item">${item.quantidade}</span>
-           <button class="btn-remover-mini" onclick="removerItemUnico(${item.id})">×</button>
+          <button class="btn-qtd" onclick="removerUmItemIndex(${JSON.stringify(item).replace(/"/g, '&quot;')})">-</button>
+          <button class="btn-qtd" onclick="adicionarMaisItemIndex(${JSON.stringify(item).replace(/"/g, '&quot;')})">+</button>
+          <span class="qtd-item">${item.quantidade}</span>
+          <button class="btn-remover-mini" onclick="removerItemUnico(${item.id})">×</button>
         </div>
       </td>
       <td>R$ ${formatarMoeda(item.valor)}</td>
@@ -208,6 +210,43 @@ function renderizarTabelaItens(itens) {
 async function removerItemUnico(id) {
   if (!confirm("Remover este item?")) return;
   await fetch(`${API_URL}/itens/${id}`, { method: "DELETE" });
+  await carregarItensComanda();
+}
+
+async function adicionarMaisItemIndex(item) {
+  const res = await fetch(`${API_URL}/comandas/${currentComandaNumero}/itens`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      codigo: String(item.codigo),
+      descricao: String(item.descricao),
+      quantidade: 1,
+      valor: item.valor
+    })
+  });
+  if (res.ok) await carregarItensComanda();
+}
+
+async function removerUmItemIndex(item) {
+  if (item.quantidade <= 1) {
+    if (confirm("Deseja remover o item?")) {
+      await removerItemUnico(item.id);
+    }
+    return;
+  }
+
+  // Se quantidade > 1, decrementa via PUT
+  const novaQtd = item.quantidade - 1;
+  await fetch(`${API_URL}/itens/${item.id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      codigo: String(item.codigo),
+      descricao: String(item.descricao),
+      quantidade: novaQtd,
+      valor: item.valor
+    })
+  });
   await carregarItensComanda();
 }
 
@@ -346,7 +385,8 @@ function renderizarTabelaDivisao() {
   if (!tbodyDivisaoItens) return;
   tbodyDivisaoItens.innerHTML = "";
   itensAgrupadosDivisao.forEach(item => {
-    const disponivel = item.total_quantidade - item.total_paga;
+    const jaConsiderado = item.total_considerado || 0;
+    const disponivel = item.total_quantidade - item.total_paga - jaConsiderado;
     if (disponivel <= 0) return;
 
     const tr = document.createElement("tr");
@@ -354,13 +394,18 @@ function renderizarTabelaDivisao() {
       <td style="padding: 8px;">${item.codigo}</td>
       <td>${item.descricao}</td>
       <td style="text-align: center;">${item.total_quantidade}</td>
-      <td style="text-align: center;">${disponivel}</td>
-      <td style="text-align: center;"><input type="number" value="0" min="0" max="${disponivel}" class="qtd-pagar-item" style="width: 50px;"></td>
+      <td style="text-align: center;">${item.total_paga.toFixed(0)}</td>
+      <td style="text-align: center;" class="qtd-disponivel-modal">${disponivel}</td>
+      <td style="text-align: center;">
+        <input type="number" value="0" min="0" max="${disponivel}" class="qtd-pagar-item" style="width: 50px; text-align: center; margin: 0;">
+      </td>
       <td>R$ ${formatarMoeda(item.valor)}</td>
       <td class="subtotal-item">R$ 0,00</td>
     `;
 
     const input = tr.querySelector(".qtd-pagar-item");
+    const disponivelEl = tr.querySelector(".qtd-disponivel-modal");
+
     if (input) {
       input.oninput = () => {
         let val = parseInt(input.value) || 0;
@@ -368,6 +413,12 @@ function renderizarTabelaDivisao() {
         if (val < 0) val = 0;
         input.value = val;
         item.selecionado = val;
+
+        // Atualiza Qtd Restante (Disponível - Selecionado Agora)
+        if (disponivelEl) {
+          disponivelEl.innerText = (disponivel - val).toString();
+        }
+
         tr.querySelector(".subtotal-item").innerText = `R$ ${formatarMoeda(val * item.valor)}`;
         atualizarTotalSelecionadoItem();
       };
@@ -444,7 +495,23 @@ async function lancarPagamentoModal() {
   });
 
   if (res.ok) {
+    alert("Pagamento lançado!");
+    if (valorPagamentoInput) valorPagamentoInput.value = "";
+
+    // Limpa breakdown acumulado após lançar
     itensSelecionadosParaPagamento = null;
+    if (itensAgrupadosDivisao) {
+      itensAgrupadosDivisao.forEach(i => {
+        i.total_considerado = 0;
+        i.itens_originais.forEach(orig => orig.quantidade_considerada = 0);
+      });
+    }
+    if (totalSelecionadoItemEl) totalSelecionadoItemEl.innerText = "R$ 0,00";
+    if (btnAdicionarAoPagamento) {
+      btnAdicionarAoPagamento.dataset.totalRaw = "0";
+      btnAdicionarAoPagamento.dataset.totalAcumulado = "0";
+    }
+
     await carregarResumoPagamento();
     await carregarPagamentosModal();
     if (valorPagamentoInput) { valorPagamentoInput.focus(); valorPagamentoInput.select(); }
@@ -761,27 +828,36 @@ function configListeners() {
 
   if (btnAdicionarAoPagamento) {
     btnAdicionarAoPagamento.onclick = () => {
-      const total = parseFloat(btnAdicionarAoPagamento.dataset.totalRaw || 0);
-      if (total <= 0) return alert("Selecione itens");
-      const breakdown = [];
-      itensAgrupadosDivisao.forEach(item => {
-        let sel = item.selecionado || 0;
-        if (sel > 0) {
-          item.itens_originais.forEach(orig => {
-            if (sel <= 0) return;
-            const disp = orig.quantidade - orig.quantidade_paga;
-            if (disp > 0) {
-              const pagar = Math.min(sel, disp);
-              breakdown.push({ id: orig.id, quantidade: pagar });
-              sel -= pagar;
-            }
-          });
-        }
-      });
+      const totalSelecionadoAgora = parseFloat(btnAdicionarAoPagamento.dataset.totalRaw || 0);
+
+      // Se não tem nada selecionado agora nem acumulado antes, avisa
+      if (totalSelecionadoAgora <= 0 && (!itensSelecionadosParaPagamento || itensSelecionadosParaPagamento.length === 0)) {
+        return alert("Selecione itens");
+      }
+
+      if (totalSelecionadoAgora > 0) {
+        // "Considera" o que está selecionado agora antes de abrir o pagamento
+        considerarSelecao(true);
+      }
+
+      const totalAcumuladoFinal = parseFloat(btnAdicionarAoPagamento.dataset.totalAcumulado || 0);
+
       if (modalDividirItem) modalDividirItem.classList.add("hidden");
-      abrirModalPagamento(total, breakdown);
+
+      // Abre o modal de pagamento com o que foi acumulado
+      abrirModalPagamento(totalAcumuladoFinal, itensSelecionadosParaPagamento);
+
+      // Limpa acumulados do modal de divisão para a próxima vez
+      itensSelecionadosParaPagamento = null;
+      itensAgrupadosDivisao.forEach(i => {
+        i.total_considerado = 0;
+        i.itens_originais.forEach(orig => orig.quantidade_considerada = 0);
+      });
     };
   }
+
+  const btnConsiderarSelecao = document.getElementById("btnConsiderarSelecao");
+  if (btnConsiderarSelecao) btnConsiderarSelecao.onclick = () => considerarSelecao(false);
 
   if (btnSalvarProdutoModal) btnSalvarProdutoModal.onclick = salvarNovoProduto;
   if (btnSalvarProdutoPage) btnSalvarProdutoPage.onclick = salvarNovoProdutoSessao;
@@ -879,3 +955,46 @@ window.removerItemUnico = removerItemUnico;
 
 configListeners();
 init();
+async function considerarSelecao(silencioso = false) {
+  const total = parseFloat(btnAdicionarAoPagamento.dataset.totalRaw || 0);
+  if (total <= 0) {
+    if (!silencioso) alert("Selecione pelo menos um item");
+    return;
+  }
+
+  const breakdown = [];
+  itensAgrupadosDivisao.forEach(item => {
+    let sel = item.selecionado || 0;
+    if (sel > 0) {
+      item.itens_originais.forEach(orig => {
+        if (sel <= 0) return;
+        const disp = orig.quantidade - (orig.quantidade_paga || 0) - (orig.quantidade_considerada || 0);
+        if (disp > 0) {
+          const pagar = Math.min(sel, disp);
+          breakdown.push({ id: orig.id, quantidade: pagar });
+          orig.quantidade_considerada = (orig.quantidade_considerada || 0) + pagar;
+          sel -= pagar;
+        }
+      });
+      item.total_considerado = (item.total_considerado || 0) + (item.selecionado || 0);
+      item.selecionado = 0;
+    }
+  });
+
+  if (!itensSelecionadosParaPagamento) itensSelecionadosParaPagamento = [];
+  breakdown.forEach(b => {
+    const existente = itensSelecionadosParaPagamento.find(x => x.id === b.id);
+    if (existente) existente.quantidade += b.quantidade;
+    else itensSelecionadosParaPagamento.push(b);
+  });
+
+  let totalAcumuladoVal = 0;
+  itensAgrupadosDivisao.forEach(i => {
+    totalAcumuladoVal += (i.total_considerado || 0) * i.valor;
+  });
+
+  btnAdicionarAoPagamento.dataset.totalAcumulado = totalAcumuladoVal;
+  totalSelecionadoItemEl.innerText = `R$ ${formatarMoeda(totalAcumuladoVal)}`;
+
+  renderizarTabelaDivisao();
+}
