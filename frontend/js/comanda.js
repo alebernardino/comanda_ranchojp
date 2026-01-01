@@ -781,6 +781,15 @@ function renderizarTabelaDivisao(itens) {
     tbodyDivisaoItens.appendChild(tr);
   });
   atualizarTotalSelecionado();
+
+  // 👉 Foco no primeiro input disponível
+  setTimeout(() => {
+    const primeiroInput = tbodyDivisaoItens.querySelector(".qtd-pagar:not([disabled])");
+    if (primeiroInput) {
+      primeiroInput.focus();
+      primeiroInput.select();
+    }
+  }, 100);
 }
 
 function atualizarTotalSelecionado() {

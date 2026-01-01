@@ -523,7 +523,6 @@ async function lancarPagamentoModal() {
   });
 
   if (res.ok) {
-    alert("Pagamento lançado!");
     if (valorPagamentoInput) valorPagamentoInput.value = "";
 
     // Limpa breakdown acumulado após lançar
@@ -844,13 +843,18 @@ function configListeners() {
   if (btnLancarPagamentoModal) btnLancarPagamentoModal.onclick = lancarPagamentoModal;
   if (valorPagamentoInput) valorPagamentoInput.onkeydown = e => { if (e.key === "Enter") lancarPagamentoModal(); };
   if (btnFinalizarComandaModal) btnFinalizarComandaModal.onclick = finalizarComandaModal;
+  const btnVoltarDivisaoModal = document.getElementById("btnVoltarDivisaoModal");
+  if (btnVoltarDivisaoModal) btnVoltarDivisaoModal.onclick = () => {
+    if (modalPagamento) modalPagamento.classList.add("hidden");
+    abrirModalDividirItem();
+  };
 
   if (metodosButtons) {
     metodosButtons.forEach(btn => btn.onclick = () => {
       metodosButtons.forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       formaPagamentoSelecionada = btn.dataset.forma;
-      if (valorPagamentoInput) { valorPagamentoInput.focus(); valorPagamentoInput.select(); }
+      if (btnLancarPagamentoModal) btnLancarPagamentoModal.focus();
     });
   }
 

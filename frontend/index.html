@@ -676,7 +676,7 @@
         <div class="col-form">
           <div class="form-pagamento" style="border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px;">
             <div class="metodos-pagamento"
-              style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;">
+              style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 15px; margin-bottom: 15px;">
               <button class="metodo-btn active" data-forma="Cartão Crédito">💳 Crédito</button>
               <button class="metodo-btn" data-forma="Cartão Débito">🏦 Débito</button>
               <button class="metodo-btn" data-forma="Pix">💠 Pix</button>
@@ -691,6 +691,9 @@
             </div>
             <button id="btnLancarPagamentoModal"
               style="width: 100%; margin-top: 15px; height: 50px; font-size: 1.1rem;">Lançar Pagamento (Enter)</button>
+            <button id="btnVoltarDivisaoModal"
+              style="width: 100%; margin-top: 8px; height: 40px; font-size: 0.95rem; background: #64748b;">Voltar p/
+              Divisão</button>
           </div>
         </div>
         <div class="col-resumo">
@@ -714,7 +717,7 @@
             <div class="total-pagar-pag"><span>A PAGAR</span> <span id="pag-saldo-devedor">R$ 0,00</span></div>
           </div>
           <button id="btnFinalizarComandaModal" class="btn-finalizar"
-            style="background: #22c55e; height: 55px; font-size: 1.2rem; margin-top: 15px;">Finalizar Comanda
+            style="background: #22c55e; height: 55px; font-size: 1.2rem; margin-top: 15px; border-radius: 8px;">Finalizar
             (F1)</button>
         </div>
       </div>

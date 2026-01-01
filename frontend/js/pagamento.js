@@ -68,9 +68,11 @@ function init() {
     }
 
     // 👉 Foco inicial no primeiro botão de método (Crédito)
-    if (metodosButtons.length > 0) {
-        metodosButtons[0].focus();
-    }
+    setTimeout(() => {
+        if (metodosButtons.length > 0) {
+            metodosButtons[0].focus();
+        }
+    }, 100);
 }
 
 init();
@@ -144,9 +146,7 @@ metodosButtons.forEach(btn => {
     // Clique do Mouse
     btn.addEventListener("click", () => {
         selecionarMetodo(btn);
-        // Foca e seleciona o valor para facilitar a edição rápida
-        valorPagamentoInput.focus();
-        valorPagamentoInput.select();
+        btnLancarPagamento.focus();
     });
 
     // Navegação via TAB
@@ -184,8 +184,8 @@ async function lancarPagamento() {
             throw new Error(error.detail || "Erro ao lançar pagamento");
         }
 
-        alert("Pagamento lançado!");
-        if (valorPagamentoInput) valorPagamentoInput.value = "";
+        // alert("Pagamento lançado!");
+        valorPagamentoInput.value = "";
 
         // Limpa breakdown acumulado do session storage e variáveis locais
         itensSelecionadosParaPagamento = null;
@@ -204,7 +204,9 @@ async function lancarPagamento() {
 
         await carregarResumo();
         await carregarPagamentos();
-        valorPagamentoInput.focus();
+        if (metodosButtons.length > 0) {
+            metodosButtons[0].focus();
+        }
 
     } catch (err) {
         alert(err.message);
@@ -289,8 +291,8 @@ document.addEventListener("keydown", (e) => {
 });
 
 // --- Lógica Modal Dividir por Item ---
-
-btnDividirItem.addEventListener("click", abrirModalItem);
+const btnVoltarDivisao = document.getElementById("btnVoltarDivisao");
+if (btnVoltarDivisao) btnVoltarDivisao.addEventListener("click", abrirModalItem);
 btnFecharModalItem.addEventListener("click", fecharModalItem);
 btnFecharModalItemSecundario.addEventListener("click", fecharModalItem);
 
@@ -409,6 +411,15 @@ function renderizarItensDivisao(itens) {
         tbodyDivisaoItens.appendChild(tr);
     });
     atualizarTotalSelecionado();
+
+    // 👉 Foco no primeiro input disponível
+    setTimeout(() => {
+        const primeiroInput = tbodyDivisaoItens.querySelector(".qtd-pagar:not([disabled])");
+        if (primeiroInput) {
+            primeiroInput.focus();
+            primeiroInput.select();
+        }
+    }, 100);
 }
 
 function atualizarTotalSelecionado() {
@@ -437,9 +448,10 @@ async function aplicarValorItem() {
     // Fecha o modal
     fecharModalItem();
 
-    // Foca no campo de valor
-    valorPagamentoInput.focus();
-    valorPagamentoInput.select();
+    // Foca na primeira forma de pagamento
+    if (metodosButtons.length > 0) {
+        metodosButtons[0].focus();
+    }
 }
 
 async function considerarSelecao(pulandoFocus = false) {
@@ -496,7 +508,8 @@ async function considerarSelecao(pulandoFocus = false) {
     renderizarItensDivisao(itensAgrupadosDivisao);
 
     if (!pulandoFocus) {
-        valorPagamentoInput.focus();
-        valorPagamentoInput.select();
+        if (metodosButtons.length > 0) {
+            metodosButtons[0].focus();
+        }
     }
 }
