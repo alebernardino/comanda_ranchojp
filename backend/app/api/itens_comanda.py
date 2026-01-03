@@ -1,10 +1,11 @@
 from pydantic import BaseModel
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List
+import sqlite3
 
-from app.database.connection import get_connection
+from app.database.dependencies import get_db
 from app.models.item_comanda import (
     ItemComandaCreate,
     ItemComandaResponse,
@@ -33,9 +34,8 @@ print("FIELDS ItemComandaCreate:", ItemComandaCreate.model_fields)
     "/comandas/{numero}/itens",
     response_model=List[ItemComandaResponse]
 )
-def listar_itens_da_comanda(numero: int):
-    conn = get_connection()
-    cursor = conn.cursor()
+def listar_itens_da_comanda(numero: int, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
 
     cursor.execute(
         "SELECT id FROM comandas WHERE numero = ?",
@@ -44,7 +44,6 @@ def listar_itens_da_comanda(numero: int):
     comanda = cursor.fetchone()
 
     if not comanda:
-        conn.close()
         raise HTTPException(status_code=404, detail="Comanda não encontrada")
 
     cursor.execute(
@@ -57,8 +56,6 @@ def listar_itens_da_comanda(numero: int):
         (comanda["id"],),
     )
     rows = cursor.fetchall()
-    conn.close()
-
     return [dict(r) for r in rows]
 
 
@@ -66,9 +63,8 @@ def listar_itens_da_comanda(numero: int):
     "/comandas/{numero}/itens",
     response_model=ItemComandaResponse
 )
-def adicionar_item(numero: int, item: ItemComandaCreate):
-    conn = get_connection()
-    cursor = conn.cursor()
+def adicionar_item(numero: int, item: ItemComandaCreate, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
 
     cursor.execute(
         "SELECT id FROM comandas WHERE numero = ? AND status = 'aberta'",
@@ -77,7 +73,6 @@ def adicionar_item(numero: int, item: ItemComandaCreate):
     comanda = cursor.fetchone()
 
     if not comanda:
-        conn.close()
         raise HTTPException(
             status_code=400,
             detail="Comanda não encontrada ou não está aberta"
@@ -125,7 +120,7 @@ def adicionar_item(numero: int, item: ItemComandaCreate):
         )
         item_id = cursor.lastrowid
 
-    conn.commit()
+    db.commit()
 
     cursor.execute(
         """
@@ -136,7 +131,6 @@ def adicionar_item(numero: int, item: ItemComandaCreate):
         (item_id,),
     )
     row = cursor.fetchone()
-    conn.close()
 
     return dict(row)
 
@@ -145,9 +139,8 @@ def adicionar_item(numero: int, item: ItemComandaCreate):
     "/itens/{item_id}",
     response_model=ItemComandaResponse
 )
-def atualizar_item(item_id: int, item: ItemComandaCreate):
-    conn = get_connection()
-    cursor = conn.cursor()
+def atualizar_item(item_id: int, item: ItemComandaCreate, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
 
     cursor.execute(
         "SELECT id FROM itens_comanda WHERE id = ?",
@@ -174,7 +167,7 @@ def atualizar_item(item_id: int, item: ItemComandaCreate):
             item_id,
         ),
     )
-    conn.commit()
+    db.commit()
 
     cursor.execute(
         """
@@ -185,15 +178,13 @@ def atualizar_item(item_id: int, item: ItemComandaCreate):
         (item_id,),
     )
     updated = cursor.fetchone()
-    conn.close()
 
     return dict(updated)
 
 
 @router.delete("/itens/{item_id}")
-def remover_item(item_id: int):
-    conn = get_connection()
-    cursor = conn.cursor()
+def remover_item(item_id: int, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
 
     cursor.execute(
         "SELECT id FROM itens_comanda WHERE id = ?",
@@ -207,7 +198,6 @@ def remover_item(item_id: int):
         "DELETE FROM itens_comanda WHERE id = ?",
         (item_id,),
     )
-    conn.commit()
-    conn.close()
+    db.commit()
 
     return {"status": "ok"}

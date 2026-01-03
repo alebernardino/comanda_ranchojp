@@ -1,14 +1,8 @@
-// js/index.js
-
 const grid = document.getElementById("comandasGrid");
 const statsLivres = document.getElementById("stats-livres");
 const statsOcupadas = document.getElementById("stats-ocupadas");
-// const statsTotalVenda = document.getElementById("stats-total-venda"); // Removido
-
-// const btnQuickOpen = document.getElementById("btnQuickOpen"); // Removido
 const btnConfirmarQuick = document.getElementById("btnConfirmarQuick");
 const quickNumeroInput = document.getElementById("quickNumero");
-const btnToggleSidebar = document.getElementById("btnToggleSidebar");
 const btnToggleRightSidebar = document.getElementById("btnToggleRightSidebar");
 const sidebar = document.querySelector(".sidebar");
 const sidebarRight = document.querySelector(".sidebar-right");
@@ -74,19 +68,23 @@ const prodPageValor = document.getElementById("prodPageValor");
 const btnSalvarProdutoPage = document.getElementById("btnSalvarProdutoPage");
 const tabelaProdutosPageBody = document.getElementById("tabelaProdutosPageBody");
 
-// Configurações
+
+// ===============================
+// CONFIGURAÇÃO E ESTADO GLOBAL
+// ===============================
 const TOTAL_COMANDAS = 300;
 let currentComandaNumero = null;
-let produtoSelecionado = null;
-let produtosCache = [];
+
 let totalComandaGlobal = 0;
 let totalPagoGlobal = 0;
 let saldoDevedorGlobal = 0;
 let formaPagamentoSelecionada = "Cartão Crédito";
 let itensAgrupadosDivisao = [];
 let itensSelecionadosParaPagamento = null;
-let estadoOrdenacaoProdutos = { campo: 'codigo', direcao: 'asc' };
 
+// ===============================
+// DASHBOARD (TELA)
+// ===============================
 async function init() {
   console.log("Sistema iniciando...");
   await carregarDashboard();
@@ -100,8 +98,6 @@ async function init() {
     }
   }, 10000);
 }
-
-// --- LOGICA DASHBOARD ---
 
 async function carregarDashboard() {
   try {
@@ -132,7 +128,18 @@ function atualizarStats(abertas) {
   if (statsLivres) statsLivres.innerText = Math.max(0, TOTAL_COMANDAS - abertas.length);
 }
 
-// --- LOGICA MODAL COMANDA ---
+const btnToggleSidebar = document.getElementById("btnToggleSidebar");
+
+if (btnToggleSidebar && sidebar) {
+  btnToggleSidebar.onclick = () => {
+    const isCollapsed = sidebar.classList.toggle("collapsed");
+    btnToggleSidebar.innerText = isCollapsed ? ">" : "<";
+  };
+}
+
+// ===============================
+// MODAL COMANDA
+// ===============================
 
 async function abrirComanda(numero) {
   if (!numero) return;
@@ -144,12 +151,24 @@ async function abrirComanda(numero) {
   currentComandaNumero = numero;
   itensSelecionadosParaPagamento = JSON.parse(sessionStorage.getItem(`comanda_${numero}_selecao`) || "null");
   try {
-    const res = await fetch(`${API_URL}/comandas/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ numero: Number(numero) })
-    });
-    if (!res.ok && res.status !== 400) return alert("Erro ao preparar comanda");
+
+    // Tenta buscar a comanda primeiro para evitar o erro 400 no console
+    const checkRes = await fetch(`${API_URL}/comandas/${numero}`);
+
+    if (checkRes.status === 404) {
+      // Não existe, cria
+      const createRes = await fetch(`${API_URL}/comandas/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ numero: Number(numero) })
+      });
+      if (!createRes.ok) return alert("Erro ao criar comanda");
+    } else if (!checkRes.ok) {
+      // Erro desconhecido ao buscar
+      return alert("Erro ao acessar comanda");
+    }
+    // Se 200, ela existe e está tudo bem, seguimos para abrir.
+
 
     if (modalComanda) modalComanda.classList.remove("hidden");
     await carregarDadosComanda();
@@ -361,7 +380,9 @@ function atualizarDivisaoTotal() {
   valorPorPessoaDiv.innerText = `R$ ${formatarMoeda(totalComandaGlobal / qtd)}`;
 }
 
-// --- LOGICA MODAL DIVIDIR POR ITEM ---
+// ===============================
+// MODAL DIVIDIR POR ITEM
+// ===============================
 
 async function abrirModalDividirItem() {
   if (modalDividirItem) modalDividirItem.classList.remove("hidden");
@@ -463,7 +484,55 @@ function atualizarTotalSelecionadoItem() {
   if (btnAdicionarAoPagamento) btnAdicionarAoPagamento.dataset.totalAcumulado = total;
 }
 
-// --- LOGICA MODAL PAGAMENTO ---
+async function considerarSelecao(silencioso = false) {
+  const total = parseFloat(btnAdicionarAoPagamento.dataset.totalRaw || 0);
+  if (total <= 0) {
+    if (!silencioso) alert("Selecione pelo menos um item");
+    return;
+  }
+
+  const breakdown = [];
+  itensAgrupadosDivisao.forEach(item => {
+    let sel = item.selecionado || 0;
+    if (sel > 0) {
+      item.itens_originais.forEach(orig => {
+        if (sel <= 0) return;
+        const disp = orig.quantidade - (orig.quantidade_paga || 0) - (orig.quantidade_considerada || 0);
+        if (disp > 0) {
+          const pagar = Math.min(sel, disp);
+          breakdown.push({ id: orig.id, quantidade: pagar });
+          orig.quantidade_considerada = (orig.quantidade_considerada || 0) + pagar;
+          sel -= pagar;
+        }
+      });
+      item.total_considerado = (item.total_considerado || 0) + (item.selecionado || 0);
+      item.selecionado = 0;
+    }
+  });
+
+  if (!itensSelecionadosParaPagamento) itensSelecionadosParaPagamento = [];
+  breakdown.forEach(b => {
+    const existente = itensSelecionadosParaPagamento.find(x => x.id === b.id);
+    if (existente) existente.quantidade += b.quantidade;
+    else itensSelecionadosParaPagamento.push(b);
+  });
+
+  let totalAcumuladoVal = 0;
+  itensAgrupadosDivisao.forEach(i => {
+    totalAcumuladoVal += (i.total_considerado || 0) * i.valor;
+  });
+
+  sessionStorage.setItem(`comanda_${currentComandaNumero}_selecao`, JSON.stringify(itensSelecionadosParaPagamento));
+
+  btnAdicionarAoPagamento.dataset.totalAcumulado = totalAcumuladoVal;
+  totalSelecionadoItemEl.innerText = `R$ ${formatarMoeda(totalAcumuladoVal)}`;
+
+  renderizarTabelaDivisao();
+}
+
+// ===============================
+// MODAL PAGAMENTO
+// ===============================
 
 async function abrirModalPagamento(valorSugerido = null, itensBreakdown = null) {
   if (modalPagamento) modalPagamento.classList.remove("hidden");
@@ -476,9 +545,16 @@ async function abrirModalPagamento(valorSugerido = null, itensBreakdown = null) 
   formaPagamentoSelecionada = "Cartão Crédito";
   if (metodosButtons) metodosButtons.forEach(b => b.classList.toggle("active", b.dataset.forma === formaPagamentoSelecionada));
 
-  if (valorPagamentoInput) {
-    setTimeout(() => { valorPagamentoInput.focus(); valorPagamentoInput.select(); }, 100);
-  }
+  // if (valorPagamentoInput) {
+  //   setTimeout(() => { valorPagamentoInput.focus(); valorPagamentoInput.select(); }, 100);
+  // }
+  setTimeout(() => {
+    const btn =
+      modalPagamento.querySelector(".metodo-btn.active") ||
+      modalPagamento.querySelector(".metodo-btn");
+
+    if (btn) btn.focus();
+  }, 50);
 }
 
 async function carregarResumoPagamento(valorSugerido = null) {
@@ -496,7 +572,17 @@ async function carregarResumoPagamento(valorSugerido = null) {
     if (valorSugerido !== null) valorPagamentoInput.value = parseFloat(valorSugerido).toFixed(2);
     else valorPagamentoInput.value = saldoDevedorGlobal > 0.001 ? saldoDevedorGlobal.toFixed(2) : "0.00";
   }
-  if (btnFinalizarComandaModal) btnFinalizarComandaModal.disabled = !data.pode_fechar || data.status === 'finalizada';
+  // if (btnFinalizarComandaModal) btnFinalizarComandaModal.disabled = !data.pode_fechar || data.status === 'finalizada';
+  // Mantemos o botão habilitado para dar feedback ao usuário se ele tentar finalizar sem pagar
+  if (btnFinalizarComandaModal) {
+    if (data.status === 'finalizada') {
+      btnFinalizarComandaModal.disabled = true;
+      btnFinalizarComandaModal.innerText = "Finalizado";
+    } else {
+      btnFinalizarComandaModal.disabled = false;
+      btnFinalizarComandaModal.innerText = "Finalizar Comanda (F1)";
+    }
+  }
 }
 
 async function carregarPagamentosModal() {
@@ -555,22 +641,36 @@ async function removerPagamentoModal(id) {
 }
 
 async function finalizarComandaModal() {
-  if (saldoDevedorGlobal > 0.01) return alert("Pague o saldo total antes de finalizar.");
-  if (!confirm("Confirmar fechamento da comanda?")) return;
-  const res = await fetch(`${API_URL}/comandas/${currentComandaNumero}/fechar`, { method: "POST" });
-  if (res.ok) {
-    if (modalPagamento) modalPagamento.classList.add("hidden");
-    if (modalComanda) modalComanda.classList.add("hidden");
-    carregarDashboard();
+  if (saldoDevedorGlobal > 0.01) {
+    alert("Saldo devedor pendente: R$ " + saldoDevedorGlobal.toFixed(2) + "\nRealize o pagamento total antes de finalizar.");
+    return;
   }
+
+  const res = await fetch(
+    `${API_URL}/comandas/${currentComandaNumero}/fechar`,
+    { method: "POST" }
+  );
+
+  if (!res.ok) {
+    let msg = "Erro ao fechar comanda";
+
+    try {
+      const data = await res.json();
+      if (data.detail) msg = data.detail;
+    } catch (e) { }
+
+    alert(msg);
+    return;
+  }
+
+  if (modalPagamento) modalPagamento.classList.add("hidden");
+  if (modalComanda) modalComanda.classList.add("hidden");
+  carregarDashboard();
 }
 
-// --- LOGICA MODAL CADASTRO PRODUTOS ---
-
-async function abrirModalCadastroProdutos() {
-  if (modalCadastroProduto) modalCadastroProduto.classList.remove("hidden");
-  await carregarProdutosCadastrados();
-}
+// ===============================
+// CADASTRO DE PRODUTOS (TELA)
+// ===============================
 
 async function carregarProdutosCadastrados() {
   const res = await fetch(`${API_URL}/produtos`);
@@ -800,16 +900,16 @@ async function excluirProduto(id) {
   }
 }
 
-// --- CONFIGURAÇÃO DE LISTENERS ---
+// ===============================
+// LISTENERS E ATALHOS GLOBAIS
+// ===============================
 
 function configListeners() {
   if (btnFecharModalComanda) btnFecharModalComanda.onclick = () => { modalComanda.classList.add("hidden"); carregarDashboard(); };
   if (btnFecharModalPagamento) btnFecharModalPagamento.onclick = () => modalPagamento.classList.add("hidden");
   if (btnFecharModalCadastro) btnFecharModalCadastro.onclick = () => { modalCadastroProduto.classList.add("hidden"); carregarProdutosBase(); };
-
   if (navDashboard) navDashboard.onclick = (e) => { e.preventDefault(); alternarParaDashboard(); };
   if (navProdutosSessao) navProdutosSessao.onclick = (e) => { e.preventDefault(); alternarParaProdutos(); };
-
   if (btnAbrirModalCadastroComanda) {
     btnAbrirModalCadastroComanda.onclick = () => {
       const codBusca = buscaCodigo ? buscaCodigo.value.trim() : "";
@@ -820,11 +920,9 @@ function configListeners() {
       }
     };
   }
-
   if (nomeComanda) nomeComanda.onblur = atualizarComandaAPI;
   if (telefoneComanda) telefoneComanda.onblur = atualizarComandaAPI;
   if (pessoasComanda) pessoasComanda.oninput = () => { if (qtdPessoasInput) qtdPessoasInput.value = pessoasComanda.value; atualizarDivisaoTotal(); };
-
   if (buscaCodigo) {
     buscaCodigo.oninput = filtrarProdutosModal;
     buscaCodigo.onkeydown = e => { if (e.key === "Enter") adicionarItemComanda(); };
@@ -942,12 +1040,7 @@ function configListeners() {
     };
   }
 
-  if (btnToggleSidebar && sidebar) {
-    btnToggleSidebar.onclick = () => {
-      const isCollapsed = sidebar.classList.toggle("collapsed");
-      btnToggleSidebar.innerText = isCollapsed ? ">" : "<";
-    };
-  }
+
 
   if (btnToggleRightSidebar && sidebarRight) {
     btnToggleRightSidebar.onclick = () => {
@@ -957,7 +1050,6 @@ function configListeners() {
   }
 }
 
-// Shortcut Global
 document.onkeydown = (e) => {
   if (e.key === "Escape") {
     if (modalDividirItem && !modalDividirItem.classList.contains("hidden")) modalDividirItem.classList.add("hidden");
@@ -974,54 +1066,17 @@ document.onkeydown = (e) => {
   }
 };
 
-window.removerPagamentoModal = removerPagamentoModal;
-window.editProduto = editProduto;
-window.removerItemUnico = removerItemUnico;
+// ===============================
+// BOOTSTRAP / STARTUP
+// ===============================
 
 configListeners();
 init();
-async function considerarSelecao(silencioso = false) {
-  const total = parseFloat(btnAdicionarAoPagamento.dataset.totalRaw || 0);
-  if (total <= 0) {
-    if (!silencioso) alert("Selecione pelo menos um item");
-    return;
-  }
 
-  const breakdown = [];
-  itensAgrupadosDivisao.forEach(item => {
-    let sel = item.selecionado || 0;
-    if (sel > 0) {
-      item.itens_originais.forEach(orig => {
-        if (sel <= 0) return;
-        const disp = orig.quantidade - (orig.quantidade_paga || 0) - (orig.quantidade_considerada || 0);
-        if (disp > 0) {
-          const pagar = Math.min(sel, disp);
-          breakdown.push({ id: orig.id, quantidade: pagar });
-          orig.quantidade_considerada = (orig.quantidade_considerada || 0) + pagar;
-          sel -= pagar;
-        }
-      });
-      item.total_considerado = (item.total_considerado || 0) + (item.selecionado || 0);
-      item.selecionado = 0;
-    }
-  });
+let produtoSelecionado = null;
+let produtosCache = [];
+let estadoOrdenacaoProdutos = { campo: 'codigo', direcao: 'asc' };
 
-  if (!itensSelecionadosParaPagamento) itensSelecionadosParaPagamento = [];
-  breakdown.forEach(b => {
-    const existente = itensSelecionadosParaPagamento.find(x => x.id === b.id);
-    if (existente) existente.quantidade += b.quantidade;
-    else itensSelecionadosParaPagamento.push(b);
-  });
-
-  let totalAcumuladoVal = 0;
-  itensAgrupadosDivisao.forEach(i => {
-    totalAcumuladoVal += (i.total_considerado || 0) * i.valor;
-  });
-
-  sessionStorage.setItem(`comanda_${currentComandaNumero}_selecao`, JSON.stringify(itensSelecionadosParaPagamento));
-
-  btnAdicionarAoPagamento.dataset.totalAcumulado = totalAcumuladoVal;
-  totalSelecionadoItemEl.innerText = `R$ ${formatarMoeda(totalAcumuladoVal)}`;
-
-  renderizarTabelaDivisao();
-}
+window.removerPagamentoModal = removerPagamentoModal;
+window.editProduto = editProduto;
+window.removerItemUnico = removerItemUnico;

@@ -1,17 +1,17 @@
-from fastapi import APIRouter, HTTPException
 from typing import List
 from datetime import datetime
+import sqlite3
 
-from app.database.connection import get_connection
+from fastapi import APIRouter, HTTPException, Depends
+from app.database.dependencies import get_db, get_comanda_resumo_logic
 from app.models.comanda import ComandaCreate, ComandaResponse
 
 router = APIRouter(prefix="/comandas", tags=["Comandas"])
 
 
 @router.get("/", response_model=List[ComandaResponse])
-def listar_comandas_abertas():
-    conn = get_connection()
-    cursor = conn.cursor()
+def listar_comandas_abertas(db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
 
     # Só considera "aberta" (ocupada no grid) se tiver nome, telefone ou itens
     cursor.execute(
@@ -28,15 +28,13 @@ def listar_comandas_abertas():
         """
     )
     rows = cursor.fetchall()
-    conn.close()
 
     return [dict(r) for r in rows]
 
 
 @router.post("/", response_model=ComandaResponse)
-def abrir_comanda(comanda: ComandaCreate):
-    conn = get_connection()
-    cursor = conn.cursor()
+def abrir_comanda(comanda: ComandaCreate, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
 
     # Verifica se número da comanda já existe
     cursor.execute(
@@ -46,7 +44,6 @@ def abrir_comanda(comanda: ComandaCreate):
     
     if existente:
         if existente["status"] == "aberta":
-            conn.close()
             raise HTTPException(
                 status_code=400,
                 detail="Já existe uma comanda ABERTA com esse número"
@@ -68,11 +65,10 @@ def abrir_comanda(comanda: ComandaCreate):
                 """,
                 (comanda.nome, comanda.telefone, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), comanda_id)
             )
-            conn.commit()
+            db.commit()
             
             cursor.execute("SELECT * FROM comandas WHERE id = ?", (comanda_id,))
             row = cursor.fetchone()
-            conn.close()
             return dict(row)
 
     # Cria nova
@@ -83,7 +79,7 @@ def abrir_comanda(comanda: ComandaCreate):
         """,
         (comanda.numero, comanda.nome, comanda.telefone),
     )
-    conn.commit()
+    db.commit()
 
     comanda_id = cursor.lastrowid
 
@@ -91,21 +87,18 @@ def abrir_comanda(comanda: ComandaCreate):
         "SELECT * FROM comandas WHERE id = ?", (comanda_id,)
     )
     row = cursor.fetchone()
-    conn.close()
 
     return dict(row)
 
 
 @router.get("/{numero}", response_model=ComandaResponse)
-def buscar_comanda_por_numero(numero: int):
-    conn = get_connection()
-    cursor = conn.cursor()
+def buscar_comanda_por_numero(numero: int, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
 
     cursor.execute(
         "SELECT * FROM comandas WHERE numero = ?", (numero,)
     )
     row = cursor.fetchone()
-    conn.close()
 
     if not row:
         raise HTTPException(status_code=404, detail="Comanda não encontrada")
@@ -114,9 +107,8 @@ def buscar_comanda_por_numero(numero: int):
 
 
 @router.put("/{numero}", response_model=ComandaResponse)
-def atualizar_comanda(numero: int, comanda: ComandaCreate):
-    conn = get_connection()
-    cursor = conn.cursor()
+def atualizar_comanda(numero: int, comanda: ComandaCreate, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
 
     # Verifica se a comanda existe
     cursor.execute(
@@ -125,7 +117,6 @@ def atualizar_comanda(numero: int, comanda: ComandaCreate):
     row = cursor.fetchone()
     
     if not row:
-        conn.close()
         raise HTTPException(status_code=404, detail="Comanda não encontrada")
     
     comanda_id = row["id"]
@@ -139,23 +130,21 @@ def atualizar_comanda(numero: int, comanda: ComandaCreate):
         """,
         (comanda.nome, comanda.telefone, comanda_id),
     )
-    conn.commit()
+    db.commit()
 
     # Retorna a comanda atualizada
     cursor.execute(
         "SELECT * FROM comandas WHERE id = ?", (comanda_id,)
     )
     updated = cursor.fetchone()
-    conn.close()
 
     return dict(updated)
 
 
 
 @router.post("/{numero}/fechar", response_model=ComandaResponse)
-def fechar_comanda(numero: int):
-    conn = get_connection()
-    cursor = conn.cursor()
+def fechar_comanda(numero: int, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
 
     cursor.execute(
         "SELECT id, status FROM comandas WHERE numero = ?",
@@ -164,11 +153,9 @@ def fechar_comanda(numero: int):
     comanda = cursor.fetchone()
 
     if not comanda:
-        conn.close()
         raise HTTPException(status_code=404, detail="Comanda não encontrada")
 
     if comanda["status"] != "aberta":
-        conn.close()
         raise HTTPException(
             status_code=400,
             detail="Comanda já está finalizada"
@@ -190,13 +177,6 @@ def fechar_comanda(numero: int):
     )
     total_pago = cursor.fetchone()["total_pago"]
 
-    if total_pago < total_itens:
-        conn.close()
-        raise HTTPException(
-            status_code=400,
-            detail="Pagamento insuficiente para fechar a comanda"
-        )
-
     cursor.execute(
         """
         UPDATE comandas
@@ -206,22 +186,20 @@ def fechar_comanda(numero: int):
         """,
         (datetime.now(), comanda_id),
     )
-    conn.commit()
+    db.commit()
 
     cursor.execute(
         "SELECT * FROM comandas WHERE id = ?",
         (comanda_id,),
     )
     updated = cursor.fetchone()
-    conn.close()
 
     return dict(updated)
 
 
 @router.get("/{numero}/resumo")
-def resumo_comanda(numero: int):
-    conn = get_connection()
-    cursor = conn.cursor()
+def resumo_comanda(numero: int, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
 
     # Buscar comanda
     cursor.execute(
@@ -231,28 +209,11 @@ def resumo_comanda(numero: int):
     comanda = cursor.fetchone()
 
     if not comanda:
-        conn.close()
         raise HTTPException(status_code=404, detail="Comanda não encontrada")
 
     comanda_id = comanda["id"]
 
-    # Total de itens
-    cursor.execute(
-        "SELECT COALESCE(SUM(subtotal), 0) as total_itens FROM itens_comanda WHERE comanda_id = ?",
-        (comanda_id,),
-    )
-    total_itens = cursor.fetchone()["total_itens"]
-
-    # Total de pagamentos
-    cursor.execute(
-        "SELECT COALESCE(SUM(valor), 0) as total_pago FROM pagamentos WHERE comanda_id = ?",
-        (comanda_id,),
-    )
-    total_pago = cursor.fetchone()["total_pago"]
-
-    saldo = total_pago - total_itens
-
-    conn.close()
+    total_itens, total_pago, saldo = get_comanda_resumo_logic(cursor, comanda_id)
 
     return {
         "numero": numero,

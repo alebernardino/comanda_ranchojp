@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List
+import sqlite3
 
-from app.database.connection import get_connection
+from app.database.dependencies import get_db
 from app.models.produto import ProdutoCreate, ProdutoResponse
 
 router = APIRouter(prefix="/produtos", tags=["Produtos"])
@@ -9,10 +10,10 @@ router = APIRouter(prefix="/produtos", tags=["Produtos"])
 
 @router.get("/", response_model=List[ProdutoResponse])
 def listar_produtos(
-    busca: str | None = Query(default=None, description="Busca por código ou descrição")
+    busca: str | None = Query(default=None, description="Busca por código ou descrição"),
+    db: sqlite3.Connection = Depends(get_db)
 ):
-    conn = get_connection()
-    cursor = conn.cursor()
+    cursor = db.cursor()
 
     if busca:
         like = f"%{busca}%"
@@ -35,15 +36,13 @@ def listar_produtos(
         )
 
     rows = cursor.fetchall()
-    conn.close()
     return [dict(r) for r in rows]
 
 
 
 @router.post("/", response_model=ProdutoResponse)
-def criar_produto(produto: ProdutoCreate):
-    conn = get_connection()
-    cursor = conn.cursor()
+def criar_produto(produto: ProdutoCreate, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
 
     # Valida código (3 dígitos)
     if not (produto.codigo.isdigit() and len(produto.codigo) == 3):
@@ -58,7 +57,6 @@ def criar_produto(produto: ProdutoCreate):
         "SELECT id FROM produtos WHERE codigo = ?", (produto.codigo,)
     )
     if cursor.fetchone():
-        conn.close()
         raise HTTPException(
             status_code=400,
             detail="Já existe produto com esse código"
@@ -71,7 +69,7 @@ def criar_produto(produto: ProdutoCreate):
         """,
         (produto.codigo, produto.descricao, produto.valor, int(produto.ativo)),
     )
-    conn.commit()
+    db.commit()
 
     produto_id = cursor.lastrowid
 
@@ -80,21 +78,18 @@ def criar_produto(produto: ProdutoCreate):
         (produto_id,),
     )
     row = cursor.fetchone()
-    conn.close()
 
     return dict(row)
 
 
 
 @router.put("/{produto_id}", response_model=ProdutoResponse)
-def atualizar_produto(produto_id: int, produto: ProdutoCreate):
-    conn = get_connection()
-    cursor = conn.cursor()
+def atualizar_produto(produto_id: int, produto: ProdutoCreate, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
 
     # Verifica se existe
     cursor.execute("SELECT id FROM produtos WHERE id = ?", (produto_id,))
     if not cursor.fetchone():
-        conn.close()
         raise HTTPException(status_code=404, detail="Produto não encontrado")
 
     # Valida código (3 dígitos)
@@ -111,7 +106,6 @@ def atualizar_produto(produto_id: int, produto: ProdutoCreate):
         (produto.codigo, produto_id)
     )
     if cursor.fetchone():
-        conn.close()
         raise HTTPException(status_code=400, detail="Já existe outro produto com esse código")
 
     cursor.execute(
@@ -122,43 +116,39 @@ def atualizar_produto(produto_id: int, produto: ProdutoCreate):
         """,
         (produto.codigo, produto.descricao, produto.valor, int(produto.ativo), produto_id),
     )
-    conn.commit()
-
     cursor.execute(
         "SELECT id, codigo, descricao, valor, ativo FROM produtos WHERE id = ?",
         (produto_id,),
     )
     row = cursor.fetchone()
-    conn.close()
+    db.commit()
 
     return dict(row)
 
 @router.post("/{produto_id}/ativar", response_model=ProdutoResponse)
-def ativar_produto(produto_id: int):
-    return _set_status(produto_id, True)
+def ativar_produto(produto_id: int, db: sqlite3.Connection = Depends(get_db)):
+    return _set_status(produto_id, True, db)
 
 
 @router.post("/{produto_id}/desativar", response_model=ProdutoResponse)
-def desativar_produto(produto_id: int):
-    return _set_status(produto_id, False)
+def desativar_produto(produto_id: int, db: sqlite3.Connection = Depends(get_db)):
+    return _set_status(produto_id, False, db)
 
 
-def _set_status(produto_id: int, ativo: bool):
-    conn = get_connection()
-    cursor = conn.cursor()
+def _set_status(produto_id: int, ativo: bool, db: sqlite3.Connection):
+    cursor = db.cursor()
 
     cursor.execute(
         "UPDATE produtos SET ativo = ? WHERE id = ?",
         (int(ativo), produto_id),
     )
-    conn.commit()
+    db.commit()
 
     cursor.execute(
         "SELECT id, codigo, descricao, valor, ativo FROM produtos WHERE id = ?",
         (produto_id,),
     )
     row = cursor.fetchone()
-    conn.close()
 
     if not row:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
@@ -169,14 +159,12 @@ def _set_status(produto_id: int, ativo: bool):
 
 
 @router.delete("/{produto_id}")
-def excluir_produto(produto_id: int):
-    conn = get_connection()
-    cursor = conn.cursor()
+def excluir_produto(produto_id: int, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
 
     # Verifica se o produto existe
     cursor.execute("SELECT id FROM produtos WHERE id = ?", (produto_id,))
     if not cursor.fetchone():
-        conn.close()
         raise HTTPException(status_code=404, detail="Produto não encontrado")
 
     # Verifica se há itens de comanda vinculados a este produto (pelo código)
@@ -186,14 +174,13 @@ def excluir_produto(produto_id: int):
     cod = cursor.fetchone()["codigo"]
     
     cursor.execute("SELECT id FROM itens_comanda WHERE codigo = ?", (cod,))
+    cursor.execute("SELECT id FROM itens_comanda WHERE codigo = ?", (cod,))
     if cursor.fetchone():
-        conn.close()
         raise HTTPException(
             status_code=400, 
             detail="Não é possível excluir: existem comandas vinculadas a este código de produto. Sugerimos desativar."
         )
 
     cursor.execute("DELETE FROM produtos WHERE id = ?", (produto_id,))
-    conn.commit()
-    conn.close()
+    db.commit()
     return {"status": "sucesso", "detail": "Produto excluído com sucesso"}

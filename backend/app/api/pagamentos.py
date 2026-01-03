@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List
+import sqlite3
 
-from app.database.connection import get_connection
+from app.database.dependencies import get_db
 from app.models.pagamento import PagamentoCreate, PagamentoResponse
 
 router = APIRouter(tags=["Pagamentos"])
@@ -11,9 +12,8 @@ router = APIRouter(tags=["Pagamentos"])
     "/comandas/{numero}/pagamentos",
     response_model=List[PagamentoResponse]
 )
-def listar_pagamentos(numero: int):
-    conn = get_connection()
-    cursor = conn.cursor()
+def listar_pagamentos(numero: int, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
 
     cursor.execute(
         "SELECT id FROM comandas WHERE numero = ?",
@@ -22,7 +22,6 @@ def listar_pagamentos(numero: int):
     comanda = cursor.fetchone()
 
     if not comanda:
-        conn.close()
         raise HTTPException(status_code=404, detail="Comanda não encontrada")
 
     cursor.execute(
@@ -35,7 +34,6 @@ def listar_pagamentos(numero: int):
         (comanda["id"],),
     )
     rows = cursor.fetchall()
-    conn.close()
 
     return [dict(r) for r in rows]
 
@@ -44,9 +42,8 @@ def listar_pagamentos(numero: int):
     "/comandas/{numero}/pagamentos",
     response_model=PagamentoResponse
 )
-def adicionar_pagamento(numero: int, pagamento: PagamentoCreate):
-    conn = get_connection()
-    cursor = conn.cursor()
+def adicionar_pagamento(numero: int, pagamento: PagamentoCreate, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
 
     cursor.execute(
         "SELECT id, status FROM comandas WHERE numero = ?",
@@ -55,11 +52,9 @@ def adicionar_pagamento(numero: int, pagamento: PagamentoCreate):
     comanda = cursor.fetchone()
 
     if not comanda:
-        conn.close()
         raise HTTPException(status_code=404, detail="Comanda não encontrada")
 
     if comanda["status"] != "aberta":
-        conn.close()
         raise HTTPException(
             status_code=400,
             detail="Comanda já finalizada"
@@ -90,20 +85,11 @@ def adicionar_pagamento(numero: int, pagamento: PagamentoCreate):
                 (item_pago["quantidade"], item_pago["id"]),
             )
             
-    conn.commit()
-
     pagamento_id = cursor.lastrowid
+    db.commit()
 
-    cursor.execute(
-        """
-        SELECT id, forma, valor, detalhe, criado_em
-        FROM pagamentos
-        WHERE id = ?
-        """,
-        (pagamento_id,),
-    )
+    cursor.execute("SELECT * FROM pagamentos WHERE id = ?", (pagamento_id,))
     row = cursor.fetchone()
-    conn.close()
 
     return dict(row)
 
@@ -112,16 +98,14 @@ def adicionar_pagamento(numero: int, pagamento: PagamentoCreate):
     "/pagamentos/{pagamento_id}",
     response_model=PagamentoResponse
 )
-def atualizar_pagamento(pagamento_id: int, pagamento: PagamentoCreate):
-    conn = get_connection()
-    cursor = conn.cursor()
+def atualizar_pagamento(pagamento_id: int, pagamento: PagamentoCreate, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
 
     cursor.execute(
         "SELECT id FROM pagamentos WHERE id = ?",
         (pagamento_id,),
     )
     if not cursor.fetchone():
-        conn.close()
         raise HTTPException(status_code=404, detail="Pagamento não encontrado")
 
     cursor.execute(
@@ -137,40 +121,29 @@ def atualizar_pagamento(pagamento_id: int, pagamento: PagamentoCreate):
             pagamento_id,
         ),
     )
-    conn.commit()
+    db.commit()
 
-    cursor.execute(
-        """
-        SELECT id, forma, valor, detalhe, criado_em
-        FROM pagamentos
-        WHERE id = ?
-        """,
-        (pagamento_id,),
-    )
+    cursor.execute("SELECT * FROM pagamentos WHERE id = ?", (pagamento_id,))
     updated = cursor.fetchone()
-    conn.close()
 
     return dict(updated)
 
 
 @router.delete("/pagamentos/{pagamento_id}")
-def remover_pagamento(pagamento_id: int):
-    conn = get_connection()
-    cursor = conn.cursor()
+def remover_pagamento(pagamento_id: int, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
 
     cursor.execute(
         "SELECT id FROM pagamentos WHERE id = ?",
         (pagamento_id,),
     )
     if not cursor.fetchone():
-        conn.close()
         raise HTTPException(status_code=404, detail="Pagamento não encontrado")
 
     cursor.execute(
         "DELETE FROM pagamentos WHERE id = ?",
         (pagamento_id,),
     )
-    conn.commit()
-    conn.close()
+    db.commit()
 
     return {"status": "ok"}
