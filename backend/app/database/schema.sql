@@ -50,3 +50,17 @@ CREATE TABLE IF NOT EXISTS pagamentos (
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (comanda_id) REFERENCES comandas (id)
 );
+
+-- =========================
+-- TABELA: colaboradores
+-- =========================
+CREATE TABLE IF NOT EXISTS colaboradores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT NOT NULL,
+    endereco TEXT,
+    contatos TEXT, -- JSON string
+    pixs TEXT, -- JSON string
+    funcao TEXT,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    ativo INTEGER DEFAULT 1
+);

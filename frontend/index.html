@@ -414,7 +414,7 @@
           <span class="nav-icon">📈</span>
           Relatórios
         </a>
-        <a href="#" class="nav-item">
+        <a href="#" class="nav-item" id="navColaboradores">
           <span class="nav-icon">👥</span>
           Colaboradores
         </a>
@@ -509,6 +509,102 @@
             </tr>
           </thead>
           <tbody id="tabelaProdutosPageBody">
+            <!-- Preenchido via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SESSÃO DE GERENCIAMENTO DE COLABORADORES -->
+    <div id="sectionColaboradores" class="hidden" style="padding: 20px;">
+      <div class="card"
+        style="background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="const content = document.getElementById('formColaboradorContent'); 
+                      const icon = document.getElementById('iconToggleColab');
+                      const isOpen = content.style.display === 'block';
+                      content.style.display = isOpen ? 'none' : 'block';
+                      icon.innerText = isOpen ? '➕' : '➖';">
+          <h3 style="margin: 0; font-size: 1.1rem; color: #1e293b; display: flex; align-items: center; gap: 10px;">
+            <span id="iconToggleColab">➕</span> Novo Colaborador
+          </h3>
+          <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Clique para expandir/recolher</p>
+        </div>
+
+        <div id="formColaboradorContent"
+          style="display: none; margin-top: 20px; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+          <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+            <button id="btnLimparColaborador"
+              style="background: #f1f5f9; color: #64748b; padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; border: 1px solid #e2e8f0; font-weight: 700;">LIMPAR
+              CAMPOS</button>
+          </div>
+
+          <div class="form-colaborador" style="display: grid; grid-template-columns: 2fr 2fr 1fr; gap: 15px;">
+            <div>
+              <label
+                style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Nome
+                Completo *</label>
+              <input id="colabNome" placeholder="Ex: João Silva..." style="width: 100%;">
+            </div>
+            <div>
+              <label
+                style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Endereço</label>
+              <input id="colabEndereco" placeholder="Rua, Número, Bairro..." style="width: 100%;">
+            </div>
+            <div>
+              <label
+                style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Função</label>
+              <input id="colabFuncao" placeholder="Ex: Atendente, Cozinha..." style="width: 100%;">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+            <div>
+              <label
+                style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Contatos</label>
+              <div id="listaInputsContatos" style="display: flex; flex-direction: column; gap: 5px;">
+                <div style="display: flex; gap: 5px;">
+                  <input class="colab-contato" placeholder="(00) 00000-0000" style="flex: 1;">
+                  <button onclick="adicionarInput('listaInputsContatos', 'colab-contato')"
+                    style="background: #38bdf8; padding: 0 10px; border-radius: 6px;">+</button>
+                </div>
+              </div>
+            </div>
+            <div>
+              <label
+                style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Chaves
+                PIX</label>
+              <div id="listaInputsPix" style="display: flex; flex-direction: column; gap: 5px;">
+                <div style="display: flex; gap: 5px;">
+                  <input class="colab-pix" placeholder="Email, CPF ou Chave..." style="flex: 1;">
+                  <button onclick="adicionarInput('listaInputsPix', 'colab-pix')"
+                    style="background: #38bdf8; padding: 0 10px; border-radius: 6px;">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+            <button id="btnSalvarColaborador"
+              style="background: #10b981; padding: 12px 24px; font-weight: 700; color: white; border-radius: 8px; border: none; cursor: pointer;">Salvar
+              Colaborador</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card"
+        style="background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+            <tr>
+              <th style="padding: 15px; text-align: center; width: 60px;">ID</th>
+              <th style="padding: 15px; text-align: left;">Nome</th>
+              <th style="padding: 15px; text-align: left;">Função</th>
+              <th style="padding: 15px; text-align: left;">Contatos</th>
+              <th style="padding: 15px; text-align: left;">PIX</th>
+              <th style="padding: 15px; text-align: center; width: 100px;">Status</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaColaboradoresBody">
             <!-- Preenchido via JS -->
           </tbody>
         </table>
@@ -761,6 +857,7 @@
   <script src="js/api.js?v=3"></script>
   <script src="js/utils.js?v=3"></script>
   <script src="js/index.js?v=3"></script>
+  <script src="js/colaboradores.js?v=3"></script>
 </body>
 
 </html>

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import comandas, produtos, itens_comanda, pagamentos
+from app.api import comandas, produtos, itens_comanda, pagamentos, colaboradores
 
 app = FastAPI(title="Comanda Rancho JP")
 
@@ -19,3 +19,4 @@ app.include_router(comandas.router)
 app.include_router(produtos.router)
 app.include_router(itens_comanda.router)
 app.include_router(pagamentos.router)
+app.include_router(colaboradores.router)
