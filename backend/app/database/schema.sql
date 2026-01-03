@@ -64,3 +64,17 @@ CREATE TABLE IF NOT EXISTS colaboradores (
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
     ativo INTEGER DEFAULT 1
 );
+
+-- =========================
+-- TABELA: pagamentos_gerais (Financeiro)
+-- =========================
+CREATE TABLE IF NOT EXISTS pagamentos_gerais (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    data DATETIME DEFAULT CURRENT_TIMESTAMP,
+    nome TEXT NOT NULL,
+    item_servico TEXT NOT NULL,
+    valor REAL NOT NULL,
+    forma_pagamento TEXT,
+    pago INTEGER DEFAULT 1, -- 1 para Sim, 0 para Não
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+);

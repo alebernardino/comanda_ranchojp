@@ -7,31 +7,62 @@ const btnSalvarColaborador = document.getElementById("btnSalvarColaborador");
 const btnLimparColaborador = document.getElementById("btnLimparColaborador");
 
 let colaboradoresCache = [];
+let sortColabCol = 'ativo';
+let sortColabAsc = false;
 
 async function carregarColaboradores() {
     try {
         const res = await fetch(`${API_URL}/colaboradores/`);
         colaboradoresCache = await res.json();
-        renderizarTabelaColaboradores(colaboradoresCache);
+        filtrarERenderizarColaboradores();
     } catch (err) {
         console.error("Erro ao carregar colaboradores:", err);
     }
 }
 
-function renderizarTabelaColaboradores(lista) {
+function filtrarERenderizarColaboradores() {
     if (!tabelaColaboradoresBody) return;
-    tabelaColaboradoresBody.innerHTML = "";
 
-    // Inativos para o final, depois ordena por nome
-    lista.sort((a, b) => {
-        if (a.ativo === b.ativo) return a.nome.localeCompare(b.nome);
-        return a.ativo ? -1 : 1;
+    const fNome = document.getElementById("filtroColabNome").value.toLowerCase();
+    const fFuncao = document.getElementById("filtroColabFuncao").value.toLowerCase();
+
+    let lista = colaboradoresCache.filter(c => {
+        const matchNome = c.nome.toLowerCase().includes(fNome);
+        const matchFuncao = (c.funcao || "").toLowerCase().includes(fFuncao);
+        return matchNome && matchFuncao;
     });
+
+    // Ordenação
+    lista.sort((a, b) => {
+        let valA = a[sortColabCol];
+        let valB = b[sortColabCol];
+
+        // Caso especial para status (ativo) - inativos sempre para baixo por padrão se não for a coluna de ordenação principal
+        // Mas se a coluna de ordenação for 'ativo', respeitamos a direção.
+
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+
+        if (valA < valB) return sortColabAsc ? -1 : 1;
+        if (valA > valB) return sortColabAsc ? 1 : -1;
+
+        // Desempate por nome
+        if (sortColabCol !== 'nome') {
+            return a.nome.localeCompare(b.nome);
+        }
+        return 0;
+    });
+
+    renderizarTabelaColaboradores(lista);
+}
+
+function renderizarTabelaColaboradores(lista) {
+    tabelaColaboradoresBody.innerHTML = "";
 
     lista.forEach(c => {
         const tr = document.createElement("tr");
         tr.style.borderBottom = "1px solid #f1f5f9";
-        if (!c.ativo) tr.style.opacity = "0.7"; // Visual feedback for inactive
+        if (!c.ativo) tr.style.opacity = "0.7";
 
         const contatosStr = c.contatos.join(", ") || "-";
         const pixsStr = c.pixs.join(", ") || "-";
@@ -51,6 +82,22 @@ function renderizarTabelaColaboradores(lista) {
         `;
         tabelaColaboradoresBody.appendChild(tr);
     });
+}
+
+function ordenarColaboradores(coluna) {
+    if (sortColabCol === coluna) {
+        sortColabAsc = !sortColabAsc;
+    } else {
+        sortColabCol = coluna;
+        sortColabAsc = true;
+    }
+    filtrarERenderizarColaboradores();
+}
+
+function limparFiltrosColaboradores() {
+    document.getElementById("filtroColabNome").value = "";
+    document.getElementById("filtroColabFuncao").value = "";
+    filtrarERenderizarColaboradores();
 }
 
 async function salvarColaborador() {
@@ -101,7 +148,6 @@ function limparCamposColaborador() {
     document.getElementById("colabEndereco").value = "";
     document.getElementById("colabFuncao").value = "";
 
-    // Reseta listas de inputs
     document.getElementById("listaInputsContatos").innerHTML = `
         <div style="display: flex; gap: 5px;">
             <input class="colab-contato" placeholder="(00) 00000-0000" style="flex: 1;">
@@ -123,7 +169,7 @@ async function alterarStatusColaborador(id, ativo) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ ativo })
         });
-        await carregarColaboradores(); // Recarrega para aplicar a nova ordenação
+        await carregarColaboradores();
     } catch (err) {
         console.error(err);
     }
@@ -132,10 +178,12 @@ async function alterarStatusColaborador(id, ativo) {
 function alternarParaColaboradores() {
     document.getElementById("sectionComandas").classList.add("hidden");
     document.getElementById("sectionProdutos").classList.add("hidden");
+    if (document.getElementById("sectionFinanceiro")) document.getElementById("sectionFinanceiro").classList.add("hidden");
     sectionColaboradores.classList.remove("hidden");
 
     document.getElementById("navDashboard").classList.remove("active");
     document.getElementById("navProdutosSessao").classList.remove("active");
+    if (document.getElementById("navFinanceiro")) document.getElementById("navFinanceiro").classList.remove("active");
     navColaboradores.classList.add("active");
 
     carregarColaboradores();
@@ -146,6 +194,8 @@ if (navColaboradores) navColaboradores.onclick = (e) => { e.preventDefault(); al
 if (btnSalvarColaborador) btnSalvarColaborador.onclick = salvarColaborador;
 if (btnLimparColaborador) btnLimparColaborador.onclick = limparCamposColaborador;
 
-// Expor globalmente para os botões inline
-window.excluirColaborador = excluirColaborador;
+// Global
 window.alterarStatusColaborador = alterarStatusColaborador;
+window.ordenarColaboradores = ordenarColaboradores;
+window.filtrarERenderizarColaboradores = filtrarERenderizarColaboradores;
+window.limparFiltrosColaboradores = limparFiltrosColaboradores;
