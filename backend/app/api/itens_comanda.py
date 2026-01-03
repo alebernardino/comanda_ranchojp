@@ -38,7 +38,7 @@ def listar_itens_da_comanda(numero: int, db: sqlite3.Connection = Depends(get_db
     cursor = db.cursor()
 
     cursor.execute(
-        "SELECT id FROM comandas WHERE numero = ?",
+        "SELECT id FROM comandas WHERE numero = ? AND status = 'aberta'",
         (numero,),
     )
     comanda = cursor.fetchone()

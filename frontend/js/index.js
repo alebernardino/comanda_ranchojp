@@ -68,7 +68,6 @@ const prodPageValor = document.getElementById("prodPageValor");
 const btnSalvarProdutoPage = document.getElementById("btnSalvarProdutoPage");
 const tabelaProdutosPageBody = document.getElementById("tabelaProdutosPageBody");
 
-
 // ===============================
 // CONFIGURAÇÃO E ESTADO GLOBAL
 // ===============================

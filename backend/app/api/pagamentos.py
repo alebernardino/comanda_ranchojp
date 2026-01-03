@@ -16,7 +16,7 @@ def listar_pagamentos(numero: int, db: sqlite3.Connection = Depends(get_db)):
     cursor = db.cursor()
 
     cursor.execute(
-        "SELECT id FROM comandas WHERE numero = ?",
+        "SELECT id FROM comandas WHERE numero = ? AND status = 'aberta'",
         (numero,),
     )
     comanda = cursor.fetchone()
@@ -46,7 +46,7 @@ def adicionar_pagamento(numero: int, pagamento: PagamentoCreate, db: sqlite3.Con
     cursor = db.cursor()
 
     cursor.execute(
-        "SELECT id, status FROM comandas WHERE numero = ?",
+        "SELECT id, status FROM comandas WHERE numero = ? AND status = 'aberta'",
         (numero,),
     )
     comanda = cursor.fetchone()

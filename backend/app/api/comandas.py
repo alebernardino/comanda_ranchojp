@@ -36,40 +36,17 @@ def listar_comandas_abertas(db: sqlite3.Connection = Depends(get_db)):
 def abrir_comanda(comanda: ComandaCreate, db: sqlite3.Connection = Depends(get_db)):
     cursor = db.cursor()
 
-    # Verifica se número da comanda já existe
+    # Verifica se já existe uma comanda ABERTA com esse número
     cursor.execute(
-        "SELECT id, status FROM comandas WHERE numero = ?", (comanda.numero,)
+        "SELECT id FROM comandas WHERE numero = ? AND status = 'aberta'", (comanda.numero,)
     )
     existente = cursor.fetchone()
     
     if existente:
-        if existente["status"] == "aberta":
-            raise HTTPException(
-                status_code=400,
-                detail="Já existe uma comanda ABERTA com esse número"
-            )
-        else:
-            # Reabre a comanda existente (finalizada)
-            comanda_id = existente["id"]
-            
-            # Limpa itens e pagamentos antigos
-            cursor.execute("DELETE FROM itens_comanda WHERE comanda_id = ?", (comanda_id,))
-            cursor.execute("DELETE FROM pagamentos WHERE comanda_id = ?", (comanda_id,))
-            
-            # Reset status e dados
-            cursor.execute(
-                """
-                UPDATE comandas 
-                SET status = 'aberta', nome = ?, telefone = ?, finalizada_em = NULL, criada_em = ?
-                WHERE id = ?
-                """,
-                (comanda.nome, comanda.telefone, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), comanda_id)
-            )
-            db.commit()
-            
-            cursor.execute("SELECT * FROM comandas WHERE id = ?", (comanda_id,))
-            row = cursor.fetchone()
-            return dict(row)
+        raise HTTPException(
+            status_code=400,
+            detail="Já existe uma comanda ABERTA com esse número"
+        )
 
     # Cria nova
     cursor.execute(
@@ -95,13 +72,15 @@ def abrir_comanda(comanda: ComandaCreate, db: sqlite3.Connection = Depends(get_d
 def buscar_comanda_por_numero(numero: int, db: sqlite3.Connection = Depends(get_db)):
     cursor = db.cursor()
 
+    # Prioritiza a comanda aberta, caso contrário pega a última (histórico)
+    # Prioritiza a comanda aberta - se não tiver aberta, retorna 404 para permitir criação de nova
     cursor.execute(
-        "SELECT * FROM comandas WHERE numero = ?", (numero,)
+        "SELECT * FROM comandas WHERE numero = ? AND status = 'aberta'", (numero,)
     )
     row = cursor.fetchone()
 
     if not row:
-        raise HTTPException(status_code=404, detail="Comanda não encontrada")
+         raise HTTPException(status_code=404, detail="Comanda não encontrada ou não está aberta")
 
     return dict(row)
 
@@ -110,14 +89,14 @@ def buscar_comanda_por_numero(numero: int, db: sqlite3.Connection = Depends(get_
 def atualizar_comanda(numero: int, comanda: ComandaCreate, db: sqlite3.Connection = Depends(get_db)):
     cursor = db.cursor()
 
-    # Verifica se a comanda existe
+    # Verifica se a comanda existe e está aberta
     cursor.execute(
-        "SELECT id FROM comandas WHERE numero = ?", (numero,)
+        "SELECT id FROM comandas WHERE numero = ? AND status = 'aberta'", (numero,)
     )
     row = cursor.fetchone()
     
     if not row:
-        raise HTTPException(status_code=404, detail="Comanda não encontrada")
+        raise HTTPException(status_code=404, detail="Comanda não encontrada ou não está aberta")
     
     comanda_id = row["id"]
 
@@ -147,19 +126,13 @@ def fechar_comanda(numero: int, db: sqlite3.Connection = Depends(get_db)):
     cursor = db.cursor()
 
     cursor.execute(
-        "SELECT id, status FROM comandas WHERE numero = ?",
+        "SELECT id, status FROM comandas WHERE numero = ? AND status = 'aberta'",
         (numero,),
     )
     comanda = cursor.fetchone()
 
     if not comanda:
-        raise HTTPException(status_code=404, detail="Comanda não encontrada")
-
-    if comanda["status"] != "aberta":
-        raise HTTPException(
-            status_code=400,
-            detail="Comanda já está finalizada"
-        )
+        raise HTTPException(status_code=404, detail="Comanda não encontrada ou já finalizada")
 
     comanda_id = comanda["id"]
 
@@ -201,15 +174,15 @@ def fechar_comanda(numero: int, db: sqlite3.Connection = Depends(get_db)):
 def resumo_comanda(numero: int, db: sqlite3.Connection = Depends(get_db)):
     cursor = db.cursor()
 
-    # Buscar comanda
+    # Buscar comanda (apenas aberta)
     cursor.execute(
-        "SELECT id, status FROM comandas WHERE numero = ?",
+        "SELECT id, status FROM comandas WHERE numero = ? AND status = 'aberta'",
         (numero,),
     )
     comanda = cursor.fetchone()
 
     if not comanda:
-        raise HTTPException(status_code=404, detail="Comanda não encontrada")
+        raise HTTPException(status_code=404, detail="Comanda não encontrada ou não está aberta")
 
     comanda_id = comanda["id"]
 
