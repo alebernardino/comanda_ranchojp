@@ -168,16 +168,24 @@ async function abrirComanda(numero) {
     }
     // Se 200, ela existe e está tudo bem, seguimos para abrir.
 
-
     if (modalComanda) modalComanda.classList.remove("hidden");
     await carregarDadosComanda();
     await carregarItensComanda();
-    if (buscaCodigo) {
-      setTimeout(() => {
-        buscaCodigo.focus();
-        buscaCodigo.select();
-      }, 100);
-    }
+
+    setTimeout(() => {
+      const temItens = tabelaItensBody && tabelaItensBody.children.length > 0;
+      if (!temItens) {
+        if (nomeComanda) {
+          nomeComanda.focus();
+          nomeComanda.select();
+        }
+      } else {
+        if (buscaCodigo) {
+          buscaCodigo.focus();
+          buscaCodigo.select();
+        }
+      }
+    }, 150);
   } catch (err) { console.error(err); }
 }
 
@@ -931,7 +939,38 @@ function configListeners() {
     buscaDescricao.onkeydown = e => { if (e.key === "Enter") adicionarItemComanda(); };
   }
   if (qtdProduto) qtdProduto.onkeydown = e => { if (e.key === "Enter") adicionarItemComanda(); };
-  if (valorProduto) valorProduto.onkeydown = e => { if (e.key === "Enter") adicionarItemComanda(); };
+  if (valorProduto) {
+    valorProduto.onkeydown = e => {
+      if (e.key === "Enter" || e.key === "Tab") {
+        const cod = buscaCodigo ? buscaCodigo.value.trim() : "";
+        const desc = buscaDescricao ? buscaDescricao.value.trim() : "";
+        const qtd = qtdProduto ? qtdProduto.value.trim() : "";
+        const val = valorProduto.value.trim();
+
+        if (!cod || !desc || !qtd || !val) {
+          e.preventDefault();
+          alert("Por favor, preencha todos os campos: Cód, Descrição, Qtd e Valor.");
+          if (!cod) buscaCodigo.focus();
+          else if (!desc) buscaDescricao.focus();
+          else if (!qtd) qtdProduto.focus();
+          else if (!val) valorProduto.focus();
+          return;
+        }
+
+        if (e.key === "Enter") {
+          adicionarItemComanda();
+        } else if (e.key === "Tab") {
+          e.preventDefault();
+          if (confirm("Adicionar item?")) {
+            adicionarItemComanda();
+          } else {
+            buscaCodigo.focus();
+            buscaCodigo.select();
+          }
+        }
+      }
+    };
+  }
 
   if (btnDividirItemModal) btnDividirItemModal.onclick = abrirModalDividirItem;
   if (btnImprimirModal) btnImprimirModal.onclick = () => window.print();
