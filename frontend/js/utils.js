@@ -1,7 +1,8 @@
 // utils.js
 
 function formatarMoeda(valor) {
-    return valor.toLocaleString("pt-BR", {
+    if (valor === null || valor === undefined || isNaN(valor)) return "0,00";
+    return Number(valor).toLocaleString("pt-BR", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     });

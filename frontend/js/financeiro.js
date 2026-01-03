@@ -201,11 +201,13 @@ function alternarParaFinanceiro() {
     document.getElementById("sectionComandas").classList.add("hidden");
     document.getElementById("sectionProdutos").classList.add("hidden");
     document.getElementById("sectionColaboradores").classList.add("hidden");
+    if (document.getElementById("sectionRelatorios")) document.getElementById("sectionRelatorios").classList.add("hidden");
     sectionFinanceiro.classList.remove("hidden");
 
     document.getElementById("navDashboard").classList.remove("active");
     document.getElementById("navProdutosSessao").classList.remove("active");
     document.getElementById("navColaboradores").classList.remove("active");
+    if (document.getElementById("navRelatorios")) document.getElementById("navRelatorios").classList.remove("active");
     navFinanceiro.classList.add("active");
 
     configurarDataPadrao();

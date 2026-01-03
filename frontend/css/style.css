@@ -781,3 +781,51 @@ th {
   background: #f59e0b !important;
   color: white !important;
 }
+
+/* Estilos para Abas de Relatórios */
+.tab-btn {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.tab-btn:hover:not(.active) {
+  background: #e2e8f0;
+}
+
+.tab-content.hidden {
+  display: none;
+}
+
+.btn-small-tab {
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    padding: 5px 15px;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    font-weight: 700;
+    box-shadow: none;
+}
+
+.btn-small-tab.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+.btn-small-tab:hover:not(.active) {
+    background: #f1f5f9;
+    transform: none;
+}

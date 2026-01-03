@@ -861,11 +861,13 @@ function alternarParaProdutos() {
   sectionProdutos.classList.remove("hidden");
   if (document.getElementById("sectionColaboradores")) document.getElementById("sectionColaboradores").classList.add("hidden");
   if (document.getElementById("sectionFinanceiro")) document.getElementById("sectionFinanceiro").classList.add("hidden");
+  if (document.getElementById("sectionRelatorios")) document.getElementById("sectionRelatorios").classList.add("hidden");
 
   navDashboard.classList.remove("active");
   navProdutosSessao.classList.add("active");
   if (document.getElementById("navColaboradores")) document.getElementById("navColaboradores").classList.remove("active");
   if (document.getElementById("navFinanceiro")) document.getElementById("navFinanceiro").classList.remove("active");
+  if (document.getElementById("navRelatorios")) document.getElementById("navRelatorios").classList.remove("active");
 
   carregarProdutosCadastrados();
 }
@@ -875,11 +877,13 @@ function alternarParaDashboard() {
   sectionComandas.classList.remove("hidden");
   if (document.getElementById("sectionColaboradores")) document.getElementById("sectionColaboradores").classList.add("hidden");
   if (document.getElementById("sectionFinanceiro")) document.getElementById("sectionFinanceiro").classList.add("hidden");
+  if (document.getElementById("sectionRelatorios")) document.getElementById("sectionRelatorios").classList.add("hidden");
 
   navProdutosSessao.classList.remove("active");
   navDashboard.classList.add("active");
   if (document.getElementById("navColaboradores")) document.getElementById("navColaboradores").classList.remove("active");
   if (document.getElementById("navFinanceiro")) document.getElementById("navFinanceiro").classList.remove("active");
+  if (document.getElementById("navRelatorios")) document.getElementById("navRelatorios").classList.remove("active");
 
   carregarDashboard();
 }

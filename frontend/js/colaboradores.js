@@ -179,11 +179,13 @@ function alternarParaColaboradores() {
     document.getElementById("sectionComandas").classList.add("hidden");
     document.getElementById("sectionProdutos").classList.add("hidden");
     if (document.getElementById("sectionFinanceiro")) document.getElementById("sectionFinanceiro").classList.add("hidden");
+    if (document.getElementById("sectionRelatorios")) document.getElementById("sectionRelatorios").classList.add("hidden");
     sectionColaboradores.classList.remove("hidden");
 
     document.getElementById("navDashboard").classList.remove("active");
     document.getElementById("navProdutosSessao").classList.remove("active");
     if (document.getElementById("navFinanceiro")) document.getElementById("navFinanceiro").classList.remove("active");
+    if (document.getElementById("navRelatorios")) document.getElementById("navRelatorios").classList.remove("active");
     navColaboradores.classList.add("active");
 
     carregarColaboradores();

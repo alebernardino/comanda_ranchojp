@@ -5,6 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rancho JP - Sistema de Comandas</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <link rel="stylesheet" href="css/style.css?v=1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -418,9 +420,13 @@
           <span class="nav-icon">💰</span>
           Financeiro
         </a>
-        <a href="#" class="nav-item">
-          <span class="nav-icon">📈</span>
+        <a href="#" class="nav-item" id="navRelatorios">
+          <span class="nav-icon">📊</span>
           Relatórios
+        </a>
+        <a href="#" class="nav-item" id="navFluxoCaixa">
+          <span class="nav-icon">💸</span>
+          Fluxo de Caixa
         </a>
       </nav>
 
@@ -767,6 +773,251 @@
         </table>
       </div>
     </div>
+
+    <!-- SESSÃO DE RELATÓRIOS -->
+    <div id="sectionRelatorios" class="hidden" style="padding: 20px;">
+      <header class="page-header" style="margin-bottom: 25px;">
+        <div class="page-title">
+          <h1
+            style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.8rem; color: #1e293b; font-weight: 800;">
+            Relatórios e Análises</h1>
+          <p style="margin: 5px 0 0; color: #64748b; font-size: 0.9rem;">Dashboards e análise detalhada de vendas</p>
+        </div>
+      </header>
+
+      <!-- Relatório: Vendas -->
+      <div id="relAbaVendas" class="tab-content">
+        <div class="card" style="background: white; padding: 25px; border-radius: 16px; margin-bottom: 20px;">
+
+          <div style="display: flex; align-items: flex-end; gap: 20px; margin-bottom: 30px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 10px; align-items: flex-end;">
+              <div>
+                <label
+                  style="display:block; font-size:0.7rem; font-weight:700; color:#64748b; margin-bottom:5px;">INÍCIO</label>
+                <input type="date" id="relVendasInicio" style="height:35px;">
+              </div>
+              <div>
+                <label
+                  style="display:block; font-size:0.7rem; font-weight:700; color:#64748b; margin-bottom:5px;">FIM</label>
+                <input type="date" id="relVendasFim" style="height:35px;">
+              </div>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: flex-end;">
+              <div>
+                <label
+                  style="display:block; font-size:0.7rem; font-weight:700; color:#64748b; margin-bottom:5px;">BUSCAR
+                  PRODUTO</label>
+                <input type="text" id="relVendasBusca" placeholder="Nome ou Código..."
+                  style="height:35px; width: 180px;">
+              </div>
+              <button onclick="carregarRelatorioVendas()"
+                style="background:#3b82f6; color:white; padding:0 20px; height:35px; border-radius:8px; font-weight:700;">FILTRAR</button>
+            </div>
+
+            <div
+              style="display: flex; gap: 8px; background: #f1f5f9; padding: 5px; border-radius: 10px; height: 45px; align-items: center;">
+              <button class="btn-small-tab" data-sub="comandas" onclick="alternarSubAbaVendas('comandas', this)">📝
+                Comandas</button>
+              <button class="btn-small-tab" data-sub="analitico" onclick="alternarSubAbaVendas('analitico', this)">🗒️
+                Analítico</button>
+              <button class="btn-small-tab active" data-sub="geral" onclick="alternarSubAbaVendas('geral', this)">📊
+                Geral</button>
+            </div>
+
+            <div id="containerAgrupamentoVendas"
+              style="display: flex; gap: 8px; background: #f1f5f9; padding: 5px; border-radius: 10px; height: 45px; align-items: center;">
+              <button class="btn-small-tab active" onclick="carregarRelatorioVendas('dia', this)">Dia</button>
+              <button class="btn-small-tab" onclick="carregarRelatorioVendas('semana', this)">Semana</button>
+              <button class="btn-small-tab" onclick="carregarRelatorioVendas('mes', this)">Mês</button>
+            </div>
+          </div>
+
+          <!-- SUB-ABA GERAL VENDAS -->
+          <div id="subAbaVendasGeral">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+              <div style="max-height: 450px; overflow-y: auto; border: 1px solid #f1f5f9; border-radius: 12px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <thead style="background:#f8fafc; position:sticky; top:0; z-index: 10;">
+                    <tr>
+                      <th style="padding:10px; text-align:left; cursor:pointer;"
+                        onclick="ordenarGeralVendas('descricao')">Produto ↕️</th>
+                      <th style="padding:10px; text-align:center; cursor:pointer;"
+                        onclick="ordenarGeralVendas('total_qtd')">Qtd ↕️</th>
+                      <th style="padding:10px; text-align:right; padding-right:10px; cursor:pointer;"
+                        onclick="ordenarGeralVendas('total_valor')">Total ↕️</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tabelaRelVendasBody"></tbody>
+                  <tfoot style="background: #f8fafc; border-top: 2px solid #e2e8f0; font-weight: 800;">
+                    <tr>
+                      <td style="padding: 12px;">TOTAL GERAL</td>
+                      <td id="totalRelVendasQtd" style="text-align: center;">0</td>
+                      <td id="totalRelVendasValor" style="text-align: right; padding-right: 10px;">R$ 0,00</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+              <div
+                style="background: #f8fafc; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: center;">
+                <canvas id="chartVendas"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-ABA ANALÍTICO VENDAS -->
+          <div id="subAbaVendasAnalitico" class="hidden">
+            <div style="border: 1px solid #f1f5f9; border-radius: 12px; overflow-y: auto; max-height: 450px;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 10;">
+                  <tr>
+                    <th style="padding: 10px; text-align: left; cursor: pointer; width: 150px; white-space: nowrap;"
+                      onclick="ordenarAnaliticoVendas('data')">Data ↕️</th>
+                    <th style="padding: 10px; text-align: center; width: 90px; cursor: pointer;"
+                      onclick="ordenarAnaliticoVendas('comanda_numero')">Comanda ↕️</th>
+                    <th style="padding: 10px; text-align: left;">Produto</th>
+                    <th style="padding: 10px; text-align: center; width: 60px;">Qtd</th>
+                    <th style="padding: 10px; text-align: right; width: 120px;">Valor (R$)</th>
+                  </tr>
+                </thead>
+                <tbody id="tabelaRelVendasAnaliticoBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- SUB-ABA COMANDAS VENDAS -->
+          <div id="subAbaVendasComandas" class="hidden">
+            <div style="border: 1px solid #f1f5f9; border-radius: 12px; overflow-y: auto; max-height: 450px;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 10;">
+                  <tr>
+                    <th style="padding: 10px; text-align: left; cursor: pointer; width: 150px; white-space: nowrap;"
+                      onclick="ordenarComandasVendas('data')">Data ↕️</th>
+                    <th style="padding: 10px; text-align: center; width: 100px; cursor: pointer;"
+                      onclick="ordenarComandasVendas('numero')">Nrº Comanda ↕️</th>
+                    <th style="padding: 10px; text-align: left;">Métodos</th>
+                    <th style="padding: 10px; text-align: right; cursor: pointer; width: 120px;"
+                      onclick="ordenarComandasVendas('total')">Total (R$) ↕️</th>
+                  </tr>
+                </thead>
+                <tbody id="tabelaRelVendasComandasBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="sectionFluxoCaixa" class="hidden" style="padding: 20px;">
+        <header class="page-header" style="margin-bottom: 25px;">
+          <div class="page-title">
+            <h1
+              style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.8rem; color: #1e293b; font-weight: 800;">
+              Fluxo de Caixa</h1>
+            <p style="margin: 5px 0 0; color: #64748b; font-size: 0.9rem;">Análise dinâmica de entradas e saídas</p>
+          </div>
+        </header>
+
+        <div class="card" style="background: white; padding: 25px; border-radius: 16px; margin-bottom: 20px;">
+          <div style="display: flex; align-items: flex-end; gap: 20px; margin-bottom: 30px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 10px; align-items: flex-end;">
+              <div>
+                <label
+                  style="display:block; font-size:0.7rem; font-weight:700; color:#64748b; margin-bottom:5px;">INÍCIO</label>
+                <input type="date" id="relFluxoInicio" style="height:35px;">
+              </div>
+              <div>
+                <label
+                  style="display:block; font-size:0.7rem; font-weight:700; color:#64748b; margin-bottom:5px;">FIM</label>
+                <input type="date" id="relFluxoFim" style="height:35px;">
+              </div>
+              <button onclick="carregarRelatorioFluxo()"
+                style="background:#3b82f6; color:white; padding:0 20px; height:35px; border-radius:8px; font-weight:700;">FILTRAR</button>
+            </div>
+
+            <div
+              style="display: flex; gap: 8px; background: #f1f5f9; padding: 5px; border-radius: 10px; height: 45px; align-items: center;">
+              <button class="btn-small-tab" data-sub="analitico" onclick="alternarSubAbaFluxo('analitico', this)">🗒️
+                Analítico</button>
+              <button class="btn-small-tab active" data-sub="geral" onclick="alternarSubAbaFluxo('geral', this)">📊
+                Geral</button>
+            </div>
+
+            <div id="containerAgrupamentoFluxo"
+              style="display: flex; gap: 8px; background: #f1f5f9; padding: 5px; border-radius: 10px; height: 45px; align-items: center;">
+              <button class="btn-small-tab active" onclick="carregarRelatorioFluxo('dia', this)">Dia</button>
+              <button class="btn-small-tab" onclick="carregarRelatorioFluxo('semana', this)">Semana</button>
+              <button class="btn-small-tab" onclick="carregarRelatorioFluxo('mes', this)">Mês</button>
+            </div>
+          </div>
+
+          <!-- SUB-ABA GERAL -->
+          <div id="subAbaFluxoGeral">
+            <div style="margin-bottom: 40px;">
+              <h4 style="margin: 0 0 15px 0; color: #10b981; display:flex; align-items:center; gap:8px;">
+                <span style="background:#dcfce7; padding:5px; border-radius:6px;">📈</span> Pivot: Entradas por Forma
+              </h4>
+              <div style="border: 1px solid #f1f5f9; border-radius: 12px; overflow-x: auto;">
+                <table id="tabelaPivotEntradas" style="width: 100%; border-collapse: collapse; min-width: 600px;">
+                </table>
+              </div>
+            </div>
+            <div>
+              <h4 style="margin: 0 0 15px 0; color: #ef4444; display:flex; align-items:center; gap:8px;">
+                <span style="background:#fee2e2; padding:5px; border-radius:6px;">📉</span> Pivot: Saídas por Recebedor
+              </h4>
+              <div style="border: 1px solid #f1f5f9; border-radius: 12px; overflow-x: auto;">
+                <table id="tabelaPivotSaidas" style="width: 100%; border-collapse: collapse; min-width: 600px;"></table>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-ABA ANALÍTICO -->
+          <div id="subAbaFluxoAnalitico" class="hidden">
+            <div style="display: grid; grid-template-rows: auto auto; gap: 30px;">
+              <div>
+                <h4 style="margin: 0 0 10px 0; color: #10b981; display:flex; align-items:center; gap:8px;">
+                  <span style="background:#dcfce7; padding:5px; border-radius:6px;">📋</span> Detalhamento de Entradas
+                </h4>
+                <div style="border: 1px solid #f1f5f9; border-radius: 12px; overflow-y: auto; max-height: 250px;">
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 10;">
+                      <tr>
+                        <th style="padding: 10px; text-align: left; cursor: pointer; width: 150px; white-space: nowrap;"
+                          onclick="ordenarAnaliticoFluxo('entradas', 'data')">Data ↕️</th>
+                        <th style="padding: 10px; text-align: left;">Descrição</th>
+                        <th style="padding: 10px; text-align: left;">Método</th>
+                        <th style="padding: 10px; text-align: right; width: 120px;">Valor (R$)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tabelaFluxoAnaliticoEntradas"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div>
+                <h4 style="margin: 0 0 10px 0; color: #ef4444; display:flex; align-items:center; gap:8px;">
+                  <span style="background:#fee2e2; padding:5px; border-radius:6px;">📋</span> Detalhamento de Saídas
+                </h4>
+                <div style="border: 1px solid #f1f5f9; border-radius: 12px; overflow-y: auto; max-height: 250px;">
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 10;">
+                      <tr>
+                        <th style="padding: 10px; text-align: left; cursor: pointer; width: 150px; white-space: nowrap;"
+                          onclick="ordenarAnaliticoFluxo('saidas', 'data')">Data ↕️</th>
+                        <th style="padding: 10px; text-align: left;">Recebedor</th>
+                        <th style="padding: 10px; text-align: left;">Serviço/Item</th>
+                        <th style="padding: 10px; text-align: right; width: 120px;">Valor (R$)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tabelaFluxoAnaliticoSaidas"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </main>
 
   <aside class="sidebar-right">
@@ -1016,6 +1267,7 @@
   <script src="js/index.js?v=3"></script>
   <script src="js/colaboradores.js?v=3"></script>
   <script src="js/financeiro.js?v=3"></script>
+  <script src="js/relatorios.js?v=3"></script>
 </body>
 
 </html>
