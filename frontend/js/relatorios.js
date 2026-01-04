@@ -58,11 +58,19 @@ async function carregarRelatorioVendas(periodo = 'dia', btn = null) {
 
         dadosComandasVendas = data.comandas || [];
         renderizarComandasVendas(dadosComandasVendas);
+
+        const dadosFechamento = data.fechamento || [];
+        renderizarFechamentoVendas(dadosFechamento);
+
+        const dadosSaidas = data.saidas || [];
+        renderizarPagamentosVendas(dadosSaidas);
+
         console.log("Relatório de vendas carregado com sucesso.");
     } catch (err) {
         console.error("Erro ao carregar relatório de vendas:", err);
     }
 }
+
 
 function ordenarGeralVendas(campo) {
     sortDirecaoGeral = sortDirecaoGeral === 'asc' ? 'desc' : 'asc';
@@ -203,6 +211,8 @@ async function carregarRelatorioFluxo(periodo = 'dia', btn = null) {
         dadosAnaliticoFluxo.entradas = data.analitico_entradas;
         dadosAnaliticoFluxo.saidas = data.analitico_saidas;
         renderizarAnaliticoFluxo(dadosAnaliticoFluxo.entradas, dadosAnaliticoFluxo.saidas);
+
+        renderizarFechamentoFluxo(data.fechamento_entradas || [], data.fechamento_saidas || []);
     } catch (err) {
         console.error("Erro ao carregar fluxo de caixa:", err);
     }
@@ -300,8 +310,9 @@ function alternarSubAbaVendas(sub, btn) {
     const divGeral = document.getElementById("subAbaVendasGeral");
     const divAnalitico = document.getElementById("subAbaVendasAnalitico");
     const divComandas = document.getElementById("subAbaVendasComandas");
-    const divAgrupamento = document.getElementById("containerAgrupamentoVendas");
-    if (!divGeral || !divAnalitico || !divComandas) return;
+    const divFechamento = document.getElementById("subAbaVendasFechamento");
+    const divPagamentos = document.getElementById("subAbaVendasPagamentos");
+    if (!divGeral || !divAnalitico || !divComandas || !divFechamento || !divPagamentos) return;
 
     const btns = btn.parentElement.querySelectorAll('button');
     btns.forEach(b => b.classList.remove('active'));
@@ -310,6 +321,8 @@ function alternarSubAbaVendas(sub, btn) {
     divGeral.classList.add("hidden");
     divAnalitico.classList.add("hidden");
     divComandas.classList.add("hidden");
+    divFechamento.classList.add("hidden");
+    divPagamentos.classList.add("hidden");
 
     if (sub === 'geral') {
         divGeral.classList.remove("hidden");
@@ -319,6 +332,12 @@ function alternarSubAbaVendas(sub, btn) {
         if (divAgrupamento) divAgrupamento.classList.add("hidden");
     } else if (sub === 'comandas') {
         divComandas.classList.remove("hidden");
+        if (divAgrupamento) divAgrupamento.classList.add("hidden");
+    } else if (sub === 'fechamento') {
+        divFechamento.classList.remove("hidden");
+        if (divAgrupamento) divAgrupamento.classList.add("hidden");
+    } else if (sub === 'pagamentos') {
+        divPagamentos.classList.remove("hidden");
         if (divAgrupamento) divAgrupamento.classList.add("hidden");
     }
 }
@@ -389,24 +408,119 @@ function renderizarComandasVendas(comandas) {
     });
 }
 
+function renderizarFechamentoVendas(fechamento) {
+    const tbody = document.getElementById("tabelaRelVendasFechamentoBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    let totalGeral = 0;
+
+    fechamento.forEach(f => {
+        totalGeral += f.total;
+        const tr = document.createElement("tr");
+        tr.style.borderBottom = "1px solid #f1f5f9";
+        tr.innerHTML = `
+            <td style="padding: 10px; font-weight: 500;">${f.forma}</td>
+            <td style="padding: 10px; text-align: right; font-weight: 800; color: #10b981;">R$ ${formatarMoeda(f.total)}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    const elTotal = document.getElementById("totalRelVendasFechamentoValor");
+    if (elTotal) elTotal.innerText = `R$ ${formatarMoeda(totalGeral)}`;
+}
+
+function renderizarPagamentosVendas(saidas) {
+    const tbody = document.getElementById("tabelaRelVendasPagamentosBody");
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+    let totalGeral = 0;
+
+    saidas.forEach(s => {
+        totalGeral += s.total;
+        const tr = document.createElement("tr");
+        tr.style.borderBottom = "1px solid #f1f5f9";
+
+        tr.innerHTML = `
+            <td style="padding: 10px; font-weight: 500;">${s.fornecedor || 'N/A'}</td>
+            <td style="padding: 10px; text-align: right; font-weight: 800; color: #ef4444;">R$ ${formatarMoeda(s.total)}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    const elTotal = document.getElementById("totalRelVendasPagamentosValor");
+    if (elTotal) elTotal.innerText = `R$ ${formatarMoeda(totalGeral)}`;
+}
+
 function alternarSubAbaFluxo(sub, btn) {
     const divGeral = document.getElementById("subAbaFluxoGeral");
     const divAnalitico = document.getElementById("subAbaFluxoAnalitico");
+    const divFechamento = document.getElementById("subAbaFluxoFechamento");
     const divAgrupamento = document.getElementById("containerAgrupamentoFluxo");
-    if (!divGeral || !divAnalitico) return;
+    if (!divGeral || !divAnalitico || !divFechamento) return;
 
     const btns = btn.parentElement.querySelectorAll('button');
     btns.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
 
+    divGeral.classList.add("hidden");
+    divAnalitico.classList.add("hidden");
+    divFechamento.classList.add("hidden");
+
     if (sub === 'geral') {
         divGeral.classList.remove("hidden");
-        divAnalitico.classList.add("hidden");
         if (divAgrupamento) divAgrupamento.classList.remove("hidden");
-    } else {
-        divGeral.classList.add("hidden");
+    } else if (sub === 'analitico') {
         divAnalitico.classList.remove("hidden");
         if (divAgrupamento) divAgrupamento.classList.add("hidden");
+    } else if (sub === 'fechamento') {
+        divFechamento.classList.remove("hidden");
+        if (divAgrupamento) divAgrupamento.classList.add("hidden");
+    }
+}
+
+function renderizarFechamentoFluxo(entradas, saidas) {
+    const tbodyE = document.getElementById("tabelaFechamentoFluxoEntradasBody");
+    const tbodyS = document.getElementById("tabelaFechamentoFluxoSaidasBody");
+    if (!tbodyE || !tbodyS) return;
+
+    tbodyE.innerHTML = "";
+    tbodyS.innerHTML = "";
+
+    let totalE = 0;
+    let totalS = 0;
+
+    entradas.forEach(e => {
+        totalE += e.total;
+        const tr = document.createElement("tr");
+        tr.style.borderBottom = "1px solid #f1f5f9";
+        tr.innerHTML = `
+            <td style="padding: 10px; font-weight: 500;">${e.forma}</td>
+            <td style="padding: 10px; text-align: right; font-weight: 800; color: #10b981;">R$ ${formatarMoeda(e.total)}</td>
+        `;
+        tbodyE.appendChild(tr);
+    });
+
+    saidas.forEach(s => {
+        totalS += s.total;
+        const tr = document.createElement("tr");
+        tr.style.borderBottom = "1px solid #f1f5f9";
+        tr.innerHTML = `
+            <td style="padding: 10px; font-weight: 500;">${s.forma}</td>
+            <td style="padding: 10px; text-align: right; font-weight: 800; color: #ef4444;">R$ ${formatarMoeda(s.total)}</td>
+        `;
+        tbodyS.appendChild(tr);
+    });
+
+    document.getElementById("totalFechamentoFluxoEntradas").innerText = `R$ ${formatarMoeda(totalE)}`;
+    document.getElementById("totalFechamentoFluxoSaidas").innerText = `R$ ${formatarMoeda(totalS)}`;
+
+    const saldo = totalE - totalS;
+    const elSaldo = document.getElementById("saldoFinalFluxo");
+    if (elSaldo) {
+        elSaldo.innerText = `R$ ${formatarMoeda(saldo)}`;
+        elSaldo.style.color = saldo >= 0 ? '#3b82f6' : '#ef4444';
     }
 }
 

@@ -386,6 +386,38 @@
       font-weight: 800;
       color: #1e293b;
     }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .btn-small-tab {
+      background: white;
+      border: 1px solid #e2e8f0;
+      color: #64748b;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: none;
+      margin: 0 !important;
+    }
+
+    .btn-small-tab:hover {
+      background: #f8fafc;
+      color: #1e293b;
+    }
+
+    .btn-small-tab.active {
+      background: #3b82f6 !important;
+      color: white !important;
+      border-color: #3b82f6 !important;
+    }
   </style>
 </head>
 
@@ -423,10 +455,6 @@
         <a href="#" class="nav-item" id="navRelatorios">
           <span class="nav-icon">📊</span>
           Relatórios
-        </a>
-        <a href="#" class="nav-item" id="navFluxoCaixa">
-          <span class="nav-icon">💸</span>
-          Fluxo de Caixa
         </a>
       </nav>
 
@@ -816,19 +844,16 @@
 
             <div
               style="display: flex; gap: 8px; background: #f1f5f9; padding: 5px; border-radius: 10px; height: 45px; align-items: center;">
+              <button class="btn-small-tab active" data-sub="geral" onclick="alternarSubAbaVendas('geral', this)">📊
+                Geral</button>
               <button class="btn-small-tab" data-sub="comandas" onclick="alternarSubAbaVendas('comandas', this)">📝
                 Comandas</button>
               <button class="btn-small-tab" data-sub="analitico" onclick="alternarSubAbaVendas('analitico', this)">🗒️
                 Analítico</button>
-              <button class="btn-small-tab active" data-sub="geral" onclick="alternarSubAbaVendas('geral', this)">📊
-                Geral</button>
-            </div>
-
-            <div id="containerAgrupamentoVendas"
-              style="display: flex; gap: 8px; background: #f1f5f9; padding: 5px; border-radius: 10px; height: 45px; align-items: center;">
-              <button class="btn-small-tab active" onclick="carregarRelatorioVendas('dia', this)">Dia</button>
-              <button class="btn-small-tab" onclick="carregarRelatorioVendas('semana', this)">Semana</button>
-              <button class="btn-small-tab" onclick="carregarRelatorioVendas('mes', this)">Mês</button>
+              <button class="btn-small-tab" data-sub="pagamentos" onclick="alternarSubAbaVendas('pagamentos', this)">💳
+                Pagamentos</button>
+              <button class="btn-small-tab" data-sub="fechamento" onclick="alternarSubAbaVendas('fechamento', this)">🔒
+                Fechamento</button>
             </div>
           </div>
 
@@ -904,6 +929,48 @@
             </div>
           </div>
 
+          <!-- SUB-ABA FECHAMENTO VENDAS -->
+          <div id="subAbaVendasFechamento" class="hidden">
+            <div style="border: 1px solid #f1f5f9; border-radius: 12px; overflow-y: auto; max-height: 450px;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 10;">
+                  <tr>
+                    <th style="padding: 10px; text-align: left;">Método de Pagamento</th>
+                    <th style="padding: 10px; text-align: right; width: 200px;">Total (R$)</th>
+                  </tr>
+                </thead>
+                <tbody id="tabelaRelVendasFechamentoBody"></tbody>
+                <tfoot style="background: #f8fafc; border-top: 2px solid #e2e8f0; font-weight: 800;">
+                  <tr>
+                    <td style="padding: 12px;">TOTAL GERAL</td>
+                    <td id="totalRelVendasFechamentoValor" style="text-align: right; padding-right: 10px;">R$ 0,00</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          <!-- SUB-ABA PAGAMENTOS VENDAS (SAÍDAS) -->
+          <div id="subAbaVendasPagamentos" class="hidden">
+            <div style="border: 1px solid #f1f5f9; border-radius: 12px; overflow-y: auto; max-height: 450px;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 10;">
+                  <tr>
+                    <th style="padding: 10px; text-align: left;">Fornecedor / Nome</th>
+                    <th style="padding: 10px; text-align: right; width: 200px;">Total Pago (R$)</th>
+                  </tr>
+                </thead>
+                <tbody id="tabelaRelVendasPagamentosBody"></tbody>
+                <tfoot style="background: #f8fafc; border-top: 2px solid #e2e8f0; font-weight: 800;">
+                  <tr>
+                    <td style="padding: 12px;">TOTAL DE PAGAMENTOS (SAÍDAS)</td>
+                    <td id="totalRelVendasPagamentosValor" style="text-align: right; padding-right: 10px;">R$ 0,00</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -940,6 +1007,8 @@
                 Analítico</button>
               <button class="btn-small-tab active" data-sub="geral" onclick="alternarSubAbaFluxo('geral', this)">📊
                 Geral</button>
+              <button class="btn-small-tab" data-sub="fechamento" onclick="alternarSubAbaFluxo('fechamento', this)">🔒
+                Fechamento</button>
             </div>
 
             <div id="containerAgrupamentoFluxo"
@@ -984,7 +1053,7 @@
                       <tr>
                         <th style="padding: 10px; text-align: left; cursor: pointer; width: 150px; white-space: nowrap;"
                           onclick="ordenarAnaliticoFluxo('entradas', 'data')">Data ↕️</th>
-                        <th style="padding: 10px; text-align: left;">Descrição</th>
+                        <th style="padding: 10px; text-align: left;">Fonte/Venda</th>
                         <th style="padding: 10px; text-align: left;">Método</th>
                         <th style="padding: 10px; text-align: right; width: 120px;">Valor (R$)</th>
                       </tr>
@@ -1012,6 +1081,65 @@
                   </table>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- SUB-ABA FECHAMENTO FLUXO -->
+          <div id="subAbaFluxoFechamento" class="hidden">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+              <div>
+                <h4 style="margin: 0 0 15px 0; color: #10b981; display:flex; align-items:center; gap:8px;">
+                  <span style="background:#dcfce7; padding:5px; border-radius:6px;">📈</span> Resumo de Entradas
+                  (Recebimentos)
+                </h4>
+                <div style="border: 1px solid #f1f5f9; border-radius: 12px; overflow-y: auto;">
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="background: #f8fafc; z-index: 10;">
+                      <tr>
+                        <th style="padding: 10px; text-align: left;">Método</th>
+                        <th style="padding: 10px; text-align: right; width: 150px;">Total (R$)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tabelaFechamentoFluxoEntradasBody"></tbody>
+                    <tfoot style="background: #f8fafc; border-top: 2px solid #e2e8f0; font-weight: 800;">
+                      <tr>
+                        <td style="padding: 12px;">TOTAL ENTRADAS</td>
+                        <td id="totalFechamentoFluxoEntradas" style="text-align: right; padding-right: 10px;">R$ 0,00
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+              <div>
+                <h4 style="margin: 0 0 15px 0; color: #ef4444; display:flex; align-items:center; gap:8px;">
+                  <span style="background:#fee2e2; padding:5px; border-radius:6px;">📉</span> Resumo de Saídas
+                  (Pagamentos)
+                </h4>
+                <div style="border: 1px solid #f1f5f9; border-radius: 12px; overflow-y: auto;">
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="background: #f8fafc; z-index: 10;">
+                      <tr>
+                        <th style="padding: 10px; text-align: left;">Método</th>
+                        <th style="padding: 10px; text-align: right; width: 150px;">Total (R$)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tabelaFechamentoFluxoSaidasBody"></tbody>
+                    <tfoot style="background: #f8fafc; border-top: 2px solid #e2e8f0; font-weight: 800;">
+                      <tr>
+                        <td style="padding: 12px;">TOTAL SAÍDAS</td>
+                        <td id="totalFechamentoFluxoSaidas" style="text-align: right; padding-right: 10px;">R$ 0,00</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div
+              style="margin-top: 25px; background: #f8fafc; padding: 20px; border-radius: 12px; border: 2px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+              <h3 style="margin: 0; color: #1e293b; font-family: 'Outfit', sans-serif;">SALDO FINAL DO PERÍODO</h3>
+              <p id="saldoFinalFluxo" style="margin: 0; font-size: 1.8rem; font-weight: 800; color: #3b82f6;">R$ 0,00
+              </p>
             </div>
           </div>
         </div>
@@ -1112,21 +1240,21 @@
             </div>
             <button id="btnAbrirModalCadastroComanda"
               style="background: #3b82f6; padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; margin: 0;">+
-              Novo</button>
+              Novo (F3)</button>
           </div>
           <div id="listaProdutos"></div>
         </div>
       </div>
 
       <div class="pdv-atalhos" style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
-        <button id="btnImprimirModal">Imprimir (F2)</button>
-        <button id="btnDividirItemModal">Dividir por item</button>
+        <button id="btnImprimirModal">Imprimir (F9)</button>
+        <button id="btnDividirItemModal">Dividir por item (F4)</button>
         <label style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
           Dividir total por:
           <input type="number" id="qtdPessoas" min="1" value="1" style="width: 60px;">
           <span id="valorPorPessoa" style="color: #ef4444;">R$ 0,00</span>
         </label>
-        <button id="btnPagamentoModal" style="background: #10b981;">Pagamento (F1)</button>
+        <button id="btnPagamentoModal" style="background: #10b981;">Pagamento (F8)</button>
       </div>
     </div>
   </div>
@@ -1161,8 +1289,8 @@
           TOTAL SELECIONADO: <span id="totalSelecionadoItem">R$ 0,00</span>
         </div>
         <div style="display: flex; gap: 10px;">
-          <button id="btnConsiderarSelecao" style="background: var(--primary);">Considerar Seleção</button>
-          <button id="btnAdicionarAoPagamento" style="background: #10b981;">Gerar Pagamento</button>
+          <button id="btnConsiderarSelecao" style="background: var(--primary);">Considerar Seleção (F5)</button>
+          <button id="btnAdicionarAoPagamento" style="background: #10b981;">Gerar Pagamento (F8)</button>
         </div>
       </div>
     </div>
@@ -1197,7 +1325,7 @@
               style="width: 100%; margin-top: 15px; height: 50px; font-size: 1.1rem;">Lançar Pagamento (Enter)</button>
             <button id="btnVoltarDivisaoModal"
               style="width: 100%; margin-top: 8px; height: 40px; font-size: 0.95rem; background: #64748b;">Voltar p/
-              Divisão</button>
+              Divisão (F4)</button>
           </div>
         </div>
         <div class="col-resumo">
@@ -1222,7 +1350,7 @@
           </div>
           <button id="btnFinalizarComandaModal" class="btn-finalizar"
             style="background: #22c55e; height: 55px; font-size: 1.2rem; margin-top: 15px; border-radius: 8px;">Finalizar
-            (F1)</button>
+            (F10)</button>
         </div>
       </div>
     </div>
@@ -1241,7 +1369,7 @@
           <input id="novoCodigo" placeholder="Código" style="width: 100px;">
           <input id="novaDescricao" placeholder="Descrição" style="flex: 1;">
           <input id="valorNovoProduto" placeholder="Valor" type="number" step="0.01" style="width: 120px;">
-          <button id="btnSalvarProdutoModal" style="background: #10b981;">Salvar Produto</button>
+          <button id="btnSalvarProdutoModal" style="background: #10b981;">Salvar Produto (F5)</button>
         </div>
       </div>
       <div style="max-height: 50vh; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 12px;">

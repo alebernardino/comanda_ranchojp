@@ -587,7 +587,7 @@ async function carregarResumoPagamento(valorSugerido = null) {
       btnFinalizarComandaModal.innerText = "Finalizado";
     } else {
       btnFinalizarComandaModal.disabled = false;
-      btnFinalizarComandaModal.innerText = "Finalizar Comanda (F1)";
+      btnFinalizarComandaModal.innerText = "Finalizar Comanda (F10)";
     }
   }
 }
@@ -1111,12 +1111,32 @@ document.onkeydown = (e) => {
     else if (modalComanda && !modalComanda.classList.contains("hidden")) btnFecharModalComanda.onclick();
     else if (modalCadastroProduto && !modalCadastroProduto.classList.contains("hidden")) modalCadastroProduto.classList.add("hidden");
   }
-  if (modalComanda && !modalComanda.classList.contains("hidden") && modalPagamento && modalPagamento.classList.contains("hidden")) {
-    if (e.key === "F1") { e.preventDefault(); abrirModalPagamento(); }
-    if (e.key === "F2") { e.preventDefault(); window.print(); }
+  // Atalhos dentro da Comanda (sem outros modais abertos)
+  if (modalComanda && !modalComanda.classList.contains("hidden") &&
+    modalPagamento.classList.contains("hidden") &&
+    modalDividirItem.classList.contains("hidden") &&
+    modalCadastroProduto.classList.contains("hidden")) {
+    if (e.key === "F3") { e.preventDefault(); btnAbrirModalCadastroComanda.onclick(); }
+    if (e.key === "F4") { e.preventDefault(); abrirModalDividirItem(); }
+    if (e.key === "F8") { e.preventDefault(); abrirModalPagamento(); }
+    if (e.key === "F9") { e.preventDefault(); window.print(); }
   }
+
+  // Atalhos dentro do Dividir por Item
+  if (modalDividirItem && !modalDividirItem.classList.contains("hidden")) {
+    if (e.key === "F5") { e.preventDefault(); considerarSelecao(false); }
+    if (e.key === "F8") { e.preventDefault(); btnAdicionarAoPagamento.onclick(); }
+  }
+
+  // Atalhos dentro do Pagamento
   if (modalPagamento && !modalPagamento.classList.contains("hidden")) {
-    if (e.key === "F1" && btnFinalizarComandaModal && !btnFinalizarComandaModal.disabled) { e.preventDefault(); finalizarComandaModal(); }
+    if (e.key === "F4") { e.preventDefault(); btnVoltarDivisaoModal.onclick(); }
+    if (e.key === "F10" && btnFinalizarComandaModal && !btnFinalizarComandaModal.disabled) { e.preventDefault(); finalizarComandaModal(); }
+  }
+
+  // Atalhos dentro do Cadastro de Produto (Modal)
+  if (modalCadastroProduto && !modalCadastroProduto.classList.contains("hidden")) {
+    if (e.key === "F5") { e.preventDefault(); salvarNovoProduto(); }
   }
 };
 

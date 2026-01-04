@@ -108,11 +108,61 @@ def relatorio_vendas(
     cursor.execute(query_comandas_base, params)
     comandas_vendas = [dict(r) for r in cursor.fetchall()]
 
+    # 5. Fechamento (Resumo de pagamentos por forma)
+    # Importante: o filtro de busca de produto (i.descricao) não deve afetar o fechamento de caixa
+    # Então criamos um where_clause específico apenas com as datas
+    where_caixa = "WHERE c.status = 'finalizada'"
+    params_caixa = []
+    if data_inicio:
+        where_caixa += " AND c.finalizada_em >= ?"
+        params_caixa.append(data_inicio)
+    if data_fim:
+        where_caixa += " AND c.finalizada_em <= ?"
+        params_caixa.append(data_fim)
+
+    query_fechamento = f"""
+        SELECT 
+            p.forma,
+            SUM(p.valor) as total
+        FROM pagamentos p
+        JOIN comandas c ON p.comanda_id = c.id
+        {where_caixa}
+        GROUP BY p.forma
+        ORDER BY total DESC
+    """
+    cursor.execute(query_fechamento, params_caixa)
+    fechamento = [dict(r) for r in cursor.fetchall()]
+
+    # 6. Resumo de Pagamentos Efetuados (Saídas/Despesas)
+    # Usamos o mesmo filtro de data do caixa
+    where_saidas = "WHERE 1=1"
+    params_saidas = []
+    if data_inicio:
+        where_saidas += " AND data >= ?"
+        params_saidas.append(data_inicio)
+    if data_fim:
+        where_saidas += " AND data <= ?"
+        params_saidas.append(data_fim)
+
+    query_saidas_resumo = f"""
+        SELECT 
+            nome as fornecedor,
+            SUM(valor) as total
+        FROM pagamentos_gerais
+        {where_saidas}
+        GROUP BY nome
+        ORDER BY total DESC
+    """
+    cursor.execute(query_saidas_resumo, params_saidas)
+    saidas_resumo = [dict(r) for r in cursor.fetchall()]
+
     return {
         "geral": geral,
         "temporal": temporal,
         "analitico": analitico,
-        "comandas": comandas_vendas
+        "comandas": comandas_vendas,
+        "fechamento": fechamento,
+        "saidas": saidas_resumo
     }
 
 @router.get("/fluxo-caixa")
@@ -197,10 +247,23 @@ def fluxo_caixa(
 
     cursor.execute(query_analitico_saidas, params)
     analitico_saidas = [dict(r) for r in cursor.fetchall()]
+
+    # NOVO: Fechamento (Resumo por método para o período todo)
+    # Entradas
+    query_fech_entradas = f"SELECT forma, SUM(valor) as total FROM pagamentos {where_entradas} GROUP BY forma ORDER BY total DESC"
+    cursor.execute(query_fech_entradas, params)
+    fechamento_entradas = [dict(r) for r in cursor.fetchall()]
+
+    # Saídas
+    query_fech_saidas = f"SELECT forma_pagamento as forma, SUM(valor) as total FROM pagamentos_gerais {where_saidas} GROUP BY forma ORDER BY total DESC"
+    cursor.execute(query_fech_saidas, params)
+    fechamento_saidas = [dict(r) for r in cursor.fetchall()]
     
     return {
         "pivot_entradas": pivot_entradas,
         "pivot_saidas": pivot_saidas,
         "analitico_entradas": analitico_entradas,
-        "analitico_saidas": analitico_saidas
+        "analitico_saidas": analitico_saidas,
+        "fechamento_entradas": fechamento_entradas,
+        "fechamento_saidas": fechamento_saidas
     }
