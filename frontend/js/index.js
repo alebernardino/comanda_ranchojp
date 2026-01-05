@@ -393,6 +393,8 @@ function atualizarDivisaoTotal() {
 
 async function abrirModalDividirItem() {
   if (modalDividirItem) modalDividirItem.classList.remove("hidden");
+  const tituloPartial = document.getElementById("tituloPartialPrint");
+  if (tituloPartial) tituloPartial.innerText = `Comanda ${currentComandaNumero} | valor parcial`;
   const res = await fetch(`${API_URL}/comandas/${currentComandaNumero}/itens`);
   if (!res.ok) return;
   const itens = await res.json();
@@ -443,6 +445,10 @@ function renderizarTabelaDivisao() {
     const disponivelParaSelecionar = item.total_quantidade - pagoVisual;
 
     const tr = document.createElement("tr");
+    tr.classList.add("item-divisao-row");
+    if (disponivelParaSelecionar <= 0) tr.classList.add("zero-print");
+    else tr.classList.add("zero-print"); // Começa como zero-print se o valor inicial for 0
+
     tr.innerHTML = `
       <td style="padding: 8px;">${item.codigo}</td>
       <td>${item.descricao}</td>
@@ -450,6 +456,7 @@ function renderizarTabelaDivisao() {
       <td style="text-align: center;">${pagoVisual.toFixed(0)}</td>
       <td style="text-align: center;" class="qtd-disponivel-modal">${disponivelParaSelecionar}</td>
       <td style="text-align: center;">
+        <span class="print-only-qty" style="display:none;">0</span>
         <input type="number" value="0" min="0" max="${disponivelParaSelecionar}" class="qtd-pagar-item" style="width: 50px; text-align: center; margin: 0;" ${disponivelParaSelecionar <= 0 ? 'disabled' : ''}>
       </td>
       <td>R$ ${formatarMoeda(item.valor)}</td>
@@ -457,6 +464,7 @@ function renderizarTabelaDivisao() {
     `;
 
     const input = tr.querySelector(".qtd-pagar-item");
+    const printQty = tr.querySelector(".print-only-qty");
     const disponivelEl = tr.querySelector(".qtd-disponivel-modal");
 
     if (input) {
@@ -467,7 +475,12 @@ function renderizarTabelaDivisao() {
         input.value = val;
         item.selecionado = val;
 
-        // Atualiza Restante Visualmente (Disponível - Selecionado Agora)
+        // Controle de impressão
+        if (val > 0) tr.classList.remove("zero-print");
+        else tr.classList.add("zero-print");
+        if (printQty) printQty.innerText = val;
+
+        // Atualiza Restante Visualmente
         if (disponivelEl) {
           disponivelEl.innerText = (disponivelParaSelecionar - val).toString();
         }
@@ -1036,6 +1049,9 @@ function configListeners() {
   const btnConsiderarSelecao = document.getElementById("btnConsiderarSelecao");
   if (btnConsiderarSelecao) btnConsiderarSelecao.onclick = () => considerarSelecao(false);
 
+  const btnImprimirDivisao = document.getElementById("btnImprimirDivisao");
+  if (btnImprimirDivisao) btnImprimirDivisao.onclick = () => window.print();
+
   if (btnSalvarProdutoModal) btnSalvarProdutoModal.onclick = salvarNovoProduto;
   if (btnSalvarProdutoPage) btnSalvarProdutoPage.onclick = salvarNovoProdutoSessao;
 
@@ -1124,9 +1140,11 @@ document.onkeydown = (e) => {
 
   // Atalhos dentro do Dividir por Item
   if (modalDividirItem && !modalDividirItem.classList.contains("hidden")) {
+    if (e.key === "F2") { e.preventDefault(); window.print(); }
     if (e.key === "F5") { e.preventDefault(); considerarSelecao(false); }
     if (e.key === "F8") { e.preventDefault(); btnAdicionarAoPagamento.onclick(); }
   }
+
 
   // Atalhos dentro do Pagamento
   if (modalPagamento && !modalPagamento.classList.contains("hidden")) {

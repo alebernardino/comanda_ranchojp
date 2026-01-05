@@ -809,23 +809,435 @@ th {
 }
 
 .btn-small-tab {
-    background: #f8fafc;
-    color: #64748b;
-    border: 1px solid #e2e8f0;
-    padding: 5px 15px;
-    font-size: 0.8rem;
-    border-radius: 6px;
-    font-weight: 700;
-    box-shadow: none;
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  padding: 5px 15px;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  font-weight: 700;
+  box-shadow: none;
 }
 
 .btn-small-tab.active {
-    background: #3b82f6;
-    color: white;
-    border-color: #3b82f6;
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
 }
 
 .btn-small-tab:hover:not(.active) {
-    background: #f1f5f9;
-    transform: none;
+  background: #f1f5f9;
+  transform: none;
+}
+
+/* Elementos globais de impressão (escondidos na tela) */
+.global-print-element {
+  display: none;
+}
+
+/* --- ESTILOS DE IMPRESSÃO PARA IMPRESSORA TÉRMICA (80mm) --- */
+@media print {
+  @page {
+    margin: 0;
+    size: 80mm auto;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Esconder tudo que não deve ser impresso */
+  .sidebar,
+  .sidebar-right,
+  .btn-toggle,
+  .page-header,
+  .nav-menu,
+  .sidebar-footer,
+  .quick-actions,
+  .pdv-produtos,
+  .pdv-atalhos,
+  .modal-actions button,
+  button:not(.btn-remover-mini),
+  .btn-remover-mini,
+  #btnFecharModalComanda,
+  #btnFecharModalPagamento,
+  #btnFecharModalCadastro,
+  .modal-content>h2,
+  .produtos-header,
+  .card button,
+  .hidden,
+  #sectionComandas,
+  #sectionProdutos,
+  #sectionColaboradores,
+  #sectionFinanceiro,
+  #sectionRelatorios,
+  .comandas-grid,
+  [style*="display: none"] {
+    display: none !important;
+  }
+
+  body {
+    background-color: white !important;
+    width: 80mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    font-size: 10pt !important;
+    color: black !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  .main-content {
+    display: none !important;
+    width: 100% !important;
+  }
+
+  /* Se não houver modal aberto, permite imprimir o conteúdo principal (ex: relatórios) */
+  body:not(:has(.modal:not(.hidden))) .main-content {
+    display: block !important;
+    padding: 2mm !important;
+    margin: 0 !important;
+    width: 80mm !important;
+  }
+
+  /* Ajuste de Modais para Impressão */
+  .modal {
+    position: static !important;
+    width: 80mm !important;
+    background: white !important;
+    backdrop-filter: none !important;
+    display: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    z-index: auto !important;
+  }
+
+  /* Mostra apenas o modal que não está oculto */
+  .modal:not(.hidden) {
+    display: block !important;
+  }
+
+  .modal-content {
+    width: 80mm !important;
+    max-width: 80mm !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 2mm !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    animation: none !important;
+  }
+
+  /* Formatação da Comanda no Papel */
+  .comanda-header {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    border-bottom: 1pt dashed black !important;
+    gap: 5px !important;
+    margin-bottom: 3mm !important;
+    padding-bottom: 2mm !important;
+  }
+
+  .comanda-info {
+    flex-direction: column !important;
+    gap: 2px !important;
+    width: 100% !important;
+  }
+
+  .info-field {
+    display: flex !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    font-size: 9pt !important;
+  }
+
+  .info-field label {
+    font-weight: normal !important;
+  }
+
+  .info-field input {
+    border: none !important;
+    text-align: right !important;
+    padding: 0 !important;
+    min-width: 0 !important;
+    font-weight: bold !important;
+    background: none !important;
+  }
+
+  .pdv-layout {
+    display: block !important;
+  }
+
+  .pdv-comanda {
+    width: 100% !important;
+  }
+
+  .entrada-produto {
+    display: none !important;
+  }
+
+  /* Tabela de Itens para Impressão */
+  table {
+    font-size: 8pt !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 2mm 0 !important;
+  }
+
+  th {
+    background: none !important;
+    border-bottom: 1pt solid black !important;
+    padding: 1mm 0 !important;
+    color: black !important;
+    text-align: left !important;
+    font-size: 8pt !important;
+  }
+
+  td {
+    padding: 1mm 0 !important;
+    border-bottom: 0.5pt dashed #ccc !important;
+    vertical-align: top !important;
+  }
+
+  #tabelaItens th:nth-child(1),
+  #tabelaItens td:nth-child(1) {
+    width: 12% !important;
+  }
+
+  /* Cód */
+  #tabelaItens th:nth-child(2),
+  #tabelaItens td:nth-child(2) {
+    width: 40% !important;
+    white-space: normal !important;
+  }
+
+  /* Desc */
+  #tabelaItens th:nth-child(3),
+  #tabelaItens td:nth-child(3) {
+    width: 10% !important;
+    text-align: center !important;
+  }
+
+  /* Qtd */
+  #tabelaItens th:nth-child(4),
+  #tabelaItens td:nth-child(4) {
+    width: 18% !important;
+    text-align: right !important;
+  }
+
+  /* Valor */
+  #tabelaItens th:nth-child(5),
+  #tabelaItens td:nth-child(5) {
+    width: 20% !important;
+    text-align: right !important;
+  }
+
+  /* Total */
+
+  .qtd-container {
+    justify-content: center !important;
+  }
+
+  .btn-qtd,
+  .btn-remover,
+  .btn-remover-mini {
+    display: none !important;
+  }
+
+  #totalComanda {
+    border-top: 1pt solid black !important;
+    margin-top: 3mm !important;
+    font-size: 11pt !important;
+    font-weight: 800 !important;
+    background: none !important;
+    box-shadow: none !important;
+    text-align: right !important;
+    padding: 2mm 0 !important;
+  }
+
+  /* Relatórios e Cards */
+  .card {
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    width: 100% !important;
+  }
+
+  canvas {
+    display: none !important;
+  }
+
+  /* Ajuste de colunas de relatórios para 80mm */
+  [id*="subAba"] table {
+    font-size: 7pt !important;
+  }
+
+  /* Regras específicas para o Modal de Divisão de Itens */
+  #modalDividirItem h3,
+  #tituloComanda {
+    display: none !important;
+  }
+
+  /* Se o modal de divisão estiver aberto, não imprime a comanda de fundo */
+  body:has(#modalDividirItem:not(.hidden)) #modalComanda {
+    display: none !important;
+  }
+
+
+  #modalDividirItem table th:nth-child(3),
+  #modalDividirItem table td:nth-child(3),
+  #modalDividirItem table th:nth-child(4),
+  #modalDividirItem table td:nth-child(4),
+  #modalDividirItem table th:nth-child(5),
+  #modalDividirItem table td:nth-child(5) {
+    display: none !important;
+  }
+
+  /* Ajuste de larguras para bater com a comanda */
+  #modalDividirItem table th:nth-child(1),
+  #modalDividirItem table td:nth-child(1) {
+    width: 12% !important;
+  }
+
+  #modalDividirItem table th:nth-child(2),
+  #modalDividirItem table td:nth-child(2) {
+    width: 40% !important;
+  }
+
+  #modalDividirItem table th:nth-child(6),
+  #modalDividirItem table td:nth-child(6) {
+    width: 10% !important;
+    text-align: center !important;
+  }
+
+  #modalDividirItem table th:nth-child(7),
+  #modalDividirItem table td:nth-child(7) {
+    width: 18% !important;
+    text-align: right !important;
+  }
+
+  #modalDividirItem table th:nth-child(8),
+  #modalDividirItem table td:nth-child(8) {
+    width: 20% !important;
+    text-align: right !important;
+  }
+
+  /* Alternância de labels */
+  .screen-only {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  #tituloPartialPrint {
+    text-align: center !important;
+    font-size: 14pt !important;
+    font-weight: 800 !important;
+  }
+
+
+  /* Oculta linhas não selecionadas no modal de divisão */
+  .zero-print {
+    display: none !important;
+  }
+
+  /* Mostra a quantidade em formato de texto e esconde o input */
+  .print-only-qty {
+    display: inline !important;
+    font-weight: bold !important;
+  }
+
+  .qtd-pagar-item {
+    display: none !important;
+  }
+
+  #footerTotalDivisao {
+    display: block !important;
+    text-align: right !important;
+    margin-top: 3mm !important;
+    font-size: 11pt !important;
+    font-weight: 800 !important;
+    border-top: 1pt solid black !important;
+    padding: 2mm 0 !important;
+    color: black !important;
+    background: none !important;
+    box-shadow: none !important;
+  }
+
+  #footerTotalDivisao span {
+    display: inline !important;
+  }
+
+  /* Estilos para o Cabeçalho e Rodapé Globais na Impressão */
+  .global-print-element {
+    display: block !important;
+    width: 80mm !important;
+    /* Força largura total do papel */
+    text-align: center !important;
+    color: black !important;
+    float: none !important;
+    clear: both !important;
+    position: relative !important;
+  }
+
+  #globalPrintHeader {
+    border-bottom: 1.5pt solid black !important;
+    margin-bottom: 4mm !important;
+    padding-bottom: 2mm !important;
+    margin-top: 0 !important;
+  }
+
+  #globalPrintHeader h1 {
+    margin: 0 !important;
+    font-size: 16pt !important;
+    /* Reduzido para garantir uma linha */
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    font-family: 'Outfit', sans-serif !important;
+    letter-spacing: -0.5px !important;
+    white-space: nowrap !important;
+    /* Impede quebra de linha */
+  }
+
+  #globalPrintFooter {
+    border-top: 1pt dashed black !important;
+    margin-top: 6mm !important;
+    padding-top: 3mm !important;
+    font-size: 8pt !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    gap: 15px !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .footer-item {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
+  }
+
+  .footer-item i,
+  .footer-item .fab {
+    font-size: 12pt !important;
+    color: black !important;
+    display: inline-block !important;
+    margin-right: 5px !important;
+    font-family: "Font Awesome 6 Brands", "Font Awesome 5 Brands" !important;
+    font-weight: 400 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
 }
