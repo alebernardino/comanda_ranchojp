@@ -137,12 +137,16 @@ def relatorio_vendas(
     # Usamos o mesmo filtro de data do caixa
     where_saidas = "WHERE 1=1"
     params_saidas = []
-    if data_inicio:
-        where_saidas += " AND data >= ?"
-        params_saidas.append(data_inicio)
-    if data_fim:
-        where_saidas += " AND data <= ?"
-        params_saidas.append(data_fim)
+    if (data_inicio):
+        # Extrai apenas a data YYYY-MM-DD para o filtro de saídas (ex: 2026-01-05)
+        # Usamos [:10] pois a string pode vir com 'T' ou espaço
+        data_ini_clean = data_inicio[:10]
+        where_saidas += " AND date(data) >= ?"
+        params_saidas.append(data_ini_clean)
+    if (data_fim):
+        data_fim_clean = data_fim[:10]
+        where_saidas += " AND date(data) <= ?"
+        params_saidas.append(data_fim_clean)
 
     query_saidas_resumo = f"""
         SELECT 

@@ -461,6 +461,10 @@
           <span class="nav-icon">📊</span>
           Relatórios
         </a>
+        <a href="#" class="nav-item" id="navFechamento">
+          <span class="nav-icon">🔒</span>
+          Fechamento
+        </a>
       </nav>
 
       <div class="sidebar-footer"
@@ -807,6 +811,59 @@
       </div>
     </div>
 
+    <div id="sectionFechamento" class="hidden" style="padding: 20px;">
+      <header class="page-header" style="margin-bottom: 25px;">
+        <div class="page-title">
+          <h1
+            style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.8rem; color: #1e293b; font-weight: 800;">
+            Fechamento Diário</h1>
+          <p style="margin: 5px 0 0; color: #64748b; font-size: 0.9rem;">Insira os valores das maquininhas e dinheiro
+            para conferência</p>
+        </div>
+      </header>
+
+      <div class="card"
+        style="background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-top: 20px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+          <div class="input-group">
+            <label
+              style="display:block; font-size: 0.75rem; font-weight: 800; color: #64748b; margin-bottom: 5px;">MAQUININHA
+              - CRÉDITO</label>
+            <input type="number" step="0.01" id="fechamentoCredito" placeholder="R$ 0,00"
+              style="width: 100%; font-size: 1.2rem; font-weight: 800; padding: 10px;">
+          </div>
+          <div class="input-group">
+            <label
+              style="display:block; font-size: 0.75rem; font-weight: 800; color: #64748b; margin-bottom: 5px;">MAQUININHA
+              - DÉBITO</label>
+            <input type="number" step="0.01" id="fechamentoDebito" placeholder="R$ 0,00"
+              style="width: 100%; font-size: 1.2rem; font-weight: 800; padding: 10px;">
+          </div>
+          <div class="input-group">
+            <label
+              style="display:block; font-size: 0.75rem; font-weight: 800; color: #64748b; margin-bottom: 5px;">MAQUININHA
+              - PIX</label>
+            <input type="number" step="0.01" id="fechamentoPix" placeholder="R$ 0,00"
+              style="width: 100%; font-size: 1.2rem; font-weight: 800; padding: 10px;">
+          </div>
+          <div class="input-group">
+            <label
+              style="display:block; font-size: 0.75rem; font-weight: 800; color: #64748b; margin-bottom: 5px;">DINHEIRO
+              EM ESPÉCIE</label>
+            <input type="number" step="0.01" id="fechamentoDinheiro" placeholder="R$ 0,00"
+              style="width: 100%; font-size: 1.2rem; font-weight: 800; padding: 10px;">
+          </div>
+        </div>
+
+        <div style="margin-top: 30px; display: flex; justify-content: flex-end;">
+          <button id="btnAbrirModalImpressaoFechamento"
+            style="background: #3b82f6; color: white; padding: 15px 30px; font-weight: 800; border-radius: 12px; border: none; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+            <span>🖨️</span> PREPARAR IMPRESSÃO
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- SESSÃO DE RELATÓRIOS -->
     <div id="sectionRelatorios" class="hidden" style="padding: 20px;">
       <header class="page-header" style="margin-bottom: 25px;">
@@ -1149,9 +1206,111 @@
           </div>
         </div>
       </div>
-
     </div>
   </main>
+
+  <!-- MODAL SELECAO IMPRESSAO FECHAMENTO -->
+  <div id="modalImpressaoFechamento" class="modal hidden">
+    <div class="modal-content" style="max-width: 400px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 1.2rem;">O que deseja imprimir?</h2>
+        <button onclick="document.getElementById('modalImpressaoFechamento').classList.add('hidden')"
+          style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 15px;">
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+          <input type="checkbox" id="checkPrintVendas" checked style="width: 20px; height: 20px;">
+          <span>Vendas (Itens e Qtd)</span>
+        </label>
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+          <input type="checkbox" id="checkPrintPagamentos" checked style="width: 20px; height: 20px;">
+          <span>Pagamentos (Saídas)</span>
+        </label>
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+          <input type="checkbox" id="checkPrintRecebimentosSistema" checked style="width: 20px; height: 20px;">
+          <span>Recebimentos (Sistema)</span>
+        </label>
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+          <input type="checkbox" id="checkPrintRecebimentosManual" checked style="width: 20px; height: 20px;">
+          <span>Recebimento (Manual)</span>
+        </label>
+      </div>
+      <div style="margin-top: 25px; display: flex; flex-direction: column; gap: 10px;">
+        <button id="btnImprimirFechamentoFinal"
+          style="background: #10b981; color: white; padding: 12px; font-weight: 800; border-radius: 8px; border: none; cursor: pointer;">IMPRIMIR
+          SELECIONADOS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEMPLATE IMPRESSAO LINGUICAO FECHAMENTO -->
+  <div id="printFechamentoDiario" class="global-print-element"
+    style="width: 80mm; font-family: 'Courier New', Courier, monospace; padding: 0 2mm;">
+    <h2 style="text-align: center; margin-bottom: 5px;">FECHAMENTO DIÁRIO</h2>
+    <p id="printFechamentoData"
+      style="text-align: center; font-size: 9pt; margin-bottom: 10px; border-bottom: 1pt solid black; padding-bottom: 5px;">
+    </p>
+
+    <div id="printBlocoVendas">
+      <h3 style="font-size: 10pt; border-bottom: 1pt dashed black; margin-top: 10px; margin-bottom: 5px;">VENDAS POR
+        ITEM</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+        <thead>
+          <tr style="border-bottom: 0.5pt solid #eee;">
+            <th style="text-align: left;">ITEM</th>
+            <th style="text-align: right;">QTD</th>
+          </tr>
+        </thead>
+        <tbody id="printBodyVendas"></tbody>
+      </table>
+    </div>
+
+    <div id="printBlocoPagamentos">
+      <h3 style="font-size: 10pt; border-bottom: 1pt dashed black; margin-top: 10px; margin-bottom: 5px;">PAGAMENTOS
+        (SAÍDAS)</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+        <thead>
+          <tr style="border-bottom: 0.5pt solid #eee;">
+            <th style="text-align: left;">RECEBEDOR</th>
+            <th style="text-align: right;">VALOR</th>
+          </tr>
+        </thead>
+        <tbody id="printBodyPagamentos"></tbody>
+      </table>
+    </div>
+
+    <div id="printBlocoRecebimentosSistema">
+      <h3 style="font-size: 10pt; border-bottom: 1pt dashed black; margin-top: 10px; margin-bottom: 5px;">RECEBIMENTOS
+        (SISTEMA)</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+        <thead>
+          <tr style="border-bottom: 0.5pt solid #eee;">
+            <th style="text-align: left;">MÉTODO</th>
+            <th style="text-align: right;">VALOR</th>
+          </tr>
+        </thead>
+        <tbody id="printBodyRecebimentosSistema"></tbody>
+      </table>
+    </div>
+
+    <div id="printBlocoRecebimentosManual">
+      <h3 style="font-size: 10pt; border-bottom: 1pt dashed black; margin-top: 10px; margin-bottom: 5px;">RECEBIMENTOS
+        (MANUAL)</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+        <thead>
+          <tr style="border-bottom: 0.5pt solid #eee;">
+            <th style="text-align: left;">FORMA</th>
+            <th style="text-align: right;">VALOR</th>
+          </tr>
+        </thead>
+        <tbody id="printBodyRecebimentosManual"></tbody>
+      </table>
+    </div>
+
+    <div style="margin-top: 20px; border-top: 1pt solid black; text-align: center; padding-top: 10px;">
+      <p style="font-size: 8pt;">Conferido por: __________________</p>
+    </div>
+  </div>
 
   <aside class="sidebar-right">
     <button id="btnToggleRightSidebar" class="btn-toggle" title="Alternar Resumo">
@@ -1417,9 +1576,30 @@
   <script src="js/financeiro.js?v=3"></script>
   <script src="js/relatorios.js?v=3"></script>
 
+  <div id="printResumoPagamento" class="global-print-element"
+    style="width: 80mm; font-family: 'Courier New', Courier, monospace; padding: 0 2mm;">
+    <h3 style="text-align: center; margin: 2mm 0; border-bottom: 1pt dashed black; padding-bottom: 2mm;">RESUMO DE
+      PAGAMENTO</h3>
+    <div id="printResumoInfo" style="margin-bottom: 3mm; font-size: 9pt; text-align: center; line-height: 1.4;"></div>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 2mm;">
+      <thead>
+        <tr style="border-bottom: 1pt solid black;">
+          <th style="text-align: left; padding: 1mm 0; font-size: 9pt; width: 60%;">FORMA</th>
+          <th style="text-align: right; padding: 1mm 0; font-size: 9pt; width: 40%;">VALOR</th>
+        </tr>
+      </thead>
+      <tbody id="printResumoPagamentoBody" style="font-size: 9pt;"></tbody>
+    </table>
+    <div id="printResumoTotal"
+      style="text-align: right; font-weight: 800; border-top: 1pt solid black; padding-top: 2mm; font-size: 11pt; margin-bottom: 2mm;">
+    </div>
+  </div>
+
   <div id="globalPrintFooter" class="global-print-element">
     <div class="footer-item"><i class="fab fa-instagram"></i> @restauranteranchojp</div>
     <div class="footer-item"><i class="fab fa-whatsapp"></i> (16) 991211765</div>
+    <!-- Quebras de linha para facilitar o destaque do papel sem cortar o conteúdo -->
+    <div class="print-only" style="display: none;"><br><br><br><br><br></div>
   </div>
 </body>
 

@@ -578,6 +578,7 @@ function alternarParaRelatorios() {
     document.getElementById("sectionColaboradores").classList.add("hidden");
     document.getElementById("sectionFinanceiro").classList.add("hidden");
     if (document.getElementById("sectionFluxoCaixa")) document.getElementById("sectionFluxoCaixa").classList.add("hidden");
+    if (document.getElementById("sectionFechamento")) document.getElementById("sectionFechamento").classList.add("hidden");
     sectionRelatorios.classList.remove("hidden");
 
     document.getElementById("navDashboard").classList.remove("active");
@@ -586,6 +587,7 @@ function alternarParaRelatorios() {
     document.getElementById("navFinanceiro").classList.remove("active");
     const navFC = document.getElementById("navFluxoCaixa");
     if (navFC) navFC.classList.remove("active");
+    if (document.getElementById("navFechamento")) document.getElementById("navFechamento").classList.remove("active");
     navRelatorios.classList.add("active");
 
     configurarDatasPadraoRel();
@@ -598,6 +600,7 @@ function alternarParaFluxoCaixa() {
     document.getElementById("sectionColaboradores").classList.add("hidden");
     document.getElementById("sectionFinanceiro").classList.add("hidden");
     document.getElementById("sectionRelatorios").classList.add("hidden");
+    if (document.getElementById("sectionFechamento")) document.getElementById("sectionFechamento").classList.add("hidden");
 
     const secFluxo = document.getElementById("sectionFluxoCaixa");
     if (secFluxo) secFluxo.classList.remove("hidden");
@@ -607,6 +610,7 @@ function alternarParaFluxoCaixa() {
     document.getElementById("navColaboradores").classList.remove("active");
     document.getElementById("navFinanceiro").classList.remove("active");
     document.getElementById("navRelatorios").classList.remove("active");
+    if (document.getElementById("navFechamento")) document.getElementById("navFechamento").classList.remove("active");
 
     const navFluxo = document.getElementById("navFluxoCaixa");
     if (navFluxo) navFluxo.classList.add("active");

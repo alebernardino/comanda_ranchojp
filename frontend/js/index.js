@@ -660,11 +660,59 @@ async function removerPagamentoModal(id) {
   await carregarPagamentosModal();
 }
 
+async function imprimirResumoPagamento() {
+  return new Promise(async (resolve) => {
+    try {
+      const res = await fetch(`${API_URL}/comandas/${currentComandaNumero}/pagamentos`);
+      const pagamentos = await res.json();
+
+      const body = document.getElementById("printResumoPagamentoBody");
+      const info = document.getElementById("printResumoInfo");
+      const totalEl = document.getElementById("printResumoTotal");
+
+      if (!body || !info || !totalEl) {
+        resolve();
+        return;
+      }
+
+      body.innerHTML = "";
+      let total = 0;
+
+      const agora = new Date();
+      const nome = document.getElementById("nomeComanda")?.value || "";
+      info.innerHTML = `<strong>COMANDA: ${currentComandaNumero}</strong><br>DATA: ${agora.toLocaleDateString()} ${agora.toLocaleTimeString()}` + (nome ? `<br>CLIENTE: ${nome}` : "");
+
+      pagamentos.forEach(p => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td style="padding: 1mm 0; text-align: left;">${p.forma}</td><td style="text-align: right; padding: 1mm 0;">R$ ${formatarMoeda(p.valor)}</td>`;
+        body.appendChild(tr);
+        total += p.valor;
+      });
+
+      totalEl.innerText = `TOTAL PAGO: R$ ${formatarMoeda(total)}`;
+
+      document.body.classList.add("printing-receipt");
+
+      // Aguarda renderização e abre diálogo de impressão
+      setTimeout(() => {
+        window.print();
+        document.body.classList.remove("printing-receipt");
+        resolve();
+      }, 300);
+    } catch (err) {
+      console.error("Erro ao imprimir:", err);
+      resolve();
+    }
+  });
+}
+
 async function finalizarComandaModal() {
   if (saldoDevedorGlobal > 0.01) {
     alert("Saldo devedor pendente: R$ " + saldoDevedorGlobal.toFixed(2) + "\nRealize o pagamento total antes de finalizar.");
     return;
   }
+
+  await imprimirResumoPagamento();
 
   const res = await fetch(
     `${API_URL}/comandas/${currentComandaNumero}/fechar`,
@@ -682,6 +730,9 @@ async function finalizarComandaModal() {
     alert(msg);
     return;
   }
+
+  // Imprime o resumo antes de fechar os modais
+
 
   if (modalPagamento) modalPagamento.classList.add("hidden");
   if (modalComanda) modalComanda.classList.add("hidden");
@@ -875,12 +926,14 @@ function alternarParaProdutos() {
   if (document.getElementById("sectionColaboradores")) document.getElementById("sectionColaboradores").classList.add("hidden");
   if (document.getElementById("sectionFinanceiro")) document.getElementById("sectionFinanceiro").classList.add("hidden");
   if (document.getElementById("sectionRelatorios")) document.getElementById("sectionRelatorios").classList.add("hidden");
+  if (document.getElementById("sectionFluxoCaixa")) document.getElementById("sectionFluxoCaixa").classList.add("hidden");
+  if (document.getElementById("sectionFechamento")) document.getElementById("sectionFechamento").classList.add("hidden");
 
   navDashboard.classList.remove("active");
   navProdutosSessao.classList.add("active");
-  if (document.getElementById("navColaboradores")) document.getElementById("navColaboradores").classList.remove("active");
   if (document.getElementById("navFinanceiro")) document.getElementById("navFinanceiro").classList.remove("active");
   if (document.getElementById("navRelatorios")) document.getElementById("navRelatorios").classList.remove("active");
+  if (document.getElementById("navFechamento")) document.getElementById("navFechamento").classList.remove("active");
 
   carregarProdutosCadastrados();
 }
@@ -891,14 +944,145 @@ function alternarParaDashboard() {
   if (document.getElementById("sectionColaboradores")) document.getElementById("sectionColaboradores").classList.add("hidden");
   if (document.getElementById("sectionFinanceiro")) document.getElementById("sectionFinanceiro").classList.add("hidden");
   if (document.getElementById("sectionRelatorios")) document.getElementById("sectionRelatorios").classList.add("hidden");
+  if (document.getElementById("sectionFluxoCaixa")) document.getElementById("sectionFluxoCaixa").classList.add("hidden");
+  if (document.getElementById("sectionFechamento")) document.getElementById("sectionFechamento").classList.add("hidden");
 
   navProdutosSessao.classList.remove("active");
   navDashboard.classList.add("active");
   if (document.getElementById("navColaboradores")) document.getElementById("navColaboradores").classList.remove("active");
   if (document.getElementById("navFinanceiro")) document.getElementById("navFinanceiro").classList.remove("active");
   if (document.getElementById("navRelatorios")) document.getElementById("navRelatorios").classList.remove("active");
+  if (document.getElementById("navFechamento")) document.getElementById("navFechamento").classList.remove("active");
 
   carregarDashboard();
+}
+
+function alternarParaFechamento() {
+  // Esconde todas as outras seções conhecidas
+  sectionComandas.classList.add("hidden");
+  sectionProdutos.classList.add("hidden");
+  if (document.getElementById("sectionColaboradores")) document.getElementById("sectionColaboradores").classList.add("hidden");
+  if (document.getElementById("sectionFinanceiro")) document.getElementById("sectionFinanceiro").classList.add("hidden");
+  if (document.getElementById("sectionRelatorios")) document.getElementById("sectionRelatorios").classList.add("hidden");
+  if (document.getElementById("sectionFluxoCaixa")) document.getElementById("sectionFluxoCaixa").classList.add("hidden");
+
+  const secFechamento = document.getElementById("sectionFechamento");
+  if (secFechamento) {
+    secFechamento.classList.remove("hidden");
+  } else {
+    console.error("Elemento sectionFechamento não encontrado!");
+  }
+
+  // Atualiza Menu
+  navDashboard.classList.remove("active");
+  navProdutosSessao.classList.remove("active");
+  if (document.getElementById("navColaboradores")) document.getElementById("navColaboradores").classList.remove("active");
+  if (document.getElementById("navFinanceiro")) document.getElementById("navFinanceiro").classList.remove("active");
+  if (document.getElementById("navRelatorios")) document.getElementById("navRelatorios").classList.remove("active");
+  const navFC = document.getElementById("navFluxoCaixa");
+  if (navFC) navFC.classList.remove("active");
+
+  const nFechamento = document.getElementById("navFechamento");
+  if (nFechamento) nFechamento.classList.add("active");
+}
+
+async function imprimirFechamentoFinal() {
+  const isVendas = document.getElementById("checkPrintVendas").checked;
+  const isPagamentos = document.getElementById("checkPrintPagamentos").checked;
+  const isSistema = document.getElementById("checkPrintRecebimentosSistema").checked;
+  const isManual = document.getElementById("checkPrintRecebimentosManual").checked;
+
+  try {
+    const now = new Date();
+    const hoje = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, '0') + "-" + String(now.getDate()).padStart(2, '0');
+    const res = await fetch(`${API_URL}/relatorios/vendas?data_inicio=${hoje}T00:00:00&data_fim=${hoje}T23:59:59`);
+    const data = await res.json();
+
+    const printData = document.getElementById("printFechamentoData");
+    if (printData) printData.innerText = `DATA: ${new Date().toLocaleDateString("pt-BR")} ${new Date().toLocaleTimeString("pt-BR")}`;
+
+    const blocoVendas = document.getElementById("printBlocoVendas");
+    const bodyVendas = document.getElementById("printBodyVendas");
+    if (bodyVendas) {
+      blocoVendas.style.display = isVendas ? "block" : "none";
+      bodyVendas.innerHTML = "";
+      if (isVendas) {
+        data.geral.forEach(v => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td style="padding: 2px 0;">${v.descricao}</td><td style="text-align: right;">${v.total_qtd}</td>`;
+          bodyVendas.appendChild(tr);
+        });
+      }
+    }
+
+    const blocoPagamentos = document.getElementById("printBlocoPagamentos");
+    const bodyPagamentos = document.getElementById("printBodyPagamentos");
+    if (bodyPagamentos) {
+      blocoPagamentos.style.display = isPagamentos ? "block" : "none";
+      bodyPagamentos.innerHTML = "";
+      if (isPagamentos) {
+        data.saidas.forEach(s => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td style="padding: 2px 0;">${s.fornecedor}</td><td style="text-align: right;">R$ ${formatarMoeda(s.total)}</td>`;
+          bodyPagamentos.appendChild(tr);
+        });
+      }
+    }
+
+    const blocoSistema = document.getElementById("printBlocoRecebimentosSistema");
+    const bodySistema = document.getElementById("printBodyRecebimentosSistema");
+    if (bodySistema) {
+      blocoSistema.style.display = isSistema ? "block" : "none";
+      bodySistema.innerHTML = "";
+      if (isSistema) {
+        data.fechamento.forEach(f => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td style="padding: 2px 0;">${f.forma}</td><td style="text-align: right;">R$ ${formatarMoeda(f.total)}</td>`;
+          bodySistema.appendChild(tr);
+        });
+      }
+    }
+
+    const blocoManual = document.getElementById("printBlocoRecebimentosManual");
+    const bodyManual = document.getElementById("printBodyRecebimentosManual");
+    if (bodyManual) {
+      blocoManual.style.display = isManual ? "block" : "none";
+      bodyManual.innerHTML = "";
+      if (isManual) {
+        const valCred = parseFloat(document.getElementById("fechamentoCredito").value || 0);
+        const valDeb = parseFloat(document.getElementById("fechamentoDebito").value || 0);
+        const valPix = parseFloat(document.getElementById("fechamentoPix").value || 0);
+        const valDin = parseFloat(document.getElementById("fechamentoDinheiro").value || 0);
+
+        const formas = [
+          { f: "CARTÃO CRÉDITO", v: valCred },
+          { f: "CARTÃO DÉBITO", v: valDeb },
+          { f: "PIX", v: valPix },
+          { f: "DINHEIRO", v: valDin }
+        ];
+
+        formas.forEach(item => {
+          if (item.v > 0) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td style="padding: 2px 0;">${item.f}</td><td style="text-align: right;">R$ ${formatarMoeda(item.v)}</td>`;
+            bodyManual.appendChild(tr);
+          }
+        });
+      }
+    }
+
+    document.body.classList.add("printing-closure");
+    setTimeout(() => {
+      window.print();
+      document.body.classList.remove("printing-closure");
+      const mImpressao = document.getElementById("modalImpressaoFechamento");
+      if (mImpressao) mImpressao.classList.add("hidden");
+    }, 500);
+
+  } catch (err) {
+    console.error("Erro no fechamento:", err);
+    alert("Erro ao preparar o fechamento.");
+  }
 }
 
 async function editProduto(id, campo, novoValor) {
@@ -946,6 +1130,9 @@ function configListeners() {
   if (btnFecharModalCadastro) btnFecharModalCadastro.onclick = () => { modalCadastroProduto.classList.add("hidden"); carregarProdutosBase(); };
   if (navDashboard) navDashboard.onclick = (e) => { e.preventDefault(); alternarParaDashboard(); };
   if (navProdutosSessao) navProdutosSessao.onclick = (e) => { e.preventDefault(); alternarParaProdutos(); };
+  const navFechamentoBtn = document.getElementById("navFechamento");
+  if (navFechamentoBtn) navFechamentoBtn.onclick = (e) => { e.preventDefault(); alternarParaFechamento(); };
+
   if (btnAbrirModalCadastroComanda) {
     btnAbrirModalCadastroComanda.onclick = () => {
       const codBusca = buscaCodigo ? buscaCodigo.value.trim() : "";
@@ -1097,6 +1284,15 @@ function configListeners() {
       }
     };
   }
+
+  const btnAbrirModalImpFech = document.getElementById("btnAbrirModalImpressaoFechamento");
+  if (btnAbrirModalImpFech) btnAbrirModalImpFech.onclick = () => {
+    const m = document.getElementById("modalImpressaoFechamento");
+    if (m) m.classList.remove("hidden");
+  };
+
+  const btnImpFechFinal = document.getElementById("btnImprimirFechamentoFinal");
+  if (btnImpFechFinal) btnImpFechFinal.onclick = imprimirFechamentoFinal;
 
   if (quickNumeroInput) {
     quickNumeroInput.onkeydown = e => {
