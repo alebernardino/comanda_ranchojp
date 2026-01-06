@@ -1299,4 +1299,23 @@ th {
     print-color-adjust: exact !important;
   }
 
+  /* Se estiver imprimindo itens parciais (divisão) */
+  body.printing-parcial .modal,
+  body.printing-parcial .main-content {
+    display: none !important;
+  }
+
+  body.printing-parcial #printItensParciais {
+    display: block !important;
+  }
+
+  body.printing-parcial #globalPrintHeader,
+  body.printing-parcial #globalPrintFooter {
+    display: block !important;
+  }
+
+  body.printing-parcial #printResumoPagamento {
+    display: none !important;
+  }
+
 }

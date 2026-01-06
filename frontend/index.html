@@ -8,6 +8,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- QZ Tray para impressão silenciosa -->
+  <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.min.js"></script>
   <link rel="stylesheet" href="css/style.css?v=1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1506,10 +1508,10 @@
 
       <div class="pdv-atalhos" style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
         <button id="btnImprimirModal">Imprimir (F9)</button>
-        <button id="btnDividirItemModal">Dividir por item (F4)</button>
+        <button id="btnDividirItemModal">Divisão por item (F4)</button>
         <label style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
-          Dividir total por:
-          <input type="number" id="qtdPessoas" min="1" value="1" style="width: 60px;">
+          Divisão por:
+          <span id="qtdPessoas" style="min-width: 40px; text-align: center; font-weight: 800; color: #1e293b;">1</span>
           <span id="valorPorPessoa" style="color: #ef4444;">R$ 0,00</span>
         </label>
         <button id="btnPagamentoModal" style="background: #10b981;">Pagamento (F8)</button>
@@ -1665,6 +1667,7 @@
 
   <script src="js/api.js?v=3"></script>
   <script src="js/utils.js?v=3"></script>
+  <script src="js/printer.js?v=1"></script>
   <script src="js/index.js?v=3"></script>
   <script src="js/colaboradores.js?v=3"></script>
   <script src="js/financeiro.js?v=3"></script>
@@ -1685,6 +1688,29 @@
       <tbody id="printResumoPagamentoBody" style="font-size: 9pt;"></tbody>
     </table>
     <div id="printResumoTotal"
+      style="text-align: right; font-weight: 800; border-top: 1pt solid black; padding-top: 2mm; font-size: 11pt; margin-bottom: 2mm;">
+    </div>
+  </div>
+
+  <!-- TEMPLATE IMPRESSÃO ITENS PARCIAIS (DIVISÃO) -->
+  <div id="printItensParciais" class="global-print-element"
+    style="width: 80mm; font-family: 'Courier New', Courier, monospace; padding: 0 2mm; display: none;">
+    <h2 id="printParciaisTitulo" style="text-align: center; margin: 2mm 0; font-size: 12pt;"></h2>
+    <p
+      style="text-align: center; font-size: 9pt; margin-bottom: 3mm; border-bottom: 1pt dashed black; padding-bottom: 2mm;">
+      ITENS SELECIONADOS
+    </p>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 2mm;">
+      <thead>
+        <tr style="border-bottom: 1pt solid black;">
+          <th style="text-align: left; padding: 1mm 0; font-size: 9pt;">ITEM</th>
+          <th style="text-align: center; padding: 1mm 0; font-size: 9pt; width: 30px;">QTD</th>
+          <th style="text-align: right; padding: 1mm 0; font-size: 9pt; width: 60px;">VALOR</th>
+        </tr>
+      </thead>
+      <tbody id="printParciaisBody" style="font-size: 9pt;"></tbody>
+    </table>
+    <div id="printParciaisTotal"
       style="text-align: right; font-weight: 800; border-top: 1pt solid black; padding-top: 2mm; font-size: 11pt; margin-bottom: 2mm;">
     </div>
   </div>

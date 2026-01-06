@@ -192,7 +192,7 @@ async function carregarDadosComanda() {
   if (nomeComanda) nomeComanda.value = comanda.nome || "";
   if (telefoneComanda) telefoneComanda.value = comanda.telefone || "";
   if (pessoasComanda) pessoasComanda.value = comanda.quantidade_pessoas || 1;
-  if (qtdPessoasInput) qtdPessoasInput.value = comanda.quantidade_pessoas || 1;
+  if (qtdPessoasInput) qtdPessoasInput.textContent = comanda.quantidade_pessoas || 1;
   renderizarProdutosModal(produtosCache);
 }
 
@@ -393,7 +393,7 @@ async function adicionarItemComanda() {
 
 function atualizarDivisaoTotal() {
   if (!valorPorPessoaDiv) return;
-  const qtd = parseInt(qtdPessoasInput ? qtdPessoasInput.value : 1) || 1;
+  const qtd = parseInt(qtdPessoasInput ? qtdPessoasInput.textContent : 1) || 1;
   valorPorPessoaDiv.innerText = `R$ ${formatarMoeda(totalComandaGlobal / qtd)}`;
 }
 
@@ -444,6 +444,15 @@ async function abrirModalDividirItem() {
 
   itensAgrupadosDivisao = Object.values(mapa);
   renderizarTabelaDivisao();
+
+  // Focar no primeiro campo "Considerar" disponível
+  setTimeout(() => {
+    const primeiroInput = document.querySelector("#tbodyDivisaoItens .qtd-pagar-item:not([disabled])");
+    if (primeiroInput) {
+      primeiroInput.focus();
+      primeiroInput.select();
+    }
+  }, 50);
 }
 
 function renderizarTabelaDivisao() {
@@ -498,6 +507,23 @@ function renderizarTabelaDivisao() {
         tr.querySelector(".subtotal-item").innerText = `R$ ${formatarMoeda(val * item.valor)}`;
         atualizarTotalSelecionadoItem();
       };
+
+      // Navegar com Enter para o próximo campo
+      input.onkeydown = (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          const todosInputs = Array.from(document.querySelectorAll("#tbodyDivisaoItens .qtd-pagar-item:not([disabled])"));
+          const idx = todosInputs.indexOf(input);
+          if (idx < todosInputs.length - 1) {
+            todosInputs[idx + 1].focus();
+            todosInputs[idx + 1].select();
+          } else {
+            // Último campo: foco no botão "Considerar Seleção"
+            const btnConsiderar = document.getElementById("btnConsiderarSelecao");
+            if (btnConsiderar) btnConsiderar.focus();
+          }
+        }
+      };
     }
     tbodyDivisaoItens.appendChild(tr);
   });
@@ -520,6 +546,21 @@ async function considerarSelecao(silencioso = false) {
     if (!silencioso) alert("Selecione pelo menos um item");
     return;
   }
+
+  // Capturar itens selecionados ANTES de zerar para impressão
+  const itensParaImprimir = [];
+  itensAgrupadosDivisao.forEach(item => {
+    const sel = item.selecionado || 0;
+    if (sel > 0) {
+      itensParaImprimir.push({
+        codigo: item.codigo,
+        descricao: item.descricao,
+        quantidade: sel,
+        valor: item.valor,
+        subtotal: sel * item.valor
+      });
+    }
+  });
 
   const breakdown = [];
   itensAgrupadosDivisao.forEach(item => {
@@ -558,6 +599,11 @@ async function considerarSelecao(silencioso = false) {
   totalSelecionadoItemEl.innerText = `R$ ${formatarMoeda(totalAcumuladoVal)}`;
 
   renderizarTabelaDivisao();
+
+  // Perguntar se quer imprimir
+  if (!silencioso && confirm("Deseja imprimir o comprovante?")) {
+    imprimirDivisaoAcao(itensParaImprimir, total);
+  }
 }
 
 // ===============================
@@ -678,12 +724,25 @@ async function removerPagamentoModal(id) {
 }
 
 async function imprimirResumoPagamento() {
-  const elemento = document.getElementById("printResumoPagamento");
-  if (!elemento) return;
-
   try {
     const res = await fetch(`${API_URL}/comandas/${currentComandaNumero}/pagamentos`);
     const pagamentos = await res.json();
+
+    let total = 0;
+    const pagamentosFormatados = pagamentos.map(p => {
+      total += p.valor;
+      return { forma: p.forma, valor: p.valor };
+    });
+
+    // Se QZ Tray está ativo, usa impressão silenciosa
+    if (typeof isQzTrayAtivo === "function" && isQzTrayAtivo()) {
+      await imprimirResumoPag(currentComandaNumero, pagamentosFormatados, total);
+      return;
+    }
+
+    // Fallback: impressão via navegador
+    const elemento = document.getElementById("printResumoPagamento");
+    if (!elemento) return;
 
     const body = document.getElementById("printResumoPagamentoBody");
     const info = document.getElementById("printResumoInfo");
@@ -692,7 +751,6 @@ async function imprimirResumoPagamento() {
     if (!body || !info || !totalEl) return;
 
     body.innerHTML = "";
-    let total = 0;
 
     const agora = new Date();
     const nome = document.getElementById("nomeComanda")?.value || "";
@@ -702,7 +760,6 @@ async function imprimirResumoPagamento() {
       const tr = document.createElement("tr");
       tr.innerHTML = `<td style="padding: 1mm 0; text-align: left;">${p.forma}</td><td style="text-align: right; padding: 1mm 0;">R$ ${formatarMoeda(p.valor)}</td>`;
       body.appendChild(tr);
-      total += p.valor;
     });
 
     totalEl.innerText = `TOTAL PAGO: R$ ${formatarMoeda(total)}`;
@@ -717,11 +774,99 @@ async function imprimirResumoPagamento() {
 }
 
 async function imprimirComandaAcao() {
+  // Se QZ Tray está ativo, usa impressão silenciosa
+  if (typeof isQzTrayAtivo === "function" && isQzTrayAtivo()) {
+    const itens = [];
+    let totalVal = 0;
+
+    const linhas = tabelaItensBody.querySelectorAll("tr");
+    linhas.forEach(tr => {
+      const tds = tr.querySelectorAll("td");
+      if (tds.length >= 5) {
+        const codigo = tds[0].innerText.trim();
+        const descricao = tds[1].innerText.trim();
+        const quantidade = parseFloat(tds[2].querySelector(".qtd-item")?.innerText || tds[2].innerText) || 0;
+        const valor = parseMoeda(tds[3].innerText);
+        const subtotal = parseMoeda(tds[4].innerText);
+        itens.push({ codigo, descricao, quantidade, valor, subtotal });
+        totalVal += subtotal;
+      }
+    });
+
+    const nome = nomeComanda ? nomeComanda.value : "";
+    const tel = telefoneComanda ? telefoneComanda.value : "";
+
+    await imprimirComanda(currentComandaNumero, nome, tel, itens, totalVal);
+    return;
+  }
+
+  // Fallback: impressão via navegador
   window.print();
 }
 
-async function imprimirDivisaoAcao() {
-  window.print();
+async function imprimirDivisaoAcao(itensParaImprimir = null, totalParaImprimir = 0) {
+  // Se não foram passados itens, coletar da tabela atual (impressão manual via F9)
+  if (!itensParaImprimir || itensParaImprimir.length === 0) {
+    itensParaImprimir = [];
+    totalParaImprimir = 0;
+    itensAgrupadosDivisao.forEach(item => {
+      const sel = item.selecionado || 0;
+      if (sel > 0) {
+        const subtotal = sel * item.valor;
+        itensParaImprimir.push({
+          codigo: item.codigo,
+          descricao: item.descricao,
+          quantidade: sel,
+          valor: item.valor,
+          subtotal: subtotal
+        });
+        totalParaImprimir += subtotal;
+      }
+    });
+  }
+
+  // Se QZ Tray está ativo, usa impressão silenciosa
+  if (typeof isQzTrayAtivo === "function" && isQzTrayAtivo()) {
+    await imprimirItensParciais(currentComandaNumero, itensParaImprimir, totalParaImprimir);
+    return;
+  }
+
+  // Fallback: impressão via navegador
+  const printContainer = document.getElementById("printItensParciais");
+  const printTitulo = document.getElementById("printParciaisTitulo");
+  const printBody = document.getElementById("printParciaisBody");
+  const printTotal = document.getElementById("printParciaisTotal");
+
+  if (!printContainer || !printBody) {
+    window.print();
+    return;
+  }
+
+  // Preencher o template
+  if (printTitulo) printTitulo.innerText = `Comanda ${currentComandaNumero}`;
+
+  printBody.innerHTML = "";
+  itensParaImprimir.forEach(item => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="padding: 1mm 0;">${item.descricao}</td>
+      <td style="text-align: center;">${item.quantidade}</td>
+      <td style="text-align: right;">R$ ${formatarMoeda(item.subtotal)}</td>
+    `;
+    printBody.appendChild(tr);
+  });
+
+  if (printTotal) printTotal.innerText = `TOTAL: R$ ${formatarMoeda(totalParaImprimir)}`;
+
+  // Mostrar o container e imprimir
+  printContainer.style.display = "block";
+  document.body.classList.add("printing-parcial");
+
+  setTimeout(() => {
+    window.print();
+    printContainer.style.display = "none";
+    document.body.classList.remove("printing-parcial");
+  }, 100);
 }
 
 async function finalizarComandaModal() {
@@ -1014,6 +1159,43 @@ async function imprimirFechamentoFinal() {
     const res = await fetch(`${API_URL}/relatorios/vendas?data_inicio=${hoje}T00:00:00&data_fim=${hoje}T23:59:59`);
     const data = await res.json();
 
+    // Preparar dados de recebimentos manuais
+    let valCred = 0, valDeb = 0, valPix = 0;
+    document.querySelectorAll(".linha-maquina").forEach(row => {
+      valCred += parseMoedaInput(row.querySelector(".f-credito").value);
+      valDeb += parseMoedaInput(row.querySelector(".f-debito").value);
+      valPix += parseMoedaInput(row.querySelector(".f-pix").value);
+    });
+
+    const dinheiroInput = document.getElementById("fechamentoDinheiroInput");
+    const voucherInput = document.getElementById("fechamentoVoucherInput");
+    const valDin = dinheiroInput ? parseMoedaInput(dinheiroInput.value) : 0;
+    const valVou = voucherInput ? parseMoedaInput(voucherInput.value) : 0;
+
+    const recebimentosManuais = [
+      { forma: "CARTÃO CRÉDITO", valor: valCred },
+      { forma: "CARTÃO DÉBITO", valor: valDeb },
+      { forma: "PIX", valor: valPix },
+      { forma: "DINHEIRO", valor: valDin },
+      { forma: "VOUCHER", valor: valVou }
+    ];
+
+    // Se QZ Tray está ativo, usa impressão silenciosa
+    if (typeof isQzTrayAtivo === "function" && isQzTrayAtivo()) {
+      const dataFormatada = `${now.toLocaleDateString("pt-BR")} ${now.toLocaleTimeString("pt-BR")}`;
+      const vendas = isVendas ? data.geral.map(v => ({ descricao: v.descricao, quantidade: v.total_qtd })) : [];
+      const pagamentos = isPagamentos ? data.saidas.map(s => ({ fornecedor: s.fornecedor, total: s.total })) : [];
+      const recebimentosSistema = isSistema ? data.fechamento.map(f => ({ forma: f.forma, total: f.total })) : [];
+      const manuais = isManual ? recebimentosManuais : [];
+
+      await imprimirFechamento(dataFormatada, vendas, pagamentos, recebimentosSistema, manuais);
+
+      const mImpressao = document.getElementById("modalImpressaoFechamento");
+      if (mImpressao) mImpressao.classList.add("hidden");
+      return;
+    }
+
+    // Fallback: impressão via navegador
     const printData = document.getElementById("printFechamentoData");
     if (printData) printData.innerText = `DATA: ${new Date().toLocaleDateString("pt-BR")} ${new Date().toLocaleTimeString("pt-BR")}`;
 
@@ -1065,33 +1247,10 @@ async function imprimirFechamentoFinal() {
       blocoManual.style.display = isManual ? "block" : "none";
       bodyManual.innerHTML = "";
       if (isManual) {
-        // Soma todos os valores de todas as linhas de máquinas
-        let valCred = 0, valDeb = 0, valPix = 0;
-
-        document.querySelectorAll(".linha-maquina").forEach(row => {
-          valCred += parseMoedaInput(row.querySelector(".f-credito").value);
-          valDeb += parseMoedaInput(row.querySelector(".f-debito").value);
-          valPix += parseMoedaInput(row.querySelector(".f-pix").value);
-        });
-
-        // Dinheiro e Voucher vêm dos campos fixos
-        const dinheiroInput = document.getElementById("fechamentoDinheiroInput");
-        const voucherInput = document.getElementById("fechamentoVoucherInput");
-        const valDin = dinheiroInput ? parseMoedaInput(dinheiroInput.value) : 0;
-        const valVou = voucherInput ? parseMoedaInput(voucherInput.value) : 0;
-
-        const formas = [
-          { f: "CARTÃO CRÉDITO", v: valCred },
-          { f: "CARTÃO DÉBITO", v: valDeb },
-          { f: "PIX", v: valPix },
-          { f: "DINHEIRO", v: valDin },
-          { f: "VOUCHER", v: valVou }
-        ];
-
-        formas.forEach(item => {
-          if (item.v > 0) {
+        recebimentosManuais.forEach(item => {
+          if (item.valor > 0) {
             const tr = document.createElement("tr");
-            tr.innerHTML = `<td style="padding: 2px 0;">${item.f}</td><td style="text-align: right;">R$ ${formatarMoeda(item.v)}</td>`;
+            tr.innerHTML = `<td style="padding: 2px 0;">${item.forma}</td><td style="text-align: right;">R$ ${formatarMoeda(item.valor)}</td>`;
             bodyManual.appendChild(tr);
           }
         });
@@ -1178,7 +1337,7 @@ function configListeners() {
     telefoneComanda.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); pessoasComanda.focus(); } };
   }
   if (pessoasComanda) {
-    pessoasComanda.oninput = () => { if (qtdPessoasInput) qtdPessoasInput.value = pessoasComanda.value; atualizarDivisaoTotal(); };
+    pessoasComanda.oninput = () => { if (qtdPessoasInput) qtdPessoasInput.textContent = pessoasComanda.value; atualizarDivisaoTotal(); };
     pessoasComanda.onblur = atualizarComandaAPI;
     pessoasComanda.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); buscaCodigo.focus(); buscaCodigo.select(); } };
   }
