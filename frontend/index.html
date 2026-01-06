@@ -857,19 +857,19 @@
       <div class="card"
         style="background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-top: 20px; overflow-x: auto;">
 
-        <table style="width: 100%; border-collapse: collapse; min-width: 800px;">
+        <!-- Tabela de Máquinas -->
+        <h3 style="margin: 0 0 15px 0; font-size: 0.9rem; color: #64748b; text-transform: uppercase;">💳 Valores das
+          Maquininhas</h3>
+        <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
           <thead>
             <tr style="text-align: left; border-bottom: 2px solid #f1f5f9;">
-              <th style="padding: 10px; font-size: 0.75rem; color: #64748b; text-transform: uppercase;">Máquina / Origem
-              </th>
-              <th style="padding: 10px; font-size: 0.75rem; color: #64748b; text-transform: uppercase; width: 160px;">
+              <th style="padding: 10px; font-size: 0.75rem; color: #64748b; text-transform: uppercase;">Máquina</th>
+              <th style="padding: 10px; font-size: 0.75rem; color: #64748b; text-transform: uppercase; width: 180px;">
                 Crédito (R$)</th>
-              <th style="padding: 10px; font-size: 0.75rem; color: #64748b; text-transform: uppercase; width: 160px;">
+              <th style="padding: 10px; font-size: 0.75rem; color: #64748b; text-transform: uppercase; width: 180px;">
                 Débito (R$)</th>
-              <th style="padding: 10px; font-size: 0.75rem; color: #64748b; text-transform: uppercase; width: 160px;">
+              <th style="padding: 10px; font-size: 0.75rem; color: #64748b; text-transform: uppercase; width: 180px;">
                 Pix (R$)</th>
-              <th style="padding: 10px; font-size: 0.75rem; color: #64748b; text-transform: uppercase; width: 160px;">
-                Dinheiro (R$)</th>
               <th style="padding: 10px; width: 50px;"></th>
             </tr>
           </thead>
@@ -878,21 +878,48 @@
           </tbody>
           <tfoot>
             <tr style="background: #f8fafc; font-weight: 800; border-top: 2px solid #e2e8f0;">
-              <td style="padding: 15px 10px; color: #1e293b;">TOTAIS SOMA</td>
+              <td style="padding: 15px 10px; color: #1e293b;">SUBTOTAL MAQUININHAS</td>
               <td style="padding: 15px 10px; color: #3b82f6;" id="totalFechamentoCredito">R$ 0,00</td>
               <td style="padding: 15px 10px; color: #3b82f6;" id="totalFechamentoDebito">R$ 0,00</td>
               <td style="padding: 15px 10px; color: #3b82f6;" id="totalFechamentoPix">R$ 0,00</td>
-              <td style="padding: 15px 10px; color: #3b82f6;" id="totalFechamentoDinheiro">R$ 0,00</td>
               <td></td>
             </tr>
           </tfoot>
         </table>
 
-        <div style="margin-top: 30px; display: flex; justify-content: space-between; align-items: center;">
-          <button id="btnAdicionarMaquina"
-            style="background: #f1f5f9; color: #1e293b; border: 1px solid #e2e8f0; box-shadow: none;">
-            + ADICIONAR MÁQUINA
-          </button>
+        <button id="btnAdicionarMaquina"
+          style="margin-top: 15px; background: #f1f5f9; color: #1e293b; border: 1px solid #e2e8f0; box-shadow: none;">
+          + ADICIONAR MÁQUINA
+        </button>
+
+        <!-- Dinheiro e Voucher Fixos -->
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e2e8f0;">
+          <h3 style="margin: 0 0 15px 0; font-size: 0.9rem; color: #64748b; text-transform: uppercase;">💵 Outros
+            Recebimentos</h3>
+          <div style="display: flex; gap: 40px; flex-wrap: wrap;">
+            <!-- Dinheiro -->
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <label style="font-size: 0.8rem; color: #64748b; font-weight: 600;">DINHEIRO (R$)</label>
+              <input type="text" id="fechamentoDinheiroInput" class="f-moeda" placeholder="R$ 0,00"
+                style="width: 180px; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 1rem; text-align: right;">
+            </div>
+            <!-- Voucher -->
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <label style="font-size: 0.8rem; color: #64748b; font-weight: 600;">VOUCHER (R$)</label>
+              <input type="text" id="fechamentoVoucherInput" class="f-moeda" placeholder="R$ 0,00"
+                style="width: 180px; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 1rem; text-align: right;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Geral e Botão -->
+        <div
+          style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span style="font-size: 0.85rem; color: #64748b;">TOTAL GERAL:</span>
+            <span id="totalFechamentoGeral"
+              style="font-size: 1.4rem; font-weight: 800; color: #1e293b; margin-left: 10px;">R$ 0,00</span>
+          </div>
           <button id="btnAbrirModalImpressaoFechamento"
             style="background: #3b82f6; color: white; padding: 15px 30px; font-weight: 800; border-radius: 12px; border: none; cursor: pointer; display: flex; align-items: center; gap: 10px;">
             <span>🖨️</span> PREPARAR IMPRESSÃO (F9)

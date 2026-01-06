@@ -256,6 +256,11 @@ button:active {
   transform: translateY(0);
 }
 
+button:focus {
+  outline: 3px solid #1e293b;
+  outline-offset: 2px;
+}
+
 /* Atalhos - Botões grandes */
 .pdv-atalhos {
   margin-top: 10px;
@@ -760,6 +765,11 @@ th {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-width: 2px;
+}
+
+.metodo-btn:focus {
+  outline: 3px solid #1e293b;
+  outline-offset: 2px;
 }
 
 .metodo-btn.active[data-forma="Dinheiro"] {

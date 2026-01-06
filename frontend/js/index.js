@@ -90,15 +90,6 @@ async function init() {
   await carregarProdutosBase();
   await carregarVendasHoje();
   initToggleVendasHoje();
-
-  setInterval(() => {
-    if ((!modalComanda || modalComanda.classList.contains("hidden")) &&
-      (!modalPagamento || modalPagamento.classList.contains("hidden")) &&
-      (!modalCadastroProduto || modalCadastroProduto.classList.contains("hidden"))) {
-      carregarDashboard();
-      carregarVendasHoje();
-    }
-  }, 10000);
 }
 
 async function carregarDashboard() {
@@ -359,6 +350,19 @@ function filtrarProdutosModal() {
   }
 }
 
+function abrirModalCadastroProdutos() {
+  if (modalCadastroProduto) {
+    modalCadastroProduto.classList.remove("hidden");
+    // Limpar campos
+    if (novoCodigoInput) novoCodigoInput.value = "";
+    if (novaDescricaoInput) novaDescricaoInput.value = "";
+    if (novoValorInput) novoValorInput.value = "";
+    if (novoGrupoInput) novoGrupoInput.value = "";
+    // Focar no código
+    if (novoCodigoInput) novoCodigoInput.focus();
+  }
+}
+
 async function adicionarItemComanda() {
   if (!produtoSelecionado) {
     const cod = buscaCodigo ? buscaCodigo.value.trim() : "";
@@ -383,6 +387,7 @@ async function adicionarItemComanda() {
     if (valorProduto) valorProduto.value = "";
     produtoSelecionado = null;
     await carregarItensComanda();
+    renderizarProdutosModal(produtosCache);
   }
 }
 
@@ -649,7 +654,17 @@ async function lancarPagamentoModal() {
 
     await carregarResumoPagamento();
     await carregarPagamentosModal();
-    if (valorPagamentoInput) { valorPagamentoInput.focus(); valorPagamentoInput.select(); }
+
+    // Verificar saldo restante e focar no elemento apropriado
+    if (saldoDevedorGlobal > 0) {
+      // Ainda há saldo a pagar - foco no método de pagamento
+      const primeiroMetodo = modalPagamento ? modalPagamento.querySelector(".metodo-btn") : null;
+      if (primeiroMetodo) primeiroMetodo.focus();
+    } else {
+      // Pagamento completo - foco no botão Finalizar
+      const btnFinalizar = document.getElementById("btnFinalizarComandaModal");
+      if (btnFinalizar) btnFinalizar.focus();
+    }
   } else {
     const err = await res.json(); alert(err.detail);
   }
@@ -1050,21 +1065,27 @@ async function imprimirFechamentoFinal() {
       blocoManual.style.display = isManual ? "block" : "none";
       bodyManual.innerHTML = "";
       if (isManual) {
-        // Soma todos os valores de todas as linhas adicionadas
-        let valCred = 0, valDeb = 0, valPix = 0, valDin = 0;
+        // Soma todos os valores de todas as linhas de máquinas
+        let valCred = 0, valDeb = 0, valPix = 0;
 
         document.querySelectorAll(".linha-maquina").forEach(row => {
-          valCred += parseFloat(row.querySelector(".f-credito").value || 0);
-          valDeb += parseFloat(row.querySelector(".f-debito").value || 0);
-          valPix += parseFloat(row.querySelector(".f-pix").value || 0);
-          valDin += parseFloat(row.querySelector(".f-dinheiro").value || 0);
+          valCred += parseMoedaInput(row.querySelector(".f-credito").value);
+          valDeb += parseMoedaInput(row.querySelector(".f-debito").value);
+          valPix += parseMoedaInput(row.querySelector(".f-pix").value);
         });
+
+        // Dinheiro e Voucher vêm dos campos fixos
+        const dinheiroInput = document.getElementById("fechamentoDinheiroInput");
+        const voucherInput = document.getElementById("fechamentoVoucherInput");
+        const valDin = dinheiroInput ? parseMoedaInput(dinheiroInput.value) : 0;
+        const valVou = voucherInput ? parseMoedaInput(voucherInput.value) : 0;
 
         const formas = [
           { f: "CARTÃO CRÉDITO", v: valCred },
           { f: "CARTÃO DÉBITO", v: valDeb },
           { f: "PIX", v: valPix },
-          { f: "DINHEIRO", v: valDin }
+          { f: "DINHEIRO", v: valDin },
+          { f: "VOUCHER", v: valVou }
         ];
 
         formas.forEach(item => {
@@ -1305,7 +1326,14 @@ function configListeners() {
   const btnAbrirModalImpFech = document.getElementById("btnAbrirModalImpressaoFechamento");
   if (btnAbrirModalImpFech) btnAbrirModalImpFech.onclick = () => {
     const m = document.getElementById("modalImpressaoFechamento");
-    if (m) m.classList.remove("hidden");
+    if (m) {
+      m.classList.remove("hidden");
+      // Focar no botão de imprimir após abrir o modal
+      setTimeout(() => {
+        const btnImprimir = document.getElementById("btnImprimirFechamentoFinal");
+        if (btnImprimir) btnImprimir.focus();
+      }, 50);
+    }
   };
 
   const btnImpFechFinal = document.getElementById("btnImprimirFechamentoFinal");
@@ -1415,7 +1443,7 @@ function parseMoedaInput(texto) {
   return parseFloat(limpo) || 0;
 }
 
-function adicionarLinhaFechamento(label = "", c = 0, d = 0, p = 0, di = 0) {
+function adicionarLinhaFechamento(label = "", c = 0, d = 0, p = 0) {
   const tbody = document.getElementById("tbodyMaquinasFechamento");
   if (!tbody) return;
 
@@ -1428,7 +1456,6 @@ function adicionarLinhaFechamento(label = "", c = 0, d = 0, p = 0, di = 0) {
     <td style="padding: 10px;"><input type="text" class="f-moeda f-credito" value="${c ? "R$ " + formatarMoeda(c) : ""}" placeholder="R$ 0,00" style="width:100%; border:1px solid #e2e8f0; padding:8px; border-radius:6px; font-weight:700; text-align:right;"></td>
     <td style="padding: 10px;"><input type="text" class="f-moeda f-debito" value="${d ? "R$ " + formatarMoeda(d) : ""}" placeholder="R$ 0,00" style="width:100%; border:1px solid #e2e8f0; padding:8px; border-radius:6px; font-weight:700; text-align:right;"></td>
     <td style="padding: 10px;"><input type="text" class="f-moeda f-pix" value="${p ? "R$ " + formatarMoeda(p) : ""}" placeholder="R$ 0,00" style="width:100%; border:1px solid #e2e8f0; padding:8px; border-radius:6px; font-weight:700; text-align:right;"></td>
-    <td style="padding: 10px;"><input type="text" class="f-moeda f-dinheiro" value="${di ? "R$ " + formatarMoeda(di) : ""}" placeholder="R$ 0,00" style="width:100%; border:1px solid #e2e8f0; padding:8px; border-radius:6px; font-weight:700; text-align:right;"></td>
     <td style="padding: 10px; text-align:center;"><button class="btn-remove-linha-fech" style="background:#fee2e2; color:#ef4444; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer;" title="Remover">×</button></td>
   `;
 
@@ -1467,15 +1494,9 @@ function adicionarLinhaFechamento(label = "", c = 0, d = 0, p = 0, di = 0) {
           todosInps[atualIdx + 1].focus();
           todosInps[atualIdx + 1].select();
         } else {
-          adicionarLinhaFechamento();
-          setTimeout(() => {
-            const novosInps = document.querySelectorAll("#tbodyMaquinasFechamento input");
-            const proximo = novosInps[atualIdx + 1];
-            if (proximo) {
-              proximo.focus();
-              proximo.select();
-            }
-          }, 0);
+          // Ir para o campo de dinheiro
+          const dinheiroInput = document.getElementById("fechamentoDinheiroInput");
+          if (dinheiroInput) dinheiroInput.focus();
         }
       }
     };
@@ -1490,23 +1511,31 @@ function adicionarLinhaFechamento(label = "", c = 0, d = 0, p = 0, di = 0) {
 }
 
 function atualizarTotaisFechamento() {
-  let sc = 0, sd = 0, sp = 0, sdi = 0;
+  let sc = 0, sd = 0, sp = 0;
   document.querySelectorAll(".linha-maquina").forEach(row => {
     sc += parseMoedaInput(row.querySelector(".f-credito").value);
     sd += parseMoedaInput(row.querySelector(".f-debito").value);
     sp += parseMoedaInput(row.querySelector(".f-pix").value);
-    sdi += parseMoedaInput(row.querySelector(".f-dinheiro").value);
   });
+
+  // Dinheiro e Voucher vêm dos campos fixos
+  const dinheiroInput = document.getElementById("fechamentoDinheiroInput");
+  const voucherInput = document.getElementById("fechamentoVoucherInput");
+  const sdi = dinheiroInput ? parseMoedaInput(dinheiroInput.value) : 0;
+  const sv = voucherInput ? parseMoedaInput(voucherInput.value) : 0;
 
   const tC = document.getElementById("totalFechamentoCredito");
   const tD = document.getElementById("totalFechamentoDebito");
   const tP = document.getElementById("totalFechamentoPix");
-  const tDi = document.getElementById("totalFechamentoDinheiro");
+  const tG = document.getElementById("totalFechamentoGeral");
 
   if (tC) tC.innerText = `R$ ${formatarMoeda(sc)}`;
   if (tD) tD.innerText = `R$ ${formatarMoeda(sd)}`;
   if (tP) tP.innerText = `R$ ${formatarMoeda(sp)}`;
-  if (tDi) tDi.innerText = `R$ ${formatarMoeda(sdi)}`;
+
+  // Total geral = maquininhas + dinheiro + voucher
+  const totalGeral = sc + sd + sp + sdi + sv;
+  if (tG) tG.innerText = `R$ ${formatarMoeda(totalGeral)}`;
 }
 
 // Inicialização e Eventos
@@ -1514,9 +1543,43 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnAdd = document.getElementById("btnAdicionarMaquina");
   if (btnAdd) btnAdd.onclick = () => adicionarLinhaFechamento();
 
-  // Adiciona a primeira linha por padrão
+  // Vincular campos de dinheiro e voucher fixos
+  const dinheiroInput = document.getElementById("fechamentoDinheiroInput");
+  const voucherInput = document.getElementById("fechamentoVoucherInput");
+
+  if (dinheiroInput) {
+    dinheiroInput.addEventListener("input", () => {
+      formatarCampoMoeda(dinheiroInput);
+      atualizarTotaisFechamento();
+    });
+    dinheiroInput.addEventListener("focus", () => dinheiroInput.select());
+    dinheiroInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (voucherInput) voucherInput.focus();
+      }
+    });
+  }
+
+  if (voucherInput) {
+    voucherInput.addEventListener("input", () => {
+      formatarCampoMoeda(voucherInput);
+      atualizarTotaisFechamento();
+    });
+    voucherInput.addEventListener("focus", () => voucherInput.select());
+    voucherInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const btnImprimir = document.getElementById("btnAbrirModalImpressaoFechamento");
+        if (btnImprimir) btnImprimir.focus();
+      }
+    });
+  }
+
+  // Adiciona duas linhas por padrão
   if (document.getElementById("tbodyMaquinasFechamento")) {
     adicionarLinhaFechamento("MÁQUINA 01");
+    adicionarLinhaFechamento("MÁQUINA 02");
   }
 });
 
