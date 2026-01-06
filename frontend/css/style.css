@@ -879,6 +879,12 @@ th {
     display: none !important;
   }
 
+  .global-print-element:not(#printFechamentoDiario):not(#printResumoPagamento) {
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important;
+  }
+
   body {
     background-color: white !important;
     width: 80mm !important;

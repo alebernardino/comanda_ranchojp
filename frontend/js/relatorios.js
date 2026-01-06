@@ -620,7 +620,9 @@ function alternarParaFluxoCaixa() {
 }
 
 function configurarDatasPadraoRel() {
-    const hoje = new Date().toISOString().split('T')[0];
+    // Usar data local para evitar problema de fuso horário
+    const agora = new Date();
+    const hoje = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
     const elInicio = document.getElementById("relVendasInicio");
     const elFim = document.getElementById("relVendasFim");
     if (elInicio && !elInicio.value) elInicio.value = hoje;
@@ -628,7 +630,9 @@ function configurarDatasPadraoRel() {
 }
 
 function configurarDatasPadraoFluxo() {
-    const hoje = new Date().toISOString().split('T')[0];
+    // Usar data local para evitar problema de fuso horário
+    const agora = new Date();
+    const hoje = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
     const elInicio = document.getElementById("relFluxoInicio");
     const elFim = document.getElementById("relFluxoFim");
     if (elInicio && !elInicio.value) elInicio.value = hoje;

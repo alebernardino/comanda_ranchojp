@@ -182,7 +182,9 @@ function limparFormFinanceiro() {
 
 function configurarDataPadrao() {
     if (finDataInput) {
-        const hoje = new Date().toISOString().split('T')[0];
+        // Usar data local para evitar problema de fuso horário
+        const agora = new Date();
+        const hoje = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
         finDataInput.value = hoje;
     }
 }

@@ -88,12 +88,15 @@ async function init() {
   console.log("Sistema iniciando...");
   await carregarDashboard();
   await carregarProdutosBase();
+  await carregarVendasHoje();
+  initToggleVendasHoje();
 
   setInterval(() => {
     if ((!modalComanda || modalComanda.classList.contains("hidden")) &&
       (!modalPagamento || modalPagamento.classList.contains("hidden")) &&
       (!modalCadastroProduto || modalCadastroProduto.classList.contains("hidden"))) {
       carregarDashboard();
+      carregarVendasHoje();
     }
   }, 10000);
 }
@@ -123,16 +126,18 @@ function renderizarGrid(mapAbertas) {
 }
 
 function atualizarStats(abertas) {
-  if (statsOcupadas) statsOcupadas.innerText = abertas.length;
-  if (statsLivres) statsLivres.innerText = Math.max(0, TOTAL_COMANDAS - abertas.length);
+  // Filtra apenas as comandas que estão dentro do intervalo do grid (1 a TOTAL_COMANDAS)
+  const abertasVisiveis = abertas.filter(c => c.numero >= 1 && c.numero <= TOTAL_COMANDAS);
+
+  if (statsOcupadas) statsOcupadas.innerText = abertasVisiveis.length;
+  if (statsLivres) statsLivres.innerText = Math.max(0, TOTAL_COMANDAS - abertasVisiveis.length);
 }
 
 const btnToggleSidebar = document.getElementById("btnToggleSidebar");
 
 if (btnToggleSidebar && sidebar) {
   btnToggleSidebar.onclick = () => {
-    const isCollapsed = sidebar.classList.toggle("collapsed");
-    btnToggleSidebar.innerText = isCollapsed ? ">" : "<";
+    sidebar.classList.toggle("collapsed");
   };
 }
 
@@ -565,9 +570,6 @@ async function abrirModalPagamento(valorSugerido = null, itensBreakdown = null) 
   formaPagamentoSelecionada = "Cartão Crédito";
   if (metodosButtons) metodosButtons.forEach(b => b.classList.toggle("active", b.dataset.forma === formaPagamentoSelecionada));
 
-  // if (valorPagamentoInput) {
-  //   setTimeout(() => { valorPagamentoInput.focus(); valorPagamentoInput.select(); }, 100);
-  // }
   setTimeout(() => {
     const btn =
       modalPagamento.querySelector(".metodo-btn.active") ||
@@ -661,49 +663,50 @@ async function removerPagamentoModal(id) {
 }
 
 async function imprimirResumoPagamento() {
-  return new Promise(async (resolve) => {
-    try {
-      const res = await fetch(`${API_URL}/comandas/${currentComandaNumero}/pagamentos`);
-      const pagamentos = await res.json();
+  const elemento = document.getElementById("printResumoPagamento");
+  if (!elemento) return;
 
-      const body = document.getElementById("printResumoPagamentoBody");
-      const info = document.getElementById("printResumoInfo");
-      const totalEl = document.getElementById("printResumoTotal");
+  try {
+    const res = await fetch(`${API_URL}/comandas/${currentComandaNumero}/pagamentos`);
+    const pagamentos = await res.json();
 
-      if (!body || !info || !totalEl) {
-        resolve();
-        return;
-      }
+    const body = document.getElementById("printResumoPagamentoBody");
+    const info = document.getElementById("printResumoInfo");
+    const totalEl = document.getElementById("printResumoTotal");
 
-      body.innerHTML = "";
-      let total = 0;
+    if (!body || !info || !totalEl) return;
 
-      const agora = new Date();
-      const nome = document.getElementById("nomeComanda")?.value || "";
-      info.innerHTML = `<strong>COMANDA: ${currentComandaNumero}</strong><br>DATA: ${agora.toLocaleDateString()} ${agora.toLocaleTimeString()}` + (nome ? `<br>CLIENTE: ${nome}` : "");
+    body.innerHTML = "";
+    let total = 0;
 
-      pagamentos.forEach(p => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td style="padding: 1mm 0; text-align: left;">${p.forma}</td><td style="text-align: right; padding: 1mm 0;">R$ ${formatarMoeda(p.valor)}</td>`;
-        body.appendChild(tr);
-        total += p.valor;
-      });
+    const agora = new Date();
+    const nome = document.getElementById("nomeComanda")?.value || "";
+    info.innerHTML = `<strong>COMANDA: ${currentComandaNumero}</strong><br>DATA: ${agora.toLocaleDateString()} ${agora.toLocaleTimeString()}` + (nome ? `<br>CLIENTE: ${nome}` : "");
 
-      totalEl.innerText = `TOTAL PAGO: R$ ${formatarMoeda(total)}`;
+    pagamentos.forEach(p => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td style="padding: 1mm 0; text-align: left;">${p.forma}</td><td style="text-align: right; padding: 1mm 0;">R$ ${formatarMoeda(p.valor)}</td>`;
+      body.appendChild(tr);
+      total += p.valor;
+    });
 
-      document.body.classList.add("printing-receipt");
+    totalEl.innerText = `TOTAL PAGO: R$ ${formatarMoeda(total)}`;
 
-      // Aguarda renderização e abre diálogo de impressão
-      setTimeout(() => {
-        window.print();
-        document.body.classList.remove("printing-receipt");
-        resolve();
-      }, 300);
-    } catch (err) {
-      console.error("Erro ao imprimir:", err);
-      resolve();
-    }
-  });
+    document.body.classList.add("printing-receipt");
+    window.print();
+    document.body.classList.remove("printing-receipt");
+
+  } catch (err) {
+    console.error("Erro ao imprimir resumo:", err);
+  }
+}
+
+async function imprimirComandaAcao() {
+  window.print();
+}
+
+async function imprimirDivisaoAcao() {
+  window.print();
 }
 
 async function finalizarComandaModal() {
@@ -712,7 +715,10 @@ async function finalizarComandaModal() {
     return;
   }
 
-  await imprimirResumoPagamento();
+  // Pergunta se deseja imprimir o comprovante
+  if (confirm("Deseja imprimir o comprovante de pagamento?")) {
+    await imprimirResumoPagamento();
+  }
 
   const res = await fetch(
     `${API_URL}/comandas/${currentComandaNumero}/fechar`,
@@ -721,18 +727,13 @@ async function finalizarComandaModal() {
 
   if (!res.ok) {
     let msg = "Erro ao fechar comanda";
-
     try {
       const data = await res.json();
       if (data.detail) msg = data.detail;
     } catch (e) { }
-
     alert(msg);
     return;
   }
-
-  // Imprime o resumo antes de fechar os modais
-
 
   if (modalPagamento) modalPagamento.classList.add("hidden");
   if (modalComanda) modalComanda.classList.add("hidden");
@@ -1049,10 +1050,15 @@ async function imprimirFechamentoFinal() {
       blocoManual.style.display = isManual ? "block" : "none";
       bodyManual.innerHTML = "";
       if (isManual) {
-        const valCred = parseFloat(document.getElementById("fechamentoCredito").value || 0);
-        const valDeb = parseFloat(document.getElementById("fechamentoDebito").value || 0);
-        const valPix = parseFloat(document.getElementById("fechamentoPix").value || 0);
-        const valDin = parseFloat(document.getElementById("fechamentoDinheiro").value || 0);
+        // Soma todos os valores de todas as linhas adicionadas
+        let valCred = 0, valDeb = 0, valPix = 0, valDin = 0;
+
+        document.querySelectorAll(".linha-maquina").forEach(row => {
+          valCred += parseFloat(row.querySelector(".f-credito").value || 0);
+          valDeb += parseFloat(row.querySelector(".f-debito").value || 0);
+          valPix += parseFloat(row.querySelector(".f-pix").value || 0);
+          valDin += parseFloat(row.querySelector(".f-dinheiro").value || 0);
+        });
 
         const formas = [
           { f: "CARTÃO CRÉDITO", v: valCred },
@@ -1078,7 +1084,6 @@ async function imprimirFechamentoFinal() {
       const mImpressao = document.getElementById("modalImpressaoFechamento");
       if (mImpressao) mImpressao.classList.add("hidden");
     }, 500);
-
   } catch (err) {
     console.error("Erro no fechamento:", err);
     alert("Erro ao preparar o fechamento.");
@@ -1143,9 +1148,19 @@ function configListeners() {
       }
     };
   }
-  if (nomeComanda) nomeComanda.onblur = atualizarComandaAPI;
-  if (telefoneComanda) telefoneComanda.onblur = atualizarComandaAPI;
-  if (pessoasComanda) pessoasComanda.oninput = () => { if (qtdPessoasInput) qtdPessoasInput.value = pessoasComanda.value; atualizarDivisaoTotal(); };
+  if (nomeComanda) {
+    nomeComanda.onblur = atualizarComandaAPI;
+    nomeComanda.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); telefoneComanda.focus(); } };
+  }
+  if (telefoneComanda) {
+    telefoneComanda.onblur = atualizarComandaAPI;
+    telefoneComanda.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); pessoasComanda.focus(); } };
+  }
+  if (pessoasComanda) {
+    pessoasComanda.oninput = () => { if (qtdPessoasInput) qtdPessoasInput.value = pessoasComanda.value; atualizarDivisaoTotal(); };
+    pessoasComanda.onblur = atualizarComandaAPI;
+    pessoasComanda.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); buscaCodigo.focus(); buscaCodigo.select(); } };
+  }
   if (buscaCodigo) {
     buscaCodigo.oninput = filtrarProdutosModal;
     buscaCodigo.onkeydown = e => { if (e.key === "Enter") adicionarItemComanda(); };
@@ -1189,7 +1204,7 @@ function configListeners() {
   }
 
   if (btnDividirItemModal) btnDividirItemModal.onclick = abrirModalDividirItem;
-  if (btnImprimirModal) btnImprimirModal.onclick = () => window.print();
+  if (btnImprimirModal) btnImprimirModal.onclick = imprimirComandaAcao;
 
   if (btnPagamentoModal) btnPagamentoModal.onclick = () => abrirModalPagamento();
   if (btnLancarPagamentoModal) btnLancarPagamentoModal.onclick = lancarPagamentoModal;
@@ -1206,7 +1221,10 @@ function configListeners() {
       metodosButtons.forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       formaPagamentoSelecionada = btn.dataset.forma;
-      if (btnLancarPagamentoModal) btnLancarPagamentoModal.focus();
+      if (valorPagamentoInput) {
+        valorPagamentoInput.focus();
+        valorPagamentoInput.select();
+      }
     });
   }
 
@@ -1236,8 +1254,7 @@ function configListeners() {
   const btnConsiderarSelecao = document.getElementById("btnConsiderarSelecao");
   if (btnConsiderarSelecao) btnConsiderarSelecao.onclick = () => considerarSelecao(false);
 
-  const btnImprimirDivisao = document.getElementById("btnImprimirDivisao");
-  if (btnImprimirDivisao) btnImprimirDivisao.onclick = () => window.print();
+  if (btnImprimirDivisao) btnImprimirDivisao.onclick = imprimirDivisaoAcao;
 
   if (btnSalvarProdutoModal) btnSalvarProdutoModal.onclick = salvarNovoProduto;
   if (btnSalvarProdutoPage) btnSalvarProdutoPage.onclick = salvarNovoProdutoSessao;
@@ -1310,8 +1327,7 @@ function configListeners() {
 
   if (btnToggleRightSidebar && sidebarRight) {
     btnToggleRightSidebar.onclick = () => {
-      const isCollapsed = sidebarRight.classList.toggle("collapsed");
-      btnToggleRightSidebar.innerText = isCollapsed ? "<" : ">";
+      sidebarRight.classList.toggle("collapsed");
     };
   }
 }
@@ -1322,6 +1338,7 @@ document.onkeydown = (e) => {
     else if (modalPagamento && !modalPagamento.classList.contains("hidden")) modalPagamento.classList.add("hidden");
     else if (modalComanda && !modalComanda.classList.contains("hidden")) btnFecharModalComanda.onclick();
     else if (modalCadastroProduto && !modalCadastroProduto.classList.contains("hidden")) modalCadastroProduto.classList.add("hidden");
+    else if (modalImpressaoFechamento && !modalImpressaoFechamento.classList.contains("hidden")) modalImpressaoFechamento.classList.add("hidden");
   }
   // Atalhos dentro da Comanda (sem outros modais abertos)
   if (modalComanda && !modalComanda.classList.contains("hidden") &&
@@ -1331,14 +1348,28 @@ document.onkeydown = (e) => {
     if (e.key === "F3") { e.preventDefault(); btnAbrirModalCadastroComanda.onclick(); }
     if (e.key === "F4") { e.preventDefault(); abrirModalDividirItem(); }
     if (e.key === "F8") { e.preventDefault(); abrirModalPagamento(); }
-    if (e.key === "F9") { e.preventDefault(); window.print(); }
+    if (e.key === "F9") { e.preventDefault(); imprimirComandaAcao(); }
   }
 
   // Atalhos dentro do Dividir por Item
   if (modalDividirItem && !modalDividirItem.classList.contains("hidden")) {
-    if (e.key === "F2") { e.preventDefault(); window.print(); }
+    if (e.key === "F9") { e.preventDefault(); imprimirDivisaoAcao(); } // Padronizado F9
     if (e.key === "F5") { e.preventDefault(); considerarSelecao(false); }
     if (e.key === "F8") { e.preventDefault(); btnAdicionarAoPagamento.onclick(); }
+  }
+
+  // Atalhos dentro do Fechamento Diário (Modal e Tela)
+  const modalImpFech = document.getElementById("modalImpressaoFechamento");
+  const secFechamento = document.getElementById("sectionFechamento");
+
+  if (modalImpFech && !modalImpFech.classList.contains("hidden")) {
+    if (e.key === "F9") { e.preventDefault(); imprimirFechamentoFinal(); }
+  } else if (secFechamento && !secFechamento.classList.contains("hidden")) {
+    if (e.key === "F9") {
+      e.preventDefault();
+      const btn = document.getElementById("btnAbrirModalImpressaoFechamento");
+      if (btn) btn.click();
+    }
   }
 
 
@@ -1367,4 +1398,193 @@ let estadoOrdenacaoProdutos = { campo: 'codigo', direcao: 'asc' };
 
 window.removerPagamentoModal = removerPagamentoModal;
 window.editProduto = editProduto;
+// ===============================
+// LÓGICA DE MÁQUINAS (FECHAMENTO)
+// ===============================
+function formatarCampoMoeda(input) {
+  let valor = input.value.replace(/\D/g, "");
+  valor = (parseFloat(valor) / 100).toFixed(2);
+  if (isNaN(valor)) valor = "0.00";
+
+  input.value = "R$ " + formatarMoeda(parseFloat(valor));
+}
+
+function parseMoedaInput(texto) {
+  if (!texto) return 0;
+  let limpo = texto.replace("R$ ", "").replace(/\./g, "").replace(",", ".");
+  return parseFloat(limpo) || 0;
+}
+
+function adicionarLinhaFechamento(label = "", c = 0, d = 0, p = 0, di = 0) {
+  const tbody = document.getElementById("tbodyMaquinasFechamento");
+  if (!tbody) return;
+
+  const tr = document.createElement("tr");
+  tr.className = "linha-maquina";
+  tr.style.borderBottom = "1px solid #f1f5f9";
+
+  tr.innerHTML = `
+    <td style="padding: 10px;"><input type="text" class="f-label" value="${label}" placeholder="Ex: Cielo, Stone..." style="width:100%; border:1px solid #e2e8f0; padding:8px; border-radius:6px; font-weight:700;"></td>
+    <td style="padding: 10px;"><input type="text" class="f-moeda f-credito" value="${c ? "R$ " + formatarMoeda(c) : ""}" placeholder="R$ 0,00" style="width:100%; border:1px solid #e2e8f0; padding:8px; border-radius:6px; font-weight:700; text-align:right;"></td>
+    <td style="padding: 10px;"><input type="text" class="f-moeda f-debito" value="${d ? "R$ " + formatarMoeda(d) : ""}" placeholder="R$ 0,00" style="width:100%; border:1px solid #e2e8f0; padding:8px; border-radius:6px; font-weight:700; text-align:right;"></td>
+    <td style="padding: 10px;"><input type="text" class="f-moeda f-pix" value="${p ? "R$ " + formatarMoeda(p) : ""}" placeholder="R$ 0,00" style="width:100%; border:1px solid #e2e8f0; padding:8px; border-radius:6px; font-weight:700; text-align:right;"></td>
+    <td style="padding: 10px;"><input type="text" class="f-moeda f-dinheiro" value="${di ? "R$ " + formatarMoeda(di) : ""}" placeholder="R$ 0,00" style="width:100%; border:1px solid #e2e8f0; padding:8px; border-radius:6px; font-weight:700; text-align:right;"></td>
+    <td style="padding: 10px; text-align:center;"><button class="btn-remove-linha-fech" style="background:#fee2e2; color:#ef4444; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer;" title="Remover">×</button></td>
+  `;
+
+  tbody.appendChild(tr);
+
+  // Vincular máscara, cálculos e navegação por Enter
+  const inputs = tr.querySelectorAll("input");
+  inputs.forEach((inp, idx) => {
+    if (inp.classList.contains("f-moeda")) {
+      // Aplica máscara a cada digitação
+      inp.addEventListener("input", () => {
+        formatarCampoMoeda(inp);
+        atualizarTotaisFechamento();
+      });
+
+      // Garante formatação ao sair do campo
+      inp.addEventListener("blur", () => {
+        if (inp.value && inp.value.trim() !== "") {
+          formatarCampoMoeda(inp);
+        }
+      });
+
+      // Ao focar, seleciona tudo para facilitar edição
+      inp.addEventListener("focus", () => {
+        inp.select();
+      });
+    }
+
+    inp.onkeydown = (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const todosInps = Array.from(document.querySelectorAll("#tbodyMaquinasFechamento input"));
+        const atualIdx = todosInps.indexOf(inp);
+
+        if (atualIdx < todosInps.length - 1) {
+          todosInps[atualIdx + 1].focus();
+          todosInps[atualIdx + 1].select();
+        } else {
+          adicionarLinhaFechamento();
+          setTimeout(() => {
+            const novosInps = document.querySelectorAll("#tbodyMaquinasFechamento input");
+            const proximo = novosInps[atualIdx + 1];
+            if (proximo) {
+              proximo.focus();
+              proximo.select();
+            }
+          }, 0);
+        }
+      }
+    };
+  });
+
+  tr.querySelector(".btn-remove-linha-fech").onclick = () => {
+    tr.remove();
+    atualizarTotaisFechamento();
+  };
+
+  atualizarTotaisFechamento();
+}
+
+function atualizarTotaisFechamento() {
+  let sc = 0, sd = 0, sp = 0, sdi = 0;
+  document.querySelectorAll(".linha-maquina").forEach(row => {
+    sc += parseMoedaInput(row.querySelector(".f-credito").value);
+    sd += parseMoedaInput(row.querySelector(".f-debito").value);
+    sp += parseMoedaInput(row.querySelector(".f-pix").value);
+    sdi += parseMoedaInput(row.querySelector(".f-dinheiro").value);
+  });
+
+  const tC = document.getElementById("totalFechamentoCredito");
+  const tD = document.getElementById("totalFechamentoDebito");
+  const tP = document.getElementById("totalFechamentoPix");
+  const tDi = document.getElementById("totalFechamentoDinheiro");
+
+  if (tC) tC.innerText = `R$ ${formatarMoeda(sc)}`;
+  if (tD) tD.innerText = `R$ ${formatarMoeda(sd)}`;
+  if (tP) tP.innerText = `R$ ${formatarMoeda(sp)}`;
+  if (tDi) tDi.innerText = `R$ ${formatarMoeda(sdi)}`;
+}
+
+// Inicialização e Eventos
+document.addEventListener("DOMContentLoaded", () => {
+  const btnAdd = document.getElementById("btnAdicionarMaquina");
+  if (btnAdd) btnAdd.onclick = () => adicionarLinhaFechamento();
+
+  // Adiciona a primeira linha por padrão
+  if (document.getElementById("tbodyMaquinasFechamento")) {
+    adicionarLinhaFechamento("MÁQUINA 01");
+  }
+});
+
+// ===============================
+// VENDAS HOJE (SIDEBAR)
+// ===============================
+async function carregarVendasHoje() {
+  const tbody = document.getElementById("tbodyVendasHoje");
+  if (!tbody) return;
+
+  try {
+    // Usar data local ao invés de UTC para evitar deslocamento de fuso horário
+    const agora = new Date();
+    const ano = agora.getFullYear();
+    const mes = String(agora.getMonth() + 1).padStart(2, '0');
+    const dia = String(agora.getDate()).padStart(2, '0');
+    const hojeInicio = `${ano}-${mes}-${dia} 00:00:00`;
+    const hojeFim = `${ano}-${mes}-${dia} 23:59:59`;
+
+    const res = await fetch(`${API_URL}/relatorios/vendas?data_inicio=${hojeInicio}&data_fim=${hojeFim}`);
+    const resposta = await res.json();
+
+    // A API retorna um objeto com várias propriedades, usamos 'geral' que contém os produtos
+    const dados = resposta.geral || [];
+
+    tbody.innerHTML = "";
+
+    if (!dados || dados.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="2" style="padding: 15px; text-align: center; color: #94a3b8;">Nenhuma venda hoje</td></tr>';
+      return;
+    }
+
+    // Ordenar por quantidade decrescente
+    dados.sort((a, b) => b.total_qtd - a.total_qtd);
+
+    dados.forEach(item => {
+      const tr = document.createElement("tr");
+      tr.style.borderBottom = "1px solid #f1f5f9";
+      tr.innerHTML = `
+        <td style="padding: 8px; color: #1e293b;">${item.descricao}</td>
+        <td style="padding: 8px; text-align: center; font-weight: 700; color: #3b82f6;">${item.total_qtd}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("Erro ao carregar vendas de hoje:", err);
+    tbody.innerHTML = '<tr><td colspan="2" style="padding: 15px; text-align: center; color: #ef4444;">Erro ao carregar</td></tr>';
+  }
+}
+
+function initToggleVendasHoje() {
+  const btn = document.getElementById("toggleVendasHojeBtn");
+  const container = document.getElementById("vendasHojeContainer");
+  const icon = document.getElementById("toggleVendasIcon");
+
+  if (!btn || !container || !icon) return;
+
+  btn.onclick = () => {
+    const isOpen = container.style.maxHeight && container.style.maxHeight !== "0px";
+
+    if (isOpen) {
+      container.style.maxHeight = "0";
+      icon.style.transform = "rotate(0deg)";
+    } else {
+      container.style.maxHeight = "400px";
+      icon.style.transform = "rotate(180deg)";
+    }
+  };
+}
+
 window.removerItemUnico = removerItemUnico;

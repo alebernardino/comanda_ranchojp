@@ -7,6 +7,7 @@
   <title>Rancho JP - Sistema de Comandas</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <link rel="stylesheet" href="css/style.css?v=1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,7 +18,9 @@
   <style>
     :root {
       --sidebar-width: 260px;
+      --sidebar-collapsed-width: 78px;
       --stats-sidebar-width: 240px;
+      --stats-sidebar-collapsed-width: 78px;
     }
 
     body {
@@ -31,43 +34,28 @@
 
     /* Sidebar Glassmorphism */
     .btn-toggle {
-      position: absolute;
-      top: 20px;
-      z-index: 1100;
-      background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(4px);
-      border: 1px solid #e2e8f0;
-      color: #1e293b;
-      font-size: 0.9rem;
-      font-weight: 800;
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.2rem;
       cursor: pointer;
-      width: 28px;
-      height: 54px;
+      width: 40px;
+      height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .sidebar .btn-toggle {
-      right: -28px;
-      border-radius: 0 10px 10px 0;
-      border-left: none;
-    }
-
-    .sidebar-right .btn-toggle {
-      left: -28px;
-      border-radius: 10px 0 0 10px;
-      border-right: none;
+      border-radius: 8px;
     }
 
     .btn-toggle:hover {
-      background: #38bdf8;
-      color: white;
-      border-color: #38bdf8;
-      width: 32px;
-      /* Pequeno efeito de expansão */
+      background: rgba(255, 255, 255, 0.1);
+      color: #38bdf8;
+    }
+
+    .sidebar-right .btn-toggle:hover {
+      background: rgba(0, 0, 0, 0.05);
+      color: #38bdf8;
     }
 
     .sidebar {
@@ -84,44 +72,55 @@
     }
 
     .sidebar.collapsed {
-      width: 0;
+      width: var(--sidebar-collapsed-width);
     }
 
     .sidebar-content {
-      width: var(--sidebar-width);
-      min-width: var(--sidebar-width);
-      padding: 30px 20px;
+      width: 100%;
+      padding: 30px 15px;
       display: flex;
       flex-direction: column;
       height: 100%;
       overflow-x: hidden;
       box-sizing: border-box;
-      transition: opacity 0.2s ease;
+      transition: all 0.3s ease;
     }
 
     .sidebar.collapsed .sidebar-content {
-      opacity: 0;
-      pointer-events: none;
+      padding: 30px 10px;
+    }
+
+    .sidebar.collapsed .brand-text,
+    .sidebar.collapsed .nav-text,
+    .sidebar.collapsed .sidebar-footer {
+      display: none;
     }
 
     .sidebar-brand {
       font-family: 'Outfit', sans-serif;
-      font-size: 1.5rem;
+      font-size: 1.2rem;
       font-weight: 800;
-      margin-bottom: 40px;
+      margin-bottom: 30px;
       display: flex;
       align-items: center;
       gap: 12px;
       color: #38bdf8;
-      padding-left: 10px;
+      padding: 0 10px;
+      transition: all 0.3s ease;
+      height: 40px;
     }
 
-    .sidebar-brand i {
-      display: inline-block;
-      width: 32px;
-      height: 32px;
-      background: #38bdf8;
-      border-radius: 8px;
+    .sidebar.collapsed .sidebar-brand {
+      display: none;
+    }
+
+    .btn-toggle {
+      flex-shrink: 0;
+    }
+
+    .sidebar.collapsed .btn-toggle,
+    .sidebar-right.collapsed .btn-toggle {
+      margin-bottom: 30px;
     }
 
     .nav-menu {
@@ -141,6 +140,12 @@
       text-decoration: none;
       transition: all 0.3s ease;
       font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .sidebar.collapsed .nav-item {
+      padding: 12px;
+      justify-content: center;
     }
 
     .nav-item:hover {
@@ -325,25 +330,49 @@
     }
 
     .sidebar-right.collapsed {
-      width: 0;
-      border: none;
+      width: var(--stats-sidebar-collapsed-width);
+      border-left: 1px solid #e2e8f0;
     }
 
     .sidebar-content-right {
-      width: var(--stats-sidebar-width);
-      min-width: var(--stats-sidebar-width);
-      padding: 30px 20px;
+      width: 100%;
+      padding: 30px 15px;
       display: flex;
       flex-direction: column;
       gap: 20px;
       overflow-x: hidden;
       box-sizing: border-box;
-      transition: opacity 0.2s ease;
+      transition: all 0.3s ease;
     }
 
     .sidebar-right.collapsed .sidebar-content-right {
-      opacity: 0;
-      pointer-events: none;
+      padding: 30px 10px;
+    }
+
+    .sidebar-right.collapsed .sidebar-content-right h3,
+    .sidebar-right.collapsed .sidebar-content-right p,
+    .sidebar-right.collapsed .stat-info {
+      display: none;
+    }
+
+    .sidebar-right.collapsed .stat-card {
+      justify-content: center;
+      padding: 10px 5px;
+    }
+
+    .sidebar-right.collapsed #toggleVendasHojeBtn span:first-child {
+      font-size: 1.5rem;
+    }
+
+    .sidebar-right.collapsed #toggleVendasHojeBtn .vendas-label,
+    .sidebar-right.collapsed #toggleVendasHojeBtn #toggleVendasIcon,
+    .sidebar-right.collapsed #vendasHojeContainer {
+      display: none !important;
+    }
+
+    .sidebar-right.collapsed #toggleVendasHojeBtn {
+      justify-content: center;
+      padding: 15px 5px;
     }
 
     .stats-overview {
@@ -428,42 +457,45 @@
     <h1>Restaurante Rancho JP</h1>
   </div>
 
-  <aside class="sidebar">
-    <button id="btnToggleSidebar" class="btn-toggle" title="Alternar Menu">
-      &lt;
-    </button>
+  <aside class="sidebar collapsed">
     <div class="sidebar-content">
+      <button id="btnToggleSidebar" class="btn-toggle" title="Alternar Menu">
+        <i class="fas fa-bars"></i>
+      </button>
+
       <div class="sidebar-brand">
-        <div
-          style="background: #38bdf8; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #0f172a; font-size: 1.2rem; font-weight: 900;">
-          R</div>
-        Rancho JP
+        <div class="brand-logo" style="display: flex; align-items: center; gap: 12px;">
+          <div
+            style="background: #38bdf8; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #0f172a; font-size: 1.2rem; font-weight: 900; flex-shrink: 0;">
+            R</div>
+          <span class="brand-text">Rancho JP</span>
+        </div>
       </div>
 
       <nav class="nav-menu">
         <a href="#" class="nav-item active" id="navDashboard">
           <span class="nav-icon">📋</span>
-          Comandas
+          <span class="nav-text">Comandas</span>
         </a>
         <a href="#" class="nav-item" id="navProdutosSessao">
           <span class="nav-icon">📦</span>
-          Produtos
+          <span class="nav-text">Produtos</span>
         </a>
         <a href="#" class="nav-item" id="navColaboradores">
           <span class="nav-icon">👥</span>
-          Colaboradores
+          <span class="nav-text">Colaboradores</span>
         </a>
         <a href="#" class="nav-item" id="navFinanceiro">
           <span class="nav-icon">💰</span>
-          Financeiro
+          <span class="nav-text">Financeiro</span>
         </a>
         <a href="#" class="nav-item" id="navRelatorios">
           <span class="nav-icon">📊</span>
-          Relatórios
+          <span class="nav-text">Relatórios</span>
         </a>
         <a href="#" class="nav-item" id="navFechamento">
           <span class="nav-icon">🔒</span>
-          Fechamento
+          <span class="nav-text">Fechamento</span>
         </a>
       </nav>
 
@@ -823,42 +855,47 @@
       </header>
 
       <div class="card"
-        style="background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-top: 20px;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-          <div class="input-group">
-            <label
-              style="display:block; font-size: 0.75rem; font-weight: 800; color: #64748b; margin-bottom: 5px;">MAQUININHA
-              - CRÉDITO</label>
-            <input type="number" step="0.01" id="fechamentoCredito" placeholder="R$ 0,00"
-              style="width: 100%; font-size: 1.2rem; font-weight: 800; padding: 10px;">
-          </div>
-          <div class="input-group">
-            <label
-              style="display:block; font-size: 0.75rem; font-weight: 800; color: #64748b; margin-bottom: 5px;">MAQUININHA
-              - DÉBITO</label>
-            <input type="number" step="0.01" id="fechamentoDebito" placeholder="R$ 0,00"
-              style="width: 100%; font-size: 1.2rem; font-weight: 800; padding: 10px;">
-          </div>
-          <div class="input-group">
-            <label
-              style="display:block; font-size: 0.75rem; font-weight: 800; color: #64748b; margin-bottom: 5px;">MAQUININHA
-              - PIX</label>
-            <input type="number" step="0.01" id="fechamentoPix" placeholder="R$ 0,00"
-              style="width: 100%; font-size: 1.2rem; font-weight: 800; padding: 10px;">
-          </div>
-          <div class="input-group">
-            <label
-              style="display:block; font-size: 0.75rem; font-weight: 800; color: #64748b; margin-bottom: 5px;">DINHEIRO
-              EM ESPÉCIE</label>
-            <input type="number" step="0.01" id="fechamentoDinheiro" placeholder="R$ 0,00"
-              style="width: 100%; font-size: 1.2rem; font-weight: 800; padding: 10px;">
-          </div>
-        </div>
+        style="background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-top: 20px; overflow-x: auto;">
 
-        <div style="margin-top: 30px; display: flex; justify-content: flex-end;">
+        <table style="width: 100%; border-collapse: collapse; min-width: 800px;">
+          <thead>
+            <tr style="text-align: left; border-bottom: 2px solid #f1f5f9;">
+              <th style="padding: 10px; font-size: 0.75rem; color: #64748b; text-transform: uppercase;">Máquina / Origem
+              </th>
+              <th style="padding: 10px; font-size: 0.75rem; color: #64748b; text-transform: uppercase; width: 160px;">
+                Crédito (R$)</th>
+              <th style="padding: 10px; font-size: 0.75rem; color: #64748b; text-transform: uppercase; width: 160px;">
+                Débito (R$)</th>
+              <th style="padding: 10px; font-size: 0.75rem; color: #64748b; text-transform: uppercase; width: 160px;">
+                Pix (R$)</th>
+              <th style="padding: 10px; font-size: 0.75rem; color: #64748b; text-transform: uppercase; width: 160px;">
+                Dinheiro (R$)</th>
+              <th style="padding: 10px; width: 50px;"></th>
+            </tr>
+          </thead>
+          <tbody id="tbodyMaquinasFechamento">
+            <!-- Linhas de máquinas inseridas via JS -->
+          </tbody>
+          <tfoot>
+            <tr style="background: #f8fafc; font-weight: 800; border-top: 2px solid #e2e8f0;">
+              <td style="padding: 15px 10px; color: #1e293b;">TOTAIS SOMA</td>
+              <td style="padding: 15px 10px; color: #3b82f6;" id="totalFechamentoCredito">R$ 0,00</td>
+              <td style="padding: 15px 10px; color: #3b82f6;" id="totalFechamentoDebito">R$ 0,00</td>
+              <td style="padding: 15px 10px; color: #3b82f6;" id="totalFechamentoPix">R$ 0,00</td>
+              <td style="padding: 15px 10px; color: #3b82f6;" id="totalFechamentoDinheiro">R$ 0,00</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div style="margin-top: 30px; display: flex; justify-content: space-between; align-items: center;">
+          <button id="btnAdicionarMaquina"
+            style="background: #f1f5f9; color: #1e293b; border: 1px solid #e2e8f0; box-shadow: none;">
+            + ADICIONAR MÁQUINA
+          </button>
           <button id="btnAbrirModalImpressaoFechamento"
             style="background: #3b82f6; color: white; padding: 15px 30px; font-weight: 800; border-radius: 12px; border: none; cursor: pointer; display: flex; align-items: center; gap: 10px;">
-            <span>🖨️</span> PREPARAR IMPRESSÃO
+            <span>🖨️</span> PREPARAR IMPRESSÃO (F9)
           </button>
         </div>
       </div>
@@ -1215,7 +1252,7 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2 style="margin: 0; font-size: 1.2rem;">O que deseja imprimir?</h2>
         <button onclick="document.getElementById('modalImpressaoFechamento').classList.add('hidden')"
-          style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+          style="background: #ef4444; color: white; border-radius: 50%; width: 32px; height: 32px; padding: 0; min-width: 32px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border: none; cursor: pointer; box-shadow: none;">×</button>
       </div>
       <div style="display: flex; flex-direction: column; gap: 15px;">
         <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
@@ -1237,8 +1274,8 @@
       </div>
       <div style="margin-top: 25px; display: flex; flex-direction: column; gap: 10px;">
         <button id="btnImprimirFechamentoFinal"
-          style="background: #10b981; color: white; padding: 12px; font-weight: 800; border-radius: 8px; border: none; cursor: pointer;">IMPRIMIR
-          SELECIONADOS</button>
+          style="background: #10b981; color: white; padding: 12px; font-weight: 700; border-radius: 8px; border: none; cursor: pointer;">Imprimir
+          Fechamento (F9)</button>
       </div>
     </div>
   </div>
@@ -1312,12 +1349,13 @@
     </div>
   </div>
 
-  <aside class="sidebar-right">
-    <button id="btnToggleRightSidebar" class="btn-toggle" title="Alternar Resumo">
-      &gt;
-    </button>
+  <aside class="sidebar-right collapsed">
     <div class="sidebar-content-right">
-      <div style="margin-bottom: 20px;">
+      <button id="btnToggleRightSidebar" class="btn-toggle" title="Alternar Resumo">
+        <i class="fas fa-bars"></i>
+      </button>
+
+      <div class="brand-text" style="margin-bottom: 20px;">
         <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; color: #1e293b; margin: 0;">Resumo Hoje</h3>
         <p style="font-size: 0.75rem; color: #64748b; margin: 5px 0 0 0;">Dados em tempo real</p>
       </div>
@@ -1331,10 +1369,39 @@
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background: #fef2f2; color: #ef4444;">🔥</div>
+          <div class="stat-icon" style="background: #fef2f2; color: #ef4444;">🍽️</div>
           <div class="stat-info">
             <h4>Em Uso</h4>
             <p id="stats-ocupadas">--</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Itens Vendidos Hoje (Recolhível) -->
+      <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+        <div id="toggleVendasHojeBtn"
+          style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 10px; background: #f8fafc; border-radius: 8px; gap: 8px;">
+          <span style="font-size: 1.2rem;">📦</span>
+          <span class="vendas-label" style="font-weight: 700; color: #1e293b; font-size: 0.9rem; flex: 1;">Itens
+            Vendidos Hoje</span>
+          <span id="toggleVendasIcon" style="font-size: 1rem; transition: transform 0.3s;">▼</span>
+        </div>
+        <div id="vendasHojeContainer" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;">
+          <div
+            style="margin-top: 10px; max-height: 300px; overflow-y: auto; border: 1px solid #f1f5f9; border-radius: 8px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+              <thead style="background: #f8fafc; position: sticky; top: 0;">
+                <tr>
+                  <th style="padding: 8px; text-align: left; color: #64748b;">Produto</th>
+                  <th style="padding: 8px; text-align: center; color: #64748b; width: 60px;">Qtd</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyVendasHoje">
+                <tr>
+                  <td colspan="2" style="padding: 15px; text-align: center; color: #94a3b8;">Carregando...</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -1469,7 +1536,7 @@
         <div style="display: flex; gap: 10px;">
           <button id="btnConsiderarSelecao" style="background: var(--primary);">Considerar Seleção (F5)</button>
           <button id="btnAdicionarAoPagamento" style="background: #10b981;">Gerar Pagamento (F8)</button>
-          <button id="btnImprimirDivisao" style="background: #3b82f6;">Imprimir (F2)</button>
+          <button id="btnImprimirDivisao" style="background: #3b82f6;">Imprimir (F9)</button>
         </div>
       </div>
     </div>
