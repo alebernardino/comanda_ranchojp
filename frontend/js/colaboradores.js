@@ -61,22 +61,22 @@ function renderizarTabelaColaboradores(lista) {
 
     lista.forEach(c => {
         const tr = document.createElement("tr");
-        tr.style.borderBottom = "1px solid #f1f5f9";
-        if (!c.ativo) tr.style.opacity = "0.7";
+        tr.classList.add("table-row");
+        if (!c.ativo) tr.classList.add("colaborador-row-inactive");
 
         const contatosStr = c.contatos.join(", ") || "-";
         const pixsStr = c.pixs.join(", ") || "-";
 
         tr.innerHTML = `
-            <td style="padding: 15px; text-align: center; color: #64748b; font-weight: 700;">#${c.id}</td>
-            <td style="padding: 15px;">
-                <div style="font-weight: 600; color: #1e293b;">${c.nome}</div>
-                <div style="font-size: 0.75rem; color: #64748b;">${c.endereco || ''}</div>
+            <td class="colaborador-id">#${c.id}</td>
+            <td class="colaborador-nome-container">
+                <div class="colaborador-nome">${c.nome}</div>
+                <div class="colaborador-endereco">${c.endereco || ''}</div>
             </td>
-            <td style="padding: 15px; color: #64748b;">${c.funcao || '-'}</td>
-            <td style="padding: 15px; font-size: 0.85rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${contatosStr}">${contatosStr}</td>
-            <td style="padding: 15px; font-size: 0.85rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${pixsStr}">${pixsStr}</td>
-            <td style="padding: 15px; text-align: center;">
+            <td class="colaborador-funcao">${c.funcao || '-'}</td>
+            <td class="colaborador-contatos" title="${contatosStr}">${contatosStr}</td>
+            <td class="colaborador-contatos" title="${pixsStr}">${pixsStr}</td>
+            <td class="colaborador-actions">
                 <input type="checkbox" ${c.ativo ? 'checked' : ''} onchange="alterarStatusColaborador(${c.id}, this.checked)">
             </td>
         `;
@@ -149,13 +149,13 @@ function limparCamposColaborador() {
     document.getElementById("colabFuncao").value = "";
 
     document.getElementById("listaInputsContatos").innerHTML = `
-        <div style="display: flex; gap: 5px;">
+        <div class="flex-container">
             <input class="colab-contato" placeholder="(00) 00000-0000" style="flex: 1;">
             <button onclick="adicionarInput('listaInputsContatos', 'colab-contato')" style="background: #38bdf8; padding: 0 10px; border-radius: 6px;">+</button>
         </div>
     `;
     document.getElementById("listaInputsPix").innerHTML = `
-        <div style="display: flex; gap: 5px;">
+        <div class="flex-container">
             <input class="colab-pix" placeholder="Email, CPF ou Chave..." style="flex: 1;">
             <button onclick="adicionarInput('listaInputsPix', 'colab-pix')" style="background: #38bdf8; padding: 0 10px; border-radius: 6px;">+</button>
         </div>

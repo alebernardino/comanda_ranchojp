@@ -1,0 +1,124 @@
+/* ============================================
+   ESTILOS PARA IMPRESSÃO TÉRMICA
+   ============================================ */
+
+/* Cabeçalho de impressão */
+.print-header {
+    text-align: center;
+    border-bottom: 2px solid black;
+    padding-bottom: 3mm;
+    margin-bottom: 3mm;
+}
+
+.print-header h1 {
+    margin: 0;
+    font-size: 14pt;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+/* Rodapé de impressão */
+.print-footer {
+    border-top: 1px dashed black;
+    padding-top: 2mm;
+    margin-top: 3mm;
+    text-align: center;
+    font-size: 8pt;
+}
+
+.print-spacer {
+    height: 20mm;
+}
+
+/* Tabela de itens na impressão */
+.print-table td {
+    padding: 1mm 0;
+}
+
+.print-table .text-center {
+    text-align: center;
+}
+
+.print-table .text-right {
+    text-align: right;
+}
+
+/* Título da comanda */
+.print-comanda-title {
+    text-align: center;
+    margin: 2mm 0;
+    font-size: 12pt;
+}
+
+/* Informações da comanda */
+.print-comanda-info {
+    font-size: 9pt;
+    margin-bottom: 3mm;
+}
+
+/* Cabeçalho da tabela */
+.print-table thead th.text-center {
+    text-align: center;
+}
+
+.print-table thead th.text-right {
+    text-align: right;
+}
+
+/* Total da impressão */
+.print-total {
+    border-top: 1px solid black;
+    padding-top: 2mm;
+    margin-top: 2mm;
+    text-align: right;
+    font-size: 11pt;
+    font-weight: 800;
+}
+
+/* Valor parcial */
+.print-partial-info {
+    text-align: center;
+    font-size: 9pt;
+    margin-bottom: 3mm;
+    border-bottom: 1px dashed black;
+    padding-bottom: 2mm;
+}
+
+/* Resumo de pagamento */
+.print-payment-title {
+    text-align: center;
+    margin: 2mm 0;
+    border-bottom: 1px dashed black;
+    padding-bottom: 2mm;
+}
+
+.print-payment-info {
+    text-align: center;
+    font-size: 9pt;
+    margin-bottom: 3mm;
+}
+
+/* Fechamento diário */
+.print-closing-title {
+    text-align: center;
+    margin: 2mm 0;
+}
+
+.print-closing-info {
+    text-align: center;
+    font-size: 9pt;
+    margin-bottom: 3mm;
+    border-bottom: 1px solid black;
+    padding-bottom: 2mm;
+}
+
+.print-closing-signature {
+    margin-top: 5mm;
+    border-top: 1px solid black;
+    text-align: center;
+    padding-top: 3mm;
+}
+
+.print-closing-signature p {
+    font-size: 8pt;
+}

@@ -303,7 +303,7 @@ function renderizarProdutosModal(lista) {
   lista.forEach(p => {
     const div = document.createElement("div");
     div.className = "produto-item";
-    if (!p.ativo) div.style.opacity = "0.5"; // Visual feedback for inactive products
+    if (!p.ativo) div.classList.add("produto-inactive");
     div.innerHTML = `<span class="produto-cod">${p.codigo}</span><span class="produto-desc">${p.descricao}</span><span class="produto-valor">R$ ${formatarMoeda(p.valor)}</span>`;
     div.onclick = () => selecionarProduto(p);
     listaProdutos.appendChild(div);
@@ -764,9 +764,17 @@ async function imprimirResumoPagamento() {
 
     totalEl.innerText = `TOTAL PAGO: R$ ${formatarMoeda(total)}`;
 
+    // Função para limpar após impressão
+    const limparAposImpressao = () => {
+      document.body.classList.remove("printing-receipt");
+      window.removeEventListener('afterprint', limparAposImpressao);
+    };
+
+    // Adicionar listener para limpar após impressão
+    window.addEventListener('afterprint', limparAposImpressao);
+
     document.body.classList.add("printing-receipt");
     window.print();
-    document.body.classList.remove("printing-receipt");
 
   } catch (err) {
     console.error("Erro ao imprimir resumo:", err);
@@ -801,6 +809,16 @@ async function imprimirComandaAcao() {
   }
 
   // Fallback: impressão via navegador
+  // Função para limpar após impressão
+  const limparAposImpressao = () => {
+    document.body.classList.remove("printing-comanda");
+    window.removeEventListener('afterprint', limparAposImpressao);
+  };
+
+  // Adicionar listener para limpar após impressão
+  window.addEventListener('afterprint', limparAposImpressao);
+
+  document.body.classList.add("printing-comanda");
   window.print();
 }
 
@@ -859,13 +877,28 @@ async function imprimirDivisaoAcao(itensParaImprimir = null, totalParaImprimir =
   if (printTotal) printTotal.innerText = `TOTAL: R$ ${formatarMoeda(totalParaImprimir)}`;
 
   // Mostrar o container e imprimir
-  printContainer.style.display = "block";
+  printContainer.classList.add("active");
   document.body.classList.add("printing-parcial");
 
+  // Função para limpar após impressão
+  const limparAposImpressao = () => {
+    printContainer.classList.remove("active");
+    document.body.classList.remove("printing-parcial");
+
+    // Limpar completamente o conteúdo do template para evitar impressões duplicadas
+    if (printTitulo) printTitulo.innerText = "";
+    if (printBody) printBody.innerHTML = "";
+    if (printTotal) printTotal.innerText = "";
+
+    window.removeEventListener('afterprint', limparAposImpressao);
+  };
+
+  // Adicionar listener para limpar após impressão
+  window.addEventListener('afterprint', limparAposImpressao);
+
+  // Fallback com timeout caso o evento não dispare
   setTimeout(() => {
     window.print();
-    printContainer.style.display = "none";
-    document.body.classList.remove("printing-parcial");
   }, 100);
 }
 
@@ -1013,7 +1046,7 @@ function renderizarTabelaProdutosPage(produtos) {
   produtos.forEach(p => {
     const grupo = p.codigo.charAt(0);
     const tr = document.createElement("tr");
-    tr.style.borderBottom = "1px solid #f1f5f9";
+    tr.classList.add("table-row");
     tr.innerHTML = `
         <td style="padding: 15px; text-align: center; font-weight: bold; color: #3b82f6;">${grupo}</td>
         <td style="padding: 15px;">${p.codigo}</td>
@@ -1608,7 +1641,7 @@ function adicionarLinhaFechamento(label = "", c = 0, d = 0, p = 0) {
 
   const tr = document.createElement("tr");
   tr.className = "linha-maquina";
-  tr.style.borderBottom = "1px solid #f1f5f9";
+  tr.classList.add("table-row");
 
   tr.innerHTML = `
     <td style="padding: 10px;"><input type="text" class="f-label" value="${label}" placeholder="Ex: Cielo, Stone..." style="width:100%; border:1px solid #e2e8f0; padding:8px; border-radius:6px; font-weight:700;"></td>
@@ -1776,7 +1809,7 @@ async function carregarVendasHoje() {
 
     dados.forEach(item => {
       const tr = document.createElement("tr");
-      tr.style.borderBottom = "1px solid #f1f5f9";
+      tr.classList.add("table-row");
       tr.innerHTML = `
         <td style="padding: 8px; color: #1e293b;">${item.descricao}</td>
         <td style="padding: 8px; text-align: center; font-weight: 700; color: #3b82f6;">${item.total_qtd}</td>

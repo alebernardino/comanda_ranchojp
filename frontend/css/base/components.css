@@ -1,0 +1,136 @@
+/* ============================================
+   COMPONENTES REUTILIZÁVEIS
+   ============================================ */
+
+/* Tabelas */
+.table-row {
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.table-cell-center {
+    text-align: center;
+}
+
+.table-cell-right {
+    text-align: right;
+}
+
+.table-cell-padding {
+    padding: 15px;
+}
+
+.table-header-bg {
+    background: #f8fafc;
+}
+
+.table-footer-bg {
+    background: #f1f5f9;
+    font-weight: 800;
+}
+
+/* Colaboradores - Células específicas */
+.colaborador-id {
+    padding: 15px;
+    text-align: center;
+    color: #64748b;
+    font-weight: 700;
+}
+
+.colaborador-nome-container {
+    padding: 15px;
+}
+
+.colaborador-nome {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.colaborador-endereco {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.colaborador-funcao {
+    padding: 15px;
+    color: #64748b;
+}
+
+.colaborador-contatos {
+    padding: 15px;
+    font-size: 0.85rem;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.colaborador-actions {
+    padding: 15px;
+    text-align: center;
+}
+
+.colaborador-row-inactive {
+    opacity: 0.7;
+}
+
+/* Produtos */
+.produto-inactive {
+    opacity: 0.5;
+}
+
+/* Botões */
+.btn-delete {
+    background: #fee2e2;
+    border: none;
+    color: #ef4444;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-delete:hover {
+    background: #fecaca;
+}
+
+/* Checkbox customizado */
+.checkbox-ativo {
+    cursor: pointer;
+}
+
+/* Container de ações */
+.actions-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* Utilitários de display */
+.flex-container {
+    display: flex;
+    gap: 5px;
+}
+
+/* Cores de saldo */
+.saldo-positivo {
+    color: #3b82f6;
+}
+
+.saldo-negativo {
+    color: #ef4444;
+}
+
+/* Estilos de impressão */
+.print-container {
+    display: none;
+}
+
+.print-container.active {
+    display: block;
+}

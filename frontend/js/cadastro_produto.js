@@ -109,10 +109,10 @@ async function carregarProdutosCadastrados() {
         <td><input class="input-tabela-texto" value="${p.codigo}" data-field="codigo" readonly></td>
         <td><input class="input-tabela-texto" value="${p.descricao}" data-field="descricao" readonly></td>
         <td><input class="input-tabela-valor" value="${p.valor.toFixed(2)}" data-field="valor" readonly></td>
-        <td style="text-align:center;">
-          <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
-            <input type="checkbox" ${p.ativo ? "checked" : ""} data-field="ativo" style="cursor:pointer;">
-            <button onclick="excluirProdutoNaPagina(${p.id})" style="background:#fee2e2; border:none; color:#ef4444; width:24px; height:24px; border-radius:50%; font-size:1.1rem; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;" title="Excluir">×</button>
+        <td class="table-cell-center">
+          <div class="actions-container">
+            <input type="checkbox" ${p.ativo ? "checked" : ""} data-field="ativo" class="checkbox-ativo">
+            <button onclick="excluirProdutoNaPagina(${p.id})" class="btn-delete" title="Excluir">×</button>
           </div>
         </td>
       `;

@@ -842,7 +842,8 @@ th {
 
 /* Elementos globais de impressão (escondidos na tela) */
 .global-print-element,
-#printResumoPagamento {
+#printResumoPagamento,
+#printItensParciais {
   display: none;
 }
 
@@ -938,6 +939,13 @@ th {
     display: block !important;
   }
 
+  /* Se estiver imprimindo a comanda normal */
+  body.printing-comanda #printResumoPagamento,
+  body.printing-comanda #printItensParciais,
+  body.printing-comanda #printFechamentoDiario {
+    display: none !important;
+  }
+
   /* Se estiver imprimindo o resumo de pagamento, esconde modais e mostra o resumo */
   body.printing-receipt .modal {
     display: none !important;
@@ -950,6 +958,10 @@ th {
   body.printing-receipt #globalPrintHeader,
   body.printing-receipt #globalPrintFooter {
     display: block !important;
+  }
+
+  body.printing-receipt #printItensParciais {
+    display: none !important;
   }
 
   /* Se estiver imprimindo o fechamento diário */
@@ -971,6 +983,12 @@ th {
   /* Ajuste específico para o resumo de pagamento para evitar o buraco branco */
   body.printing-receipt .modal,
   body.printing-receipt .main-content {
+    display: none !important;
+  }
+
+  /* Garante que apenas o resumo de pagamento seja visível */
+  body.printing-receipt #printItensParciais,
+  body.printing-receipt #printFechamentoDiario {
     display: none !important;
   }
 
@@ -1315,6 +1333,12 @@ th {
   }
 
   body.printing-parcial #printResumoPagamento {
+    display: none !important;
+  }
+
+  /* Garante que apenas itens parciais sejam visíveis */
+  body.printing-parcial #printResumoPagamento,
+  body.printing-parcial #printFechamentoDiario {
     display: none !important;
   }
 

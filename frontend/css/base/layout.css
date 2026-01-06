@@ -1,0 +1,451 @@
+/* ============================================
+   LAYOUT PRINCIPAL - VARIÁVEIS E ESTRUTURA
+   ============================================ */
+
+:root {
+    --sidebar-width: 260px;
+    --sidebar-collapsed-width: 78px;
+    --stats-sidebar-width: 240px;
+    --stats-sidebar-collapsed-width: 78px;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f8fafc;
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    overflow: hidden;
+}
+
+/* ============================================
+   SIDEBAR ESQUERDA
+   ============================================ */
+
+.sidebar {
+    position: relative;
+    width: var(--sidebar-width);
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar.collapsed {
+    width: var(--sidebar-collapsed-width);
+}
+
+.sidebar-content {
+    width: 100%;
+    padding: 30px 15px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+.sidebar.collapsed .sidebar-content {
+    padding: 30px 10px;
+}
+
+.sidebar.collapsed .brand-text,
+.sidebar.collapsed .nav-text,
+.sidebar.collapsed .sidebar-footer {
+    display: none;
+}
+
+.sidebar-brand {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #38bdf8;
+    padding: 0 10px;
+    transition: all 0.3s ease;
+    height: 40px;
+}
+
+.sidebar.collapsed .sidebar-brand {
+    display: none;
+}
+
+/* Botão Toggle */
+.btn-toggle {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.2rem;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.btn-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #38bdf8;
+}
+
+.sidebar.collapsed .btn-toggle,
+.sidebar-right.collapsed .btn-toggle {
+    margin-bottom: 30px;
+}
+
+/* Menu de Navegação */
+.nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    color: #94a3b8;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.sidebar.collapsed .nav-item {
+    padding: 12px;
+    justify-content: center;
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.nav-item.active {
+    background: #38bdf8;
+    color: #0f172a;
+}
+
+.nav-icon {
+    font-size: 1.2rem;
+}
+
+/* ============================================
+   ÁREA DE CONTEÚDO PRINCIPAL
+   ============================================ */
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 20px 40px;
+}
+
+.page-header {
+    position: sticky;
+    top: 0;
+    background: #f8fafc;
+    padding: 15px 0;
+    margin-bottom: 20px;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.page-title h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.2rem;
+    color: #1e293b;
+    margin: 0;
+}
+
+.page-title p {
+    color: #64748b;
+    margin: 5px 0 0 0;
+}
+
+/* Ações Rápidas */
+.quick-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.btn-quick {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-add-comanda {
+    background: #38bdf8;
+    color: #0f172a;
+}
+
+.quick-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: white;
+    padding: 4px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.quick-input-group:focus-within {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+}
+
+.quick-input-group input {
+    border: none;
+    padding: 8px 12px;
+    width: 200px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1e293b;
+    background: transparent;
+}
+
+.quick-input-group input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.quick-input-group button {
+    margin: 0;
+}
+
+/* ============================================
+   GRID DE COMANDAS
+   ============================================ */
+
+.comandas-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 4px;
+}
+
+.comanda-card {
+    aspect-ratio: 2 / 0.7;
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+    padding: 2px;
+}
+
+.comanda-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 2;
+}
+
+.comanda-card span {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+/* Estados das Comandas */
+.comanda-card.disponivel {
+    color: #10b981;
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+}
+
+.comanda-card.ocupada {
+    color: #ef4444;
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+.comanda-card.ocupada::after {
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.45rem;
+    font-weight: 800;
+    background: #ef4444;
+    color: white;
+    padding: 0px 4px;
+    border-radius: 2px;
+    white-space: nowrap;
+}
+
+/* ============================================
+   SIDEBAR DIREITA (ESTATÍSTICAS)
+   ============================================ */
+
+.sidebar-right {
+    position: relative;
+    width: var(--stats-sidebar-width);
+    background: #f8fafc;
+    border-left: 1px solid #e2e8f0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 90;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-right.collapsed {
+    width: var(--stats-sidebar-collapsed-width);
+    border-left: 1px solid #e2e8f0;
+}
+
+.sidebar-right .btn-toggle:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #38bdf8;
+}
+
+.sidebar-content-right {
+    width: 100%;
+    padding: 30px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+.sidebar-right.collapsed .sidebar-content-right {
+    padding: 30px 10px;
+}
+
+.sidebar-right.collapsed .sidebar-content-right h3,
+.sidebar-right.collapsed .sidebar-content-right p,
+.sidebar-right.collapsed .stat-info {
+    display: none;
+}
+
+.sidebar-right.collapsed .stat-card {
+    justify-content: center;
+    padding: 10px 5px;
+}
+
+.sidebar-right.collapsed #toggleVendasHojeBtn span:first-child {
+    font-size: 1.5rem;
+}
+
+.sidebar-right.collapsed #toggleVendasHojeBtn .vendas-label,
+.sidebar-right.collapsed #toggleVendasHojeBtn #toggleVendasIcon,
+.sidebar-right.collapsed #vendasHojeContainer {
+    display: none !important;
+}
+
+.sidebar-right.collapsed #toggleVendasHojeBtn {
+    justify-content: center;
+    padding: 15px 5px;
+}
+
+/* Estatísticas */
+.stats-overview {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.stat-card {
+    background: white;
+    padding: 15px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid #f1f5f9;
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.stat-info h4 {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.stat-info p {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+/* ============================================
+   UTILITÁRIOS
+   ============================================ */
+
+.hidden {
+    display: none !important;
+}
+
+.btn-small-tab {
+    background: white;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: none;
+    margin: 0 !important;
+}
+
+.btn-small-tab:hover {
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+.btn-small-tab.active {
+    background: #3b82f6 !important;
+    color: white !important;
+    border-color: #3b82f6 !important;
+}
