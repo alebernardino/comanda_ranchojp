@@ -105,6 +105,10 @@ body {
     margin-bottom: 30px;
 }
 
+#btnToggleRightSidebar {
+    margin-left: auto;
+}
+
 /* Menu de Navegação */
 .nav-menu {
     display: flex;

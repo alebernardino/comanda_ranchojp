@@ -1,3 +1,26 @@
+// Elementos da Comanda
+const modalComanda = document.getElementById("modalComanda");
+const btnFecharModalComanda = document.getElementById("btnFecharModalComanda");
+const tituloComanda = document.getElementById("tituloComanda");
+const nomeComanda = document.getElementById("nomeComanda");
+const telefoneComanda = document.getElementById("telefoneComanda");
+const pessoasComanda = document.getElementById("pessoasComanda");
+const qtdPessoasInput = document.getElementById("qtdPessoas");
+const buscaCodigo = document.getElementById("buscaCodigo");
+const buscaDescricao = document.getElementById("buscaDescricao");
+const qtdProduto = document.getElementById("qtdProduto");
+const valorProduto = document.getElementById("valorProduto");
+const tabelaItensBody = document.querySelector("#tabelaItens tbody");
+const totalComandaDiv = document.getElementById("totalComanda");
+const valorPorPessoaDiv = document.getElementById("valorPorPessoa");
+const btnImprimirModal = document.getElementById("btnImprimirModal");
+const btnPagamentoModal = document.getElementById("btnPagamentoModal");
+const btnDividirItemModal = document.getElementById("btnDividirItemModal");
+const btnAbrirModalCadastroComanda = document.getElementById("btnAbrirModalCadastroComanda");
+
+// Seções
+const sectionComandas = document.getElementById("sectionComandas");
+
 // ===============================
 // FUNÇÕES PÚBLICAS
 // ===============================
@@ -12,21 +35,11 @@ async function abrirComanda(numero) {
     currentComandaNumero = numero;
     itensSelecionadosParaPagamento = JSON.parse(sessionStorage.getItem(`comanda_${numero}_selecao`) || "null");
     try {
+        // Tenta buscar ou criar a comanda em uma única chamada para evitar 404 no console
+        const res = await fetch(`${API_URL}/comandas/garantir/${numero}`, { method: "POST" });
 
-        // Tenta buscar a comanda primeiro para evitar o erro 400 no console
-        const checkRes = await fetch(`${API_URL}/comandas/${numero}`);
-
-        if (checkRes.status === 404) {
-            // Não existe, cria
-            const createRes = await fetch(`${API_URL}/comandas/`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ numero: Number(numero) })
-            });
-            if (!createRes.ok) return alert("Erro ao criar comanda");
-        } else if (!checkRes.ok) {
-            // Erro desconhecido ao buscar
-            return alert("Erro ao acessar comanda");
+        if (!res.ok) {
+            return alert("Erro ao acessar/criar comanda");
         }
         // Se 200, ela existe e está tudo bem, seguimos para abrir.
 
@@ -191,6 +204,87 @@ function atualizarDivisaoTotal() {
     valorPorPessoaDiv.innerText = `R$ ${formatarMoeda(totalComandaGlobal / qtd)}`;
 }
 
+function setupComandaListeners() {
+    if (btnFecharModalComanda) {
+        btnFecharModalComanda.onclick = () => {
+            modalComanda.classList.add("hidden");
+            carregarDashboard();
+        };
+    }
+
+    if (btnAbrirModalCadastroComanda) {
+        btnAbrirModalCadastroComanda.onclick = () => {
+            const codBusca = buscaCodigo ? buscaCodigo.value.trim() : "";
+            abrirModalCadastroProdutos();
+            const novoCodigoInput = document.getElementById("novoCodigo");
+            const novaDescricaoInput = document.getElementById("novaDescricao");
+            if (codBusca && novoCodigoInput) {
+                novoCodigoInput.value = codBusca;
+                if (novaDescricaoInput) novaDescricaoInput.focus();
+            }
+        };
+    }
+
+    if (nomeComanda) {
+        nomeComanda.onblur = atualizarComandaAPI;
+        nomeComanda.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); telefoneComanda.focus(); } };
+    }
+    if (telefoneComanda) {
+        telefoneComanda.onblur = atualizarComandaAPI;
+        telefoneComanda.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); pessoasComanda.focus(); } };
+    }
+    if (pessoasComanda) {
+        pessoasComanda.oninput = () => { if (qtdPessoasInput) qtdPessoasInput.textContent = pessoasComanda.value; atualizarDivisaoTotal(); };
+        pessoasComanda.onblur = atualizarComandaAPI;
+        pessoasComanda.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); buscaCodigo.focus(); buscaCodigo.select(); } };
+    }
+    if (buscaCodigo) {
+        buscaCodigo.oninput = filtrarProdutosModal;
+        buscaCodigo.onkeydown = e => { if (e.key === "Enter") adicionarItemComanda(); };
+    }
+    if (buscaDescricao) {
+        buscaDescricao.oninput = filtrarProdutosModal;
+        buscaDescricao.onkeydown = e => { if (e.key === "Enter") adicionarItemComanda(); };
+    }
+    if (qtdProduto) qtdProduto.onkeydown = e => { if (e.key === "Enter") adicionarItemComanda(); };
+    if (valorProduto) {
+        valorProduto.onkeydown = e => {
+            if (e.key === "Enter" || e.key === "Tab") {
+                const cod = buscaCodigo ? buscaCodigo.value.trim() : "";
+                const desc = buscaDescricao ? buscaDescricao.value.trim() : "";
+                const qtd = qtdProduto ? qtdProduto.value.trim() : "";
+                const val = valorProduto.value.trim();
+
+                if (!cod || !desc || !qtd || !val) {
+                    e.preventDefault();
+                    alert("Por favor, preencha todos os campos: Cód, Descrição, Qtd e Valor.");
+                    if (!cod) buscaCodigo.focus();
+                    else if (!desc) buscaDescricao.focus();
+                    else if (!qtd) qtdProduto.focus();
+                    else if (!val) valorProduto.focus();
+                    return;
+                }
+
+                if (e.key === "Enter") {
+                    adicionarItemComanda();
+                } else if (e.key === "Tab") {
+                    e.preventDefault();
+                    if (confirm("Adicionar item?")) {
+                        adicionarItemComanda();
+                    } else {
+                        buscaCodigo.focus();
+                        buscaCodigo.select();
+                    }
+                }
+            }
+        };
+    }
+
+    if (btnDividirItemModal) btnDividirItemModal.onclick = abrirModalDividirItem;
+    if (btnImprimirModal) btnImprimirModal.onclick = imprimirComandaAcao;
+    if (btnPagamentoModal) btnPagamentoModal.onclick = () => abrirModalPagamento();
+}
+
 // ===============================
 // EXPOSIÇÃO GLOBAL DAS FUNÇÕES
 // ===============================
@@ -204,3 +298,9 @@ window.removerUmItemIndex = removerUmItemIndex;
 window.atualizarComandaAPI = atualizarComandaAPI;
 window.adicionarItemComanda = adicionarItemComanda;
 window.atualizarDivisaoTotal = atualizarDivisaoTotal;
+window.setupComandaListeners = setupComandaListeners;
+
+// Inicialização
+document.addEventListener("DOMContentLoaded", () => {
+    setupComandaListeners();
+});

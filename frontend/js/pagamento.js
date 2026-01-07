@@ -3,10 +3,19 @@
 // Modal de pagamento e finalização de comanda
 // ===============================
 
-// Nota: Elementos DOM compartilhados (modalPagamento, btnFecharModalPagamento,
-// tituloPagamentoModal, valorPagamentoInput, btnLancarPagamentoModal,
-// tabelaPagamentosBody, pagTotalComandaEl, pagTotalPagoEl, pagSaldoDevedorEl,
-// btnFinalizarComandaModal, metodosButtons) estão declarados no index.js
+// Elementos do Modal de Pagamento
+const modalPagamento = document.getElementById("modalPagamento");
+const btnFecharModalPagamento = document.getElementById("btnFecharModalPagamento");
+const tituloPagamentoModal = document.getElementById("tituloPagamentoModal");
+const valorPagamentoInput = document.getElementById("valorPagamentoInput");
+const btnLancarPagamentoModal = document.getElementById("btnLancarPagamentoModal");
+const tabelaPagamentosBody = document.querySelector("#tabelaPagamentosModal tbody");
+const pagTotalComandaEl = document.getElementById("pag-total-comanda");
+const pagTotalPagoEl = document.getElementById("pag-total-pago");
+const pagSaldoDevedorEl = document.getElementById("pag-saldo-devedor");
+const btnFinalizarComandaModal = document.getElementById("btnFinalizarComandaModal");
+const metodosButtons = document.querySelectorAll("#modalPagamento .metodo-btn");
+const btnVoltarDivisaoModal = document.getElementById("btnVoltarDivisaoModal");
 
 // ===============================
 // FUNÇÕES PÚBLICAS
@@ -155,6 +164,32 @@ async function finalizarComandaModal() {
     carregarDashboard();
 }
 
+function setupPagamentoListeners() {
+    if (btnFecharModalPagamento) btnFecharModalPagamento.onclick = () => modalPagamento.classList.add("hidden");
+    if (btnLancarPagamentoModal) btnLancarPagamentoModal.onclick = lancarPagamentoModal;
+    if (valorPagamentoInput) valorPagamentoInput.onkeydown = e => { if (e.key === "Enter") lancarPagamentoModal(); };
+    if (btnFinalizarComandaModal) btnFinalizarComandaModal.onclick = finalizarComandaModal;
+
+    if (btnVoltarDivisaoModal) {
+        btnVoltarDivisaoModal.onclick = () => {
+            if (modalPagamento) modalPagamento.classList.add("hidden");
+            abrirModalDividirItem();
+        };
+    }
+
+    if (metodosButtons) {
+        metodosButtons.forEach(btn => btn.onclick = () => {
+            metodosButtons.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            formaPagamentoSelecionada = btn.dataset.forma;
+            if (valorPagamentoInput) {
+                valorPagamentoInput.focus();
+                valorPagamentoInput.select();
+            }
+        });
+    }
+}
+
 // ===============================
 // EXPOSIÇÃO GLOBAL DAS FUNÇÕES
 // ===============================
@@ -164,3 +199,9 @@ window.carregarPagamentosModal = carregarPagamentosModal;
 window.lancarPagamentoModal = lancarPagamentoModal;
 window.removerPagamentoModal = removerPagamentoModal;
 window.finalizarComandaModal = finalizarComandaModal;
+window.setupPagamentoListeners = setupPagamentoListeners;
+
+// Inicialização
+document.addEventListener("DOMContentLoaded", () => {
+    setupPagamentoListeners();
+});

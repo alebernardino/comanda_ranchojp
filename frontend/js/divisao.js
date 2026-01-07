@@ -3,8 +3,13 @@
 // Modal de divisão por item
 // ===============================
 
-// Nota: Elementos DOM compartilhados (modalDividirItem, tbodyDivisaoItens, 
-// totalSelecionadoItemEl, btnAdicionarAoPagamento) estão declarados no index.js
+// Elementos do Modal de Divisão
+const modalDividirItem = document.getElementById("modalDividirItem");
+const tbodyDivisaoItens = document.getElementById("tbodyDivisaoItens");
+const totalSelecionadoItemEl = document.getElementById("totalSelecionadoItem");
+const btnAdicionarAoPagamento = document.getElementById("btnAdicionarAoPagamento");
+const btnConsiderarSelecao = document.getElementById("btnConsiderarSelecao");
+const btnImprimirDivisao = document.getElementById("btnImprimirDivisao");
 
 // ===============================
 // FUNÇÕES PÚBLICAS
@@ -215,6 +220,34 @@ async function considerarSelecao(silencioso = false) {
     }
 }
 
+function setupDivisaoListeners() {
+    if (btnAdicionarAoPagamento) {
+        btnAdicionarAoPagamento.onclick = () => {
+            const totalSelecionadoAgora = parseFloat(btnAdicionarAoPagamento.dataset.totalRaw || 0);
+
+            // Se não tem nada selecionado agora nem acumulado antes, avisa
+            if (totalSelecionadoAgora <= 0 && (!itensSelecionadosParaPagamento || itensSelecionadosParaPagamento.length === 0)) {
+                return alert("Selecione itens");
+            }
+
+            if (totalSelecionadoAgora > 0) {
+                // "Considera" o que está selecionado agora antes de abrir o pagamento
+                considerarSelecao(true);
+            }
+
+            const totalAcumuladoFinal = parseFloat(btnAdicionarAoPagamento.dataset.totalAcumulado || 0);
+
+            if (modalDividirItem) modalDividirItem.classList.add("hidden");
+
+            // Abre o modal de pagamento com o que foi acumulado
+            abrirModalPagamento(totalAcumuladoFinal, itensSelecionadosParaPagamento);
+        };
+    }
+
+    if (btnConsiderarSelecao) btnConsiderarSelecao.onclick = () => considerarSelecao(false);
+    if (btnImprimirDivisao) btnImprimirDivisao.onclick = imprimirDivisaoAcao;
+}
+
 // ===============================
 // EXPOSIÇÃO GLOBAL DAS FUNÇÕES
 // ===============================
@@ -222,4 +255,10 @@ window.abrirModalDividirItem = abrirModalDividirItem;
 window.renderizarTabelaDivisao = renderizarTabelaDivisao;
 window.atualizarTotalSelecionadoItem = atualizarTotalSelecionadoItem;
 window.considerarSelecao = considerarSelecao;
+window.setupDivisaoListeners = setupDivisaoListeners;
+
+// Inicialização
+document.addEventListener("DOMContentLoaded", () => {
+    setupDivisaoListeners();
+});
 

@@ -1,7 +1,22 @@
-const listaProdutos = document.getElementById("listaProdutos");
-const tabelaProdutosModalBody = document.querySelector("#tabelaProdutosModal tbody");
 const prodPageValor = document.getElementById("prodPageValor");
 const tabelaProdutosPageBody = document.getElementById("tabelaProdutosPageBody");
+const listaProdutos = document.getElementById("listaProdutos");
+const tabelaProdutosModalBody = document.querySelector("#tabelaProdutosModal tbody");
+
+// Elementos do Modal de Cadastro
+const modalCadastroProduto = document.getElementById("modalCadastroProduto");
+const btnFecharModalCadastro = document.getElementById("btnFecharModalCadastro");
+const btnSalvarProdutoModal = document.getElementById("btnSalvarProdutoModal");
+const btnSalvarProdutoPage = document.getElementById("btnSalvarProdutoPage");
+const novoCodigoInput = document.getElementById("novoCodigo");
+const novaDescricaoInput = document.getElementById("novaDescricao");
+const valorNovoProdutoInput = document.getElementById("valorNovoProduto");
+const prodPageCodigo = document.getElementById("prodPageCodigo");
+const prodPageDescricao = document.getElementById("prodPageDescricao");
+
+// Seções e Navegação
+const sectionProdutos = document.getElementById("sectionProdutos");
+const navProdutosSessao = document.getElementById("navProdutosSessao");
 
 // ===============================
 // FUNÇÕES PÚBLICAS - CARREGAMENTO
@@ -344,6 +359,44 @@ function setupProdutosEnterNavigation() {
                 if (confirm("Deseja salvar o novo produto?")) {
                     salvarNovoProdutoSessao();
                 }
+            }
+        };
+    }
+
+    // Listeners movem-se para cá
+    if (btnFecharModalCadastro) btnFecharModalCadastro.onclick = () => { modalCadastroProduto.classList.add("hidden"); carregarProdutosBase(); };
+    if (navProdutosSessao) navProdutosSessao.onclick = (e) => { e.preventDefault(); alternarParaProdutos(); };
+    if (btnSalvarProdutoModal) btnSalvarProdutoModal.onclick = salvarNovoProduto;
+    if (btnSalvarProdutoPage) btnSalvarProdutoPage.onclick = salvarNovoProdutoSessao;
+    if (prodPageCodigo) prodPageCodigo.oninput = filtrarERenderizarProdutosPage;
+    if (prodPageDescricao) prodPageDescricao.oninput = filtrarERenderizarProdutosPage;
+
+    if (novoCodigoInput) {
+        novoCodigoInput.oninput = () => {
+            const cod = novoCodigoInput.value.trim();
+            if (cod.length === 3) {
+                const existe = produtosCache.find(p => String(p.codigo) === cod);
+                if (existe) {
+                    alert(`O código ${cod} já está em uso pelo produto: ${existe.descricao}`);
+                    novoCodigoInput.value = "";
+                }
+            }
+        };
+        novoCodigoInput.onblur = () => {
+            const cod = novoCodigoInput.value.trim();
+            if (cod && !/^\d{3}$/.test(cod)) {
+                alert("O código do produto deve ter exatamente 3 dígitos numéricos (ex: 001, 123)");
+                setTimeout(() => novoCodigoInput.focus(), 10);
+            }
+        };
+    }
+
+    if (prodPageCodigo) {
+        prodPageCodigo.onblur = () => {
+            const cod = prodPageCodigo.value.trim();
+            if (cod && !/^\d{3}$/.test(cod)) {
+                alert("O código do produto deve ter exatamente 3 dígitos numéricos.");
+                setTimeout(() => prodPageCodigo.focus(), 10);
             }
         };
     }

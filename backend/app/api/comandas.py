@@ -72,7 +72,6 @@ def abrir_comanda(comanda: ComandaCreate, db: sqlite3.Connection = Depends(get_d
 def buscar_comanda_por_numero(numero: int, db: sqlite3.Connection = Depends(get_db)):
     cursor = db.cursor()
 
-    # Prioritiza a comanda aberta, caso contrário pega a última (histórico)
     # Prioritiza a comanda aberta - se não tiver aberta, retorna 404 para permitir criação de nova
     cursor.execute(
         "SELECT * FROM comandas WHERE numero = ? AND status = 'aberta'", (numero,)
@@ -83,6 +82,30 @@ def buscar_comanda_por_numero(numero: int, db: sqlite3.Connection = Depends(get_
          raise HTTPException(status_code=404, detail="Comanda não encontrada ou não está aberta")
 
     return dict(row)
+
+@router.post("/garantir/{numero}", response_model=ComandaResponse)
+def garantir_comanda(numero: int, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
+    # Verifica se já existe aberta
+    cursor.execute(
+        "SELECT * FROM comandas WHERE numero = ? AND status = 'aberta'", (numero,)
+    )
+    row = cursor.fetchone()
+    
+    if row:
+        return dict(row)
+    
+    # Se não existe, cria uma nova aberta
+    cursor.execute(
+        "INSERT INTO comandas (numero, status) VALUES (?, 'aberta')",
+        (numero,)
+    )
+    db.commit()
+    
+    cursor.execute(
+        "SELECT * FROM comandas WHERE id = ?", (cursor.lastrowid,)
+    )
+    return dict(cursor.fetchone())
 
 
 @router.put("/{numero}", response_model=ComandaResponse)

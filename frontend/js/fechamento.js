@@ -319,6 +319,24 @@ document.addEventListener("DOMContentLoaded", () => {
         adicionarLinhaFechamento("MÁQUINA 02");
     }
 
+    // Botões de Impressão (antes no index.js)
+    const btnAbrirModalImpFech = document.getElementById("btnAbrirModalImpressaoFechamento");
+    if (btnAbrirModalImpFech) {
+        btnAbrirModalImpFech.onclick = () => {
+            const m = document.getElementById("modalImpressaoFechamento");
+            if (m) {
+                m.classList.remove("hidden");
+                // Focar no botão de imprimir após abrir o modal
+                setTimeout(() => {
+                    const btnImprimir = document.getElementById("btnImprimirFechamentoFinal");
+                    if (btnImprimir) btnImprimir.focus();
+                }, 50);
+            }
+        };
+    }
+
+    const btnImpFechFinal = document.getElementById("btnImprimirFechamentoFinal");
+    if (btnImpFechFinal) btnImpFechFinal.onclick = imprimirFechamentoFinal;
 });
 
 // ===============================
