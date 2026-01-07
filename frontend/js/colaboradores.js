@@ -160,6 +160,7 @@ function limparCamposColaborador() {
             <button onclick="adicionarInput('listaInputsPix', 'colab-pix')" style="background: #38bdf8; padding: 0 10px; border-radius: 6px;">+</button>
         </div>
     `;
+    setupColaboradoresEnterNavigation();
 }
 
 async function alterarStatusColaborador(id, ativo) {
@@ -190,6 +191,12 @@ function alternarParaColaboradores() {
     if (document.getElementById("navFechamento")) document.getElementById("navFechamento").classList.remove("active");
     navColaboradores.classList.add("active");
 
+    // Focar no primeiro campo
+    setTimeout(() => {
+        const inputNome = document.getElementById("colabNome");
+        if (inputNome) inputNome.focus();
+    }, 100);
+
     carregarColaboradores();
 }
 
@@ -197,6 +204,89 @@ function alternarParaColaboradores() {
 if (navColaboradores) navColaboradores.onclick = (e) => { e.preventDefault(); alternarParaColaboradores(); };
 if (btnSalvarColaborador) btnSalvarColaborador.onclick = salvarColaborador;
 if (btnLimparColaborador) btnLimparColaborador.onclick = limparCamposColaborador;
+
+function setupColaboradoresEnterNavigation() {
+    const fields = [
+        "colabNome",
+        "colabEndereco",
+        "colabFuncao"
+    ];
+
+    fields.forEach((id, index) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.onkeydown = (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    const nextId = fields[index + 1];
+                    if (nextId) {
+                        document.getElementById(nextId).focus();
+                    } else {
+                        // Se for o último do grid, foca no primeiro contato
+                        const primContato = document.querySelector(".colab-contato");
+                        if (primContato) primContato.focus();
+                    }
+                }
+            };
+        }
+    });
+
+    // Lógica para inputs dinâmicos de contato e pix usando delegação ou reassociação
+    // Para simplificar e lidar com novos inputs, usamos delegação no container
+    const contatosCont = document.getElementById("listaInputsContatos");
+    if (contatosCont) {
+        contatosCont.onkeydown = (e) => {
+            if (e.key === "Enter" && e.target.classList.contains("colab-contato")) {
+                e.preventDefault();
+                // Tenta focar no próximo input de contato ou no primeiro pix
+                const allContatos = Array.from(contatosCont.querySelectorAll(".colab-contato"));
+                const currIdx = allContatos.indexOf(e.target);
+                if (currIdx < allContatos.length - 1) {
+                    allContatos[currIdx + 1].focus();
+                } else {
+                    const primPix = document.querySelector(".colab-pix");
+                    if (primPix) primPix.focus();
+                }
+            }
+        };
+    }
+
+    const pixCont = document.getElementById("listaInputsPix");
+    if (pixCont) {
+        pixCont.onkeydown = (e) => {
+            if (e.key === "Enter" && e.target.classList.contains("colab-pix")) {
+                e.preventDefault();
+                const allPix = Array.from(pixCont.querySelectorAll(".colab-pix"));
+                const currIdx = allPix.indexOf(e.target);
+                if (currIdx < allPix.length - 1) {
+                    allPix[currIdx + 1].focus();
+                } else {
+                    btnSalvarColaborador.focus();
+                }
+            }
+        };
+    }
+
+    if (btnSalvarColaborador) {
+        btnSalvarColaborador.onkeydown = (e) => {
+            if (e.key === "Tab") {
+                // Se pressionar Tab no botão de salvar, perguntamos se deseja salvar
+                e.preventDefault();
+                if (confirm("Deseja salvar os dados do colaborador?")) {
+                    salvarColaborador();
+                } else {
+                    // Se não quiser salvar, pode querer voltar ao início ou para o campo anterior (Shift+Tab)
+                    // Mas o pedido foi apenas perguntar se quer salvar ao apertar Tab.
+                }
+            }
+        };
+    }
+}
+
+// Chamar no carregamento inicial se o elemento existir
+document.addEventListener("DOMContentLoaded", () => {
+    setupColaboradoresEnterNavigation();
+});
 
 // Global
 window.alterarStatusColaborador = alterarStatusColaborador;

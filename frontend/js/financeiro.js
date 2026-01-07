@@ -199,6 +199,46 @@ async function excluirRegistroFin(id) {
     }
 }
 
+function setupFinanceiroEnterNavigation() {
+    const fields = [
+        "finData",
+        "finNome",
+        "finServico",
+        "finValor",
+        "finForma"
+    ];
+
+    fields.forEach((id, index) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.onkeydown = (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    const nextId = fields[index + 1];
+                    if (nextId) {
+                        document.getElementById(nextId).focus();
+                    } else {
+                        const btn = document.getElementById("btnSalvarFin");
+                        if (btn) btn.focus();
+                    }
+                }
+            };
+        }
+    });
+
+    const btnSalvar = document.getElementById("btnSalvarFin");
+    if (btnSalvar) {
+        btnSalvar.onkeydown = (e) => {
+            if (e.key === "Tab") {
+                e.preventDefault();
+                if (confirm("Deseja salvar este lançamento financeiro?")) {
+                    salvarLancamentoFin();
+                }
+            }
+        };
+    }
+}
+
 function alternarParaFinanceiro() {
     document.getElementById("sectionComandas").classList.add("hidden");
     document.getElementById("sectionProdutos").classList.add("hidden");
@@ -216,11 +256,22 @@ function alternarParaFinanceiro() {
 
     configurarDataPadrao();
     carregarFinanceiro();
+
+    // Focar no campo de nome (ou data se preferir, mas nome é mais comum)
+    setTimeout(() => {
+        const inputNome = document.getElementById("finNome");
+        if (inputNome) inputNome.focus();
+    }, 100);
 }
 
 // Listeners
 if (navFinanceiro) navFinanceiro.onclick = (e) => { e.preventDefault(); alternarParaFinanceiro(); };
 if (btnSalvarFin) btnSalvarFin.onclick = salvarLancamentoFin;
+
+// Chamar no carregamento inicial
+document.addEventListener("DOMContentLoaded", () => {
+    setupFinanceiroEnterNavigation();
+});
 
 // Global
 window.excluirRegistroFin = excluirRegistroFin;

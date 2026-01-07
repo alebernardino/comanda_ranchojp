@@ -326,20 +326,16 @@ function alternarSubAbaVendas(sub, btn) {
 
     if (sub === 'geral') {
         divGeral.classList.remove("hidden");
-        if (divAgrupamento) divAgrupamento.classList.remove("hidden");
     } else if (sub === 'analitico') {
         divAnalitico.classList.remove("hidden");
-        if (divAgrupamento) divAgrupamento.classList.add("hidden");
     } else if (sub === 'comandas') {
         divComandas.classList.remove("hidden");
-        if (divAgrupamento) divAgrupamento.classList.add("hidden");
     } else if (sub === 'fechamento') {
         divFechamento.classList.remove("hidden");
-        if (divAgrupamento) divAgrupamento.classList.add("hidden");
     } else if (sub === 'pagamentos') {
         divPagamentos.classList.remove("hidden");
-        if (divAgrupamento) divAgrupamento.classList.add("hidden");
     }
+
 }
 
 function ordenarAnaliticoVendas(campo) {
