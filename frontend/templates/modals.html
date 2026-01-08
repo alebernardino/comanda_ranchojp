@@ -1,0 +1,265 @@
+<!-- MODAL DE ATENDIMENTO (COMANDA) -->
+<div id="modalComanda" class="modal hidden">
+    <div class="modal-content">
+        <div class="comanda-header">
+            <h2 id="tituloComanda">Comanda</h2>
+            <div class="comanda-info">
+                <div class="info-field">
+                    <label>Nome:</label>
+                    <input type="text" id="nomeComanda" placeholder="Nome do cliente" autocomplete="off">
+                </div>
+                <div class="info-field">
+                    <label>Telefone:</label>
+                    <input type="text" id="telefoneComanda" placeholder="Telefone" autocomplete="off">
+                </div>
+                <div class="info-field">
+                    <label>Pessoas:</label>
+                    <input type="text" id="pessoasComanda" placeholder="Qtde" style="min-width: 60px;">
+                </div>
+            </div>
+            <button id="btnFecharModalComanda"
+                style="background: #ef4444; border-radius: 50%; width: 36px; height: 36px; padding: 0; min-width: 36px;">×</button>
+        </div>
+
+        <div class="pdv-layout">
+            <!-- COLUNA ESQUERDA -->
+            <div class="pdv-comanda">
+                <div class="entrada-produto">
+                    <input id="buscaCodigo" placeholder="Código" autocomplete="off" style="width: 80px;">
+                    <input id="buscaDescricao" placeholder="Descrição" autocomplete="off" style="flex: 1;">
+                    <input id="qtdProduto" type="number" step="1" placeholder="Qtd" style="width: 70px;">
+                    <input id="valorProduto" type="number" step="0.01" placeholder="Valor" readonly
+                        style="width: 90px;">
+                </div>
+
+                <div id="itensComanda">
+                    <table id="tabelaItens">
+                        <thead>
+                            <tr>
+                                <th>Cód</th>
+                                <th>Descrição</th>
+                                <th>Qtd</th>
+                                <th>R$ Valor</th>
+                                <th>R$ Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div id="totalComanda"></div>
+                </div>
+            </div>
+
+            <!-- COLUNA DIREITA -->
+            <div class="pdv-produtos">
+                <div class="produtos-header"
+                    style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 20px;">
+                        <span>COD</span>
+                        <span>Produtos</span>
+                        <span>Valor</span>
+                    </div>
+                    <button id="btnAbrirModalCadastroComanda"
+                        style="background: #3b82f6; padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; margin: 0;">+
+                        Novo (F3)</button>
+                </div>
+                <div id="listaProdutos"></div>
+            </div>
+        </div>
+
+        <div class="pdv-atalhos" style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+            <button id="btnImprimirModal">Imprimir (F9)</button>
+            <button id="btnDividirItemModal">Divisão por item (F4)</button>
+            <label style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                Divisão por:
+                <span id="qtdPessoas"
+                    style="min-width: 40px; text-align: center; font-weight: 800; color: #1e293b;">1</span>
+                <span id="valorPorPessoa" style="color: #ef4444;">R$ 0,00</span>
+            </label>
+            <button id="btnPagamentoModal" style="background: #10b981;">Pagamento (F8)</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DIVIDIR POR ITEM -->
+<div id="modalDividirItem" class="modal hidden">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0;" class="screen-only">Dividir por item</h3>
+            <h2 id="tituloPartialPrint" class="print-only"
+                style="display:none; text-align:center; width:100%; margin:0 0 10px 0; font-family:'Outfit', sans-serif;">
+            </h2>
+            <button onclick="document.getElementById('modalDividirItem').classList.add('hidden')"
+                style="background: #ef4444; border-radius: 50%; width: 36px; height: 36px; padding: 0; min-width: 36px; color: white; border: none; cursor: pointer;">×</button>
+        </div>
+        <div style="max-height: 400px; overflow-y: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f1f5f9;">
+                        <th style="padding: 10px;">Cód</th>
+                        <th>Descrição</th>
+                        <th style="text-align: center;">Total</th>
+                        <th style="text-align: center;">Pago</th>
+                        <th style="text-align: center;">Restante</th>
+                        <th style="text-align: center;">
+                            <span class="screen-only">Considerar</span>
+                            <span class="print-only" style="display:none;">Qtd</span>
+                        </th>
+                        <th>
+                            <span class="screen-only">Valor</span>
+                            <span class="print-only" style="display:none;">R$ Valor</span>
+                        </th>
+                        <th>
+                            <span class="screen-only">Subtotal</span>
+                            <span class="print-only" style="display:none;">R$ Subtotal</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyDivisaoItens"></tbody>
+            </table>
+        </div>
+        <div class="modal-actions" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 1.25rem; font-weight: 800; color: #3b82f6;" id="footerTotalDivisao">
+                <span class="screen-only">TOTAL SELECIONADO:</span>
+                <span class="print-only" style="display:none;">TOTAL:</span>
+                <span id="totalSelecionadoItem">R$ 0,00</span>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button id="btnConsiderarSelecao" style="background: var(--primary);">Considerar Seleção (F5)</button>
+                <button id="btnAdicionarAoPagamento" style="background: #10b981;">Gerar Pagamento (F8)</button>
+                <button id="btnImprimirDivisao" style="background: #3b82f6;">Imprimir (F9)</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE PAGAMENTO -->
+<div id="modalPagamento" class="modal hidden">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 id="tituloPagamentoModal">Pagamento Comanda</h2>
+            <button id="btnFecharModalPagamento"
+                style="background: #ef4444; border-radius: 50%; width: 36px; height: 36px; padding: 0; min-width: 36px;">×</button>
+        </div>
+        <div class="pagamento-grid">
+            <div class="col-form">
+                <div class="form-pagamento" style="border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px;">
+                    <div class="metodos-pagamento"
+                        style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 15px; margin-bottom: 15px;">
+                        <button class="metodo-btn active" data-forma="Cartão Crédito">💳 Crédito</button>
+                        <button class="metodo-btn" data-forma="Cartão Débito">🏦 Débito</button>
+                        <button class="metodo-btn" data-forma="Pix">💠 Pix</button>
+                        <button class="metodo-btn" data-forma="Dinheiro">💵 Dinheiro</button>
+                        <button class="metodo-btn" data-forma="Abatimento">📉 Abatimento</button>
+                        <button class="metodo-btn" data-forma="Voucher">🎫 Voucher</button>
+                    </div>
+                    <div class="valor-input-container">
+                        <label style="display: block; font-weight: 700; margin-bottom: 5px;">VALOR A LANÇAR</label>
+                        <input type="number" id="valorPagamentoInput" step="0.01"
+                            style="width: 100%; font-size: 1.5rem; font-weight: 800; text-align: right; color: #3b82f6;">
+                    </div>
+                    <button id="btnLancarPagamentoModal"
+                        style="width: 100%; margin-top: 15px; height: 50px; font-size: 1.1rem;">Lançar Pagamento
+                        (Enter)</button>
+                    <button id="btnVoltarDivisaoModal"
+                        style="width: 100%; margin-top: 8px; height: 40px; font-size: 0.95rem; background: #64748b;">Voltar
+                        p/
+                        Divisão (F4)</button>
+                </div>
+            </div>
+            <div class="col-resumo">
+                <div class="lista-pagamentos"
+                    style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; min-height: 200px; max-height: 300px; overflow-y: auto;">
+                    <table id="tabelaPagamentosModal" style="width: 100%;">
+                        <thead>
+                            <tr style="font-size: 0.75rem; color: #64748b; text-transform: uppercase;">
+                                <th style="text-align: left;">Forma</th>
+                                <th style="text-align: right;">Valor</th>
+                                <th style="width: 40px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="resumo-comanda-pagamento" style="margin-top: 15px;">
+                    <div class="resumo-item-pag"><span>Total Comanda</span> <span id="pag-total-comanda">R$ 0,00</span>
+                    </div>
+                    <div class="resumo-item-pag"><span>Total Pago</span> <span id="pag-total-pago"
+                            style="color: #3b82f6;">R$
+                            0,00</span></div>
+                    <div class="total-pagar-pag"><span>A PAGAR</span> <span id="pag-saldo-devedor">R$ 0,00</span></div>
+                </div>
+                <button id="btnFinalizarComandaModal" class="btn-finalizar"
+                    style="background: #22c55e; height: 55px; font-size: 1.2rem; margin-top: 15px; border-radius: 8px;">Finalizar
+                    (F10)</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CADASTRO PRODUTO -->
+<div id="modalCadastroProduto" class="modal hidden">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2>Cadastro de Produtos</h2>
+            <button id="btnFecharModalCadastro"
+                style="background: #ef4444; border-radius: 50%; width: 36px; height: 36px; padding: 0; min-width: 36px;">×</button>
+        </div>
+        <div class="form-cadastro">
+            <div class="campos-linha">
+                <input id="novoCodigo" placeholder="Código" style="width: 100px;">
+                <input id="novaDescricao" placeholder="Descrição" style="flex: 1;">
+                <input id="valorNovoProduto" placeholder="Valor" type="number" step="0.01" style="width: 120px;">
+                <button id="btnSalvarProdutoModal" style="background: #10b981;">Salvar Produto (F5)</button>
+            </div>
+        </div>
+        <div style="max-height: 50vh; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 12px;">
+            <table id="tabelaProdutosModal" style="width: 100%;">
+                <thead style="background: #f8fafc; position: sticky; top: 0;">
+                    <tr>
+                        <th style="padding: 12px; border-radius: 12px 0 0 0;">Grupo</th>
+                        <th>Cód</th>
+                        <th>Descrição</th>
+                        <th>Valor</th>
+                        <th style="text-align: center;">Ativo</th>
+                        <th style="text-align: center; border-radius: 0 12px 0 0;">Excluir</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL SELECAO IMPRESSAO FECHAMENTO -->
+<div id="modalImpressaoFechamento" class="modal hidden">
+    <div class="modal-content" style="max-width: 400px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0; font-size: 1.2rem;">O que deseja imprimir?</h2>
+            <button onclick="document.getElementById('modalImpressaoFechamento').classList.add('hidden')"
+                style="background: #ef4444; color: white; border-radius: 50%; width: 32px; height: 32px; padding: 0; min-width: 32px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border: none; cursor: pointer; box-shadow: none;">×</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <input type="checkbox" id="checkPrintVendas" checked style="width: 20px; height: 20px;">
+                <span>Vendas (Itens e Qtd)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <input type="checkbox" id="checkPrintPagamentos" checked style="width: 20px; height: 20px;">
+                <span>Pagamentos (Saídas)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <input type="checkbox" id="checkPrintRecebimentosSistema" checked style="width: 20px; height: 20px;">
+                <span>Recebimentos (Sistema)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <input type="checkbox" id="checkPrintRecebimentosManual" checked style="width: 20px; height: 20px;">
+                <span>Recebimento (Manual)</span>
+            </label>
+        </div>
+        <div style="margin-top: 25px; display: flex; flex-direction: column; gap: 10px;">
+            <button id="btnImprimirFechamentoFinal"
+                style="background: #10b981; color: white; padding: 12px; font-weight: 700; border-radius: 8px; border: none; cursor: pointer;">Imprimir
+                Fechamento (F9)</button>
+        </div>
+    </div>
+</div>

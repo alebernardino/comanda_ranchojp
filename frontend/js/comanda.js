@@ -1,25 +1,34 @@
-// Elementos da Comanda
-const modalComanda = document.getElementById("modalComanda");
-const btnFecharModalComanda = document.getElementById("btnFecharModalComanda");
-const tituloComanda = document.getElementById("tituloComanda");
-const nomeComanda = document.getElementById("nomeComanda");
-const telefoneComanda = document.getElementById("telefoneComanda");
-const pessoasComanda = document.getElementById("pessoasComanda");
-const qtdPessoasInput = document.getElementById("qtdPessoas");
-const buscaCodigo = document.getElementById("buscaCodigo");
-const buscaDescricao = document.getElementById("buscaDescricao");
-const qtdProduto = document.getElementById("qtdProduto");
-const valorProduto = document.getElementById("valorProduto");
-const tabelaItensBody = document.querySelector("#tabelaItens tbody");
-const totalComandaDiv = document.getElementById("totalComanda");
-const valorPorPessoaDiv = document.getElementById("valorPorPessoa");
-const btnImprimirModal = document.getElementById("btnImprimirModal");
-const btnPagamentoModal = document.getElementById("btnPagamentoModal");
-const btnDividirItemModal = document.getElementById("btnDividirItemModal");
-const btnAbrirModalCadastroComanda = document.getElementById("btnAbrirModalCadastroComanda");
+// Variáveis de elementos DOM da Comanda
+let modalComanda, btnFecharModalComanda, tituloComanda, nomeComanda, telefoneComanda, pessoasComanda;
+let qtdPessoasInput, buscaCodigo, buscaDescricao, qtdProduto, valorProduto;
+let tabelaItensBody, totalComandaDiv, valorPorPessoaDiv;
+let btnImprimirModal, btnPagamentoModal, btnDividirItemModal, btnAbrirModalCadastroComanda;
+let sectionComandas;
 
-// Seções
-const sectionComandas = document.getElementById("sectionComandas");
+function carregarElementosComanda() {
+    modalComanda = document.getElementById("modalComanda");
+    btnFecharModalComanda = document.getElementById("btnFecharModalComanda");
+    tituloComanda = document.getElementById("tituloComanda");
+    nomeComanda = document.getElementById("nomeComanda");
+    telefoneComanda = document.getElementById("telefoneComanda");
+    pessoasComanda = document.getElementById("pessoasComanda");
+    qtdPessoasInput = document.getElementById("qtdPessoas");
+    buscaCodigo = document.getElementById("buscaCodigo");
+    buscaDescricao = document.getElementById("buscaDescricao");
+    qtdProduto = document.getElementById("qtdProduto");
+    valorProduto = document.getElementById("valorProduto");
+    tabelaItensBody = document.querySelector("#tabelaItens tbody");
+    totalComandaDiv = document.getElementById("totalComanda");
+    valorPorPessoaDiv = document.getElementById("valorPorPessoa");
+    btnImprimirModal = document.getElementById("btnImprimirModal");
+    btnPagamentoModal = document.getElementById("btnPagamentoModal");
+    btnDividirItemModal = document.getElementById("btnDividirItemModal");
+    btnAbrirModalCadastroComanda = document.getElementById("btnAbrirModalCadastroComanda");
+    sectionComandas = document.getElementById("sectionComandas");
+}
+
+// Função legada removida em favor da nova estrutura
+// function carregarElementosComanda() { ... }
 
 // ===============================
 // FUNÇÕES PÚBLICAS
@@ -205,17 +214,19 @@ function atualizarDivisaoTotal() {
 }
 
 function setupComandaListeners() {
+    carregarElementosComanda();
+
     if (btnFecharModalComanda) {
         btnFecharModalComanda.onclick = () => {
             modalComanda.classList.add("hidden");
-            carregarDashboard();
+            if (typeof carregarDashboard === "function") carregarDashboard();
         };
     }
 
     if (btnAbrirModalCadastroComanda) {
         btnAbrirModalCadastroComanda.onclick = () => {
             const codBusca = buscaCodigo ? buscaCodigo.value.trim() : "";
-            abrirModalCadastroProdutos();
+            if (typeof abrirModalCadastroProdutos === "function") abrirModalCadastroProdutos();
             const novoCodigoInput = document.getElementById("novoCodigo");
             const novaDescricaoInput = document.getElementById("novaDescricao");
             if (codBusca && novoCodigoInput) {
@@ -226,24 +237,24 @@ function setupComandaListeners() {
     }
 
     if (nomeComanda) {
-        nomeComanda.onblur = atualizarComandaAPI;
-        nomeComanda.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); telefoneComanda.focus(); } };
+        nomeComanda.onblur = () => atualizarComandaAPI();
+        nomeComanda.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); if (telefoneComanda) telefoneComanda.focus(); } };
     }
     if (telefoneComanda) {
-        telefoneComanda.onblur = atualizarComandaAPI;
-        telefoneComanda.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); pessoasComanda.focus(); } };
+        telefoneComanda.onblur = () => atualizarComandaAPI();
+        telefoneComanda.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); if (pessoasComanda) pessoasComanda.focus(); } };
     }
     if (pessoasComanda) {
         pessoasComanda.oninput = () => { if (qtdPessoasInput) qtdPessoasInput.textContent = pessoasComanda.value; atualizarDivisaoTotal(); };
-        pessoasComanda.onblur = atualizarComandaAPI;
-        pessoasComanda.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); buscaCodigo.focus(); buscaCodigo.select(); } };
+        pessoasComanda.onblur = () => atualizarComandaAPI();
+        pessoasComanda.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); if (buscaCodigo) { buscaCodigo.focus(); buscaCodigo.select(); } } };
     }
     if (buscaCodigo) {
-        buscaCodigo.oninput = filtrarProdutosModal;
+        buscaCodigo.oninput = () => { if (typeof filtrarProdutosModal === "function") filtrarProdutosModal(buscaCodigo.value.trim()); };
         buscaCodigo.onkeydown = e => { if (e.key === "Enter") adicionarItemComanda(); };
     }
     if (buscaDescricao) {
-        buscaDescricao.oninput = filtrarProdutosModal;
+        buscaDescricao.oninput = () => { if (typeof filtrarProdutosModal === "function") filtrarProdutosModal(buscaDescricao.value.trim()); };
         buscaDescricao.onkeydown = e => { if (e.key === "Enter") adicionarItemComanda(); };
     }
     if (qtdProduto) qtdProduto.onkeydown = e => { if (e.key === "Enter") adicionarItemComanda(); };
@@ -258,10 +269,10 @@ function setupComandaListeners() {
                 if (!cod || !desc || !qtd || !val) {
                     e.preventDefault();
                     alert("Por favor, preencha todos os campos: Cód, Descrição, Qtd e Valor.");
-                    if (!cod) buscaCodigo.focus();
-                    else if (!desc) buscaDescricao.focus();
-                    else if (!qtd) qtdProduto.focus();
-                    else if (!val) valorProduto.focus();
+                    if (buscaCodigo && !cod) buscaCodigo.focus();
+                    else if (buscaDescricao && !desc) buscaDescricao.focus();
+                    else if (qtdProduto && !qtd) qtdProduto.focus();
+                    else if (valorProduto && !val) valorProduto.focus();
                     return;
                 }
 
@@ -272,22 +283,25 @@ function setupComandaListeners() {
                     if (confirm("Adicionar item?")) {
                         adicionarItemComanda();
                     } else {
-                        buscaCodigo.focus();
-                        buscaCodigo.select();
+                        if (buscaCodigo) { buscaCodigo.focus(); buscaCodigo.select(); }
                     }
                 }
             }
         };
     }
 
-    if (btnDividirItemModal) btnDividirItemModal.onclick = abrirModalDividirItem;
-    if (btnImprimirModal) btnImprimirModal.onclick = imprimirComandaAcao;
-    if (btnPagamentoModal) btnPagamentoModal.onclick = () => abrirModalPagamento();
+    if (btnDividirItemModal) btnDividirItemModal.onclick = () => { if (typeof abrirModalDividirItem === "function") abrirModalDividirItem(); };
+    if (btnImprimirModal) btnImprimirModal.onclick = () => { if (typeof imprimirComandaAcao === "function") imprimirComandaAcao(); };
+    if (btnPagamentoModal) btnPagamentoModal.onclick = () => { if (typeof abrirModalPagamento === "function") abrirModalPagamento(); };
 }
+
+// Inicialização
+// document.addEventListener("DOMContentLoaded", setupComandaListeners);
 
 // ===============================
 // EXPOSIÇÃO GLOBAL DAS FUNÇÕES
 // ===============================
+window.setupComandaListeners = setupComandaListeners;
 window.abrirComanda = abrirComanda;
 window.carregarDadosComanda = carregarDadosComanda;
 window.carregarItensComanda = carregarItensComanda;
@@ -298,9 +312,3 @@ window.removerUmItemIndex = removerUmItemIndex;
 window.atualizarComandaAPI = atualizarComandaAPI;
 window.adicionarItemComanda = adicionarItemComanda;
 window.atualizarDivisaoTotal = atualizarDivisaoTotal;
-window.setupComandaListeners = setupComandaListeners;
-
-// Inicialização
-document.addEventListener("DOMContentLoaded", () => {
-    setupComandaListeners();
-});

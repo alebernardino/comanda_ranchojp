@@ -3,8 +3,28 @@
 // Tela de fechamento diário
 // ===============================
 
-// Nota: Elementos DOM compartilhados (sectionComandas, sectionProdutos, 
-// navDashboard, navProdutosSessao) estão declarados no index.js
+// Variáveis de elementos DOM do Fechamento
+let sectionFechamento, navFechamento, tbodyMaquinasFechamento;
+let fechamentoDinheiroInput, fechamentoVoucherInput;
+let totalFechamentoCredito, totalFechamentoDebito, totalFechamentoPix, totalFechamentoGeral;
+let modalImpressaoFechamento, btnAdicionarMaquina;
+let btnAbrirModalImpressaoFechamento, btnImprimirFechamentoFinal;
+
+function carregarElementosFechamento() {
+    sectionFechamento = document.getElementById("sectionFechamento");
+    navFechamento = document.getElementById("navFechamento");
+    tbodyMaquinasFechamento = document.getElementById("tbodyMaquinasFechamento");
+    fechamentoDinheiroInput = document.getElementById("fechamentoDinheiroInput");
+    fechamentoVoucherInput = document.getElementById("fechamentoVoucherInput");
+    totalFechamentoCredito = document.getElementById("totalFechamentoCredito");
+    totalFechamentoDebito = document.getElementById("totalFechamentoDebito");
+    totalFechamentoPix = document.getElementById("totalFechamentoPix");
+    totalFechamentoGeral = document.getElementById("totalFechamentoGeral");
+    modalImpressaoFechamento = document.getElementById("modalImpressaoFechamento");
+    btnAdicionarMaquina = document.getElementById("btnAdicionarMaquina");
+    btnAbrirModalImpressaoFechamento = document.getElementById("btnAbrirModalImpressaoFechamento");
+    btnImprimirFechamentoFinal = document.getElementById("btnImprimirFechamentoFinal");
+}
 
 // ===============================
 // FUNÇÕES PÚBLICAS
@@ -12,31 +32,29 @@
 
 function alternarParaFechamento() {
     // Esconde todas as outras seções conhecidas
-    sectionComandas.classList.add("hidden");
-    sectionProdutos.classList.add("hidden");
+    if (typeof sectionComandas !== 'undefined' && sectionComandas) sectionComandas.classList.add("hidden");
+    if (typeof sectionProdutos !== 'undefined' && sectionProdutos) sectionProdutos.classList.add("hidden");
     if (document.getElementById("sectionColaboradores")) document.getElementById("sectionColaboradores").classList.add("hidden");
     if (document.getElementById("sectionFinanceiro")) document.getElementById("sectionFinanceiro").classList.add("hidden");
     if (document.getElementById("sectionRelatorios")) document.getElementById("sectionRelatorios").classList.add("hidden");
     if (document.getElementById("sectionFluxoCaixa")) document.getElementById("sectionFluxoCaixa").classList.add("hidden");
 
-    const secFechamento = document.getElementById("sectionFechamento");
-    if (secFechamento) {
-        secFechamento.classList.remove("hidden");
+    if (sectionFechamento) {
+        sectionFechamento.classList.remove("hidden");
     } else {
         console.error("Elemento sectionFechamento não encontrado!");
     }
 
     // Atualiza Menu
-    navDashboard.classList.remove("active");
-    navProdutosSessao.classList.remove("active");
+    if (typeof navDashboard !== 'undefined' && navDashboard) navDashboard.classList.remove("active");
+    if (typeof navProdutosSessao !== 'undefined' && navProdutosSessao) navProdutosSessao.classList.remove("active");
     if (document.getElementById("navColaboradores")) document.getElementById("navColaboradores").classList.remove("active");
     if (document.getElementById("navFinanceiro")) document.getElementById("navFinanceiro").classList.remove("active");
     if (document.getElementById("navRelatorios")) document.getElementById("navRelatorios").classList.remove("active");
     const navFC = document.getElementById("navFluxoCaixa");
     if (navFC) navFC.classList.remove("active");
 
-    const nFechamento = document.getElementById("navFechamento");
-    if (nFechamento) nFechamento.classList.add("active");
+    if (navFechamento) navFechamento.classList.add("active");
 }
 
 async function imprimirFechamentoFinal() {
@@ -59,10 +77,8 @@ async function imprimirFechamentoFinal() {
             valPix += parseMoedaInput(row.querySelector(".f-pix").value);
         });
 
-        const dinheiroInput = document.getElementById("fechamentoDinheiroInput");
-        const voucherInput = document.getElementById("fechamentoVoucherInput");
-        const valDin = dinheiroInput ? parseMoedaInput(dinheiroInput.value) : 0;
-        const valVou = voucherInput ? parseMoedaInput(voucherInput.value) : 0;
+        const valDin = fechamentoDinheiroInput ? parseMoedaInput(fechamentoDinheiroInput.value) : 0;
+        const valVou = fechamentoVoucherInput ? parseMoedaInput(fechamentoVoucherInput.value) : 0;
 
         const recebimentosManuais = [
             { forma: "CARTÃO CRÉDITO", valor: valCred },
@@ -82,8 +98,7 @@ async function imprimirFechamentoFinal() {
 
             await imprimirFechamento(dataFormatada, vendas, pagamentos, recebimentosSistema, manuais);
 
-            const mImpressao = document.getElementById("modalImpressaoFechamento");
-            if (mImpressao) mImpressao.classList.add("hidden");
+            if (modalImpressaoFechamento) modalImpressaoFechamento.classList.add("hidden");
             return;
         }
 
@@ -153,8 +168,7 @@ async function imprimirFechamentoFinal() {
         setTimeout(() => {
             window.print();
             document.body.classList.remove("printing-closure");
-            const mImpressao = document.getElementById("modalImpressaoFechamento");
-            if (mImpressao) mImpressao.classList.add("hidden");
+            if (modalImpressaoFechamento) modalImpressaoFechamento.classList.add("hidden");
         }, 500);
     } catch (err) {
         console.error("Erro no fechamento:", err);
@@ -177,8 +191,7 @@ function parseMoedaInput(texto) {
 }
 
 function adicionarLinhaFechamento(label = "", c = 0, d = 0, p = 0) {
-    const tbody = document.getElementById("tbodyMaquinasFechamento");
-    if (!tbody) return;
+    if (!tbodyMaquinasFechamento) return;
 
     const tr = document.createElement("tr");
     tr.className = "linha-maquina";
@@ -192,7 +205,7 @@ function adicionarLinhaFechamento(label = "", c = 0, d = 0, p = 0) {
     <td style="padding: 10px; text-align:center;"><button class="btn-remove-linha-fech" style="background:#fee2e2; color:#ef4444; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer;" title="Remover">×</button></td>
   `;
 
-    tbody.appendChild(tr);
+    tbodyMaquinasFechamento.appendChild(tr);
 
     // Vincular máscara, cálculos e navegação por Enter
     const inputs = tr.querySelectorAll("input");
@@ -225,11 +238,9 @@ function adicionarLinhaFechamento(label = "", c = 0, d = 0, p = 0) {
 
                 if (atualIdx < todosInps.length - 1) {
                     todosInps[atualIdx + 1].focus();
-                    todosInps[atualIdx + 1].select();
                 } else {
                     // Ir para o campo de dinheiro
-                    const dinheiroInput = document.getElementById("fechamentoDinheiroInput");
-                    if (dinheiroInput) dinheiroInput.focus();
+                    if (fechamentoDinheiroInput) fechamentoDinheiroInput.focus();
                 }
             }
         };
@@ -252,96 +263,85 @@ function atualizarTotaisFechamento() {
     });
 
     // Dinheiro e Voucher vêm dos campos fixos
-    const dinheiroInput = document.getElementById("fechamentoDinheiroInput");
-    const voucherInput = document.getElementById("fechamentoVoucherInput");
-    const sdi = dinheiroInput ? parseMoedaInput(dinheiroInput.value) : 0;
-    const sv = voucherInput ? parseMoedaInput(voucherInput.value) : 0;
+    const sdi = fechamentoDinheiroInput ? parseMoedaInput(fechamentoDinheiroInput.value) : 0;
+    const sv = fechamentoVoucherInput ? parseMoedaInput(fechamentoVoucherInput.value) : 0;
 
-    const tC = document.getElementById("totalFechamentoCredito");
-    const tD = document.getElementById("totalFechamentoDebito");
-    const tP = document.getElementById("totalFechamentoPix");
-    const tG = document.getElementById("totalFechamentoGeral");
-
-    if (tC) tC.innerText = `R$ ${formatarMoeda(sc)}`;
-    if (tD) tD.innerText = `R$ ${formatarMoeda(sd)}`;
-    if (tP) tP.innerText = `R$ ${formatarMoeda(sp)}`;
+    if (totalFechamentoCredito) totalFechamentoCredito.innerText = `R$ ${formatarMoeda(sc)}`;
+    if (totalFechamentoDebito) totalFechamentoDebito.innerText = `R$ ${formatarMoeda(sd)}`;
+    if (totalFechamentoPix) totalFechamentoPix.innerText = `R$ ${formatarMoeda(sp)}`;
 
     // Total geral = maquininhas + dinheiro + voucher
     const totalGeral = sc + sd + sp + sdi + sv;
-    if (tG) tG.innerText = `R$ ${formatarMoeda(totalGeral)}`;
+    if (totalFechamentoGeral) totalFechamentoGeral.innerText = `R$ ${formatarMoeda(totalGeral)}`;
 }
 
 // ===============================
 // INICIALIZAÇÃO
 // ===============================
-document.addEventListener("DOMContentLoaded", () => {
-    const btnAdd = document.getElementById("btnAdicionarMaquina");
-    if (btnAdd) btnAdd.onclick = () => adicionarLinhaFechamento();
+function setupFechamentoListeners() {
+    carregarElementosFechamento();
+
+    if (btnAdicionarMaquina) btnAdicionarMaquina.onclick = () => adicionarLinhaFechamento();
 
     // Vincular campos de dinheiro e voucher fixos
-    const dinheiroInput = document.getElementById("fechamentoDinheiroInput");
-    const voucherInput = document.getElementById("fechamentoVoucherInput");
-
-    if (dinheiroInput) {
-        dinheiroInput.addEventListener("input", () => {
-            formatarCampoMoeda(dinheiroInput);
+    if (fechamentoDinheiroInput) {
+        fechamentoDinheiroInput.addEventListener("input", () => {
+            formatarCampoMoeda(fechamentoDinheiroInput);
             atualizarTotaisFechamento();
         });
-        dinheiroInput.addEventListener("focus", () => dinheiroInput.select());
-        dinheiroInput.addEventListener("keydown", (e) => {
+        fechamentoDinheiroInput.addEventListener("focus", () => fechamentoDinheiroInput.select());
+        fechamentoDinheiroInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
                 e.preventDefault();
-                if (voucherInput) voucherInput.focus();
+                if (fechamentoVoucherInput) fechamentoVoucherInput.focus();
             }
         });
     }
 
-    if (voucherInput) {
-        voucherInput.addEventListener("input", () => {
-            formatarCampoMoeda(voucherInput);
+    if (fechamentoVoucherInput) {
+        fechamentoVoucherInput.addEventListener("input", () => {
+            formatarCampoMoeda(fechamentoVoucherInput);
             atualizarTotaisFechamento();
         });
-        voucherInput.addEventListener("focus", () => voucherInput.select());
-        voucherInput.addEventListener("keydown", (e) => {
+        fechamentoVoucherInput.addEventListener("focus", () => fechamentoVoucherInput.select());
+        fechamentoVoucherInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
                 e.preventDefault();
-                const btnImprimir = document.getElementById("btnAbrirModalImpressaoFechamento");
-                if (btnImprimir) btnImprimir.focus();
+                if (btnAbrirModalImpressaoFechamento) btnAbrirModalImpressaoFechamento.focus();
             }
         });
     }
 
     // Adiciona duas linhas por padrão (limpando antes para evitar duplicidade)
-    const tbody = document.getElementById("tbodyMaquinasFechamento");
-    if (tbody) {
-        tbody.innerHTML = "";
+    if (tbodyMaquinasFechamento) {
+        tbodyMaquinasFechamento.innerHTML = "";
         adicionarLinhaFechamento("MÁQUINA 01");
         adicionarLinhaFechamento("MÁQUINA 02");
     }
 
     // Botões de Impressão (antes no index.js)
-    const btnAbrirModalImpFech = document.getElementById("btnAbrirModalImpressaoFechamento");
-    if (btnAbrirModalImpFech) {
-        btnAbrirModalImpFech.onclick = () => {
-            const m = document.getElementById("modalImpressaoFechamento");
-            if (m) {
-                m.classList.remove("hidden");
+    if (btnAbrirModalImpressaoFechamento) {
+        btnAbrirModalImpressaoFechamento.onclick = () => {
+            if (modalImpressaoFechamento) {
+                modalImpressaoFechamento.classList.remove("hidden");
                 // Focar no botão de imprimir após abrir o modal
                 setTimeout(() => {
-                    const btnImprimir = document.getElementById("btnImprimirFechamentoFinal");
-                    if (btnImprimir) btnImprimir.focus();
+                    if (btnImprimirFechamentoFinal) btnImprimirFechamentoFinal.focus();
                 }, 50);
             }
         };
     }
 
-    const btnImpFechFinal = document.getElementById("btnImprimirFechamentoFinal");
-    if (btnImpFechFinal) btnImpFechFinal.onclick = imprimirFechamentoFinal;
-});
+    if (btnImprimirFechamentoFinal) btnImprimirFechamentoFinal.onclick = imprimirFechamentoFinal;
+}
+
+// Para retrocompatibilidade se carregado diretamente
+document.addEventListener("DOMContentLoaded", setupFechamentoListeners);
 
 // ===============================
 // EXPOSIÇÃO GLOBAL DAS FUNÇÕES
 // ===============================
+window.setupFechamentoListeners = setupFechamentoListeners;
 window.alternarParaFechamento = alternarParaFechamento;
 window.imprimirFechamentoFinal = imprimirFechamentoFinal;
 window.formatarCampoMoeda = formatarCampoMoeda;

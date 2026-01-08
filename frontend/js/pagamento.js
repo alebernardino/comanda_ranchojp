@@ -3,19 +3,25 @@
 // Modal de pagamento e finalização de comanda
 // ===============================
 
-// Elementos do Modal de Pagamento
-const modalPagamento = document.getElementById("modalPagamento");
-const btnFecharModalPagamento = document.getElementById("btnFecharModalPagamento");
-const tituloPagamentoModal = document.getElementById("tituloPagamentoModal");
-const valorPagamentoInput = document.getElementById("valorPagamentoInput");
-const btnLancarPagamentoModal = document.getElementById("btnLancarPagamentoModal");
-const tabelaPagamentosBody = document.querySelector("#tabelaPagamentosModal tbody");
-const pagTotalComandaEl = document.getElementById("pag-total-comanda");
-const pagTotalPagoEl = document.getElementById("pag-total-pago");
-const pagSaldoDevedorEl = document.getElementById("pag-saldo-devedor");
-const btnFinalizarComandaModal = document.getElementById("btnFinalizarComandaModal");
-const metodosButtons = document.querySelectorAll("#modalPagamento .metodo-btn");
-const btnVoltarDivisaoModal = document.getElementById("btnVoltarDivisaoModal");
+// Variáveis de elementos DOM do Pagamento
+let modalPagamento, btnFecharModalPagamento, tituloPagamentoModal, valorPagamentoInput, btnLancarPagamentoModal;
+let tabelaPagamentosBody, pagTotalComandaEl, pagTotalPagoEl, pagSaldoDevedorEl, btnFinalizarComandaModal;
+let metodosButtons, btnVoltarDivisaoModal;
+
+function carregarElementosPagamento() {
+    modalPagamento = document.getElementById("modalPagamento");
+    btnFecharModalPagamento = document.getElementById("btnFecharModalPagamento");
+    tituloPagamentoModal = document.getElementById("tituloPagamentoModal");
+    valorPagamentoInput = document.getElementById("valorPagamentoInput");
+    btnLancarPagamentoModal = document.getElementById("btnLancarPagamentoModal");
+    tabelaPagamentosBody = document.querySelector("#tabelaPagamentosModal tbody");
+    pagTotalComandaEl = document.getElementById("pag-total-comanda");
+    pagTotalPagoEl = document.getElementById("pag-total-pago");
+    pagSaldoDevedorEl = document.getElementById("pag-saldo-devedor");
+    btnFinalizarComandaModal = document.getElementById("btnFinalizarComandaModal");
+    metodosButtons = document.querySelectorAll("#modalPagamento .metodo-btn");
+    btnVoltarDivisaoModal = document.getElementById("btnVoltarDivisaoModal");
+}
 
 // ===============================
 // FUNÇÕES PÚBLICAS
@@ -165,7 +171,9 @@ async function finalizarComandaModal() {
 }
 
 function setupPagamentoListeners() {
-    if (btnFecharModalPagamento) btnFecharModalPagamento.onclick = () => modalPagamento.classList.add("hidden");
+    carregarElementosPagamento();
+
+    if (btnFecharModalPagamento) btnFecharModalPagamento.onclick = () => { if (modalPagamento) modalPagamento.classList.add("hidden"); };
     if (btnLancarPagamentoModal) btnLancarPagamentoModal.onclick = lancarPagamentoModal;
     if (valorPagamentoInput) valorPagamentoInput.onkeydown = e => { if (e.key === "Enter") lancarPagamentoModal(); };
     if (btnFinalizarComandaModal) btnFinalizarComandaModal.onclick = finalizarComandaModal;
@@ -173,7 +181,7 @@ function setupPagamentoListeners() {
     if (btnVoltarDivisaoModal) {
         btnVoltarDivisaoModal.onclick = () => {
             if (modalPagamento) modalPagamento.classList.add("hidden");
-            abrirModalDividirItem();
+            if (typeof abrirModalDividirItem === "function") abrirModalDividirItem();
         };
     }
 
@@ -190,18 +198,5 @@ function setupPagamentoListeners() {
     }
 }
 
-// ===============================
-// EXPOSIÇÃO GLOBAL DAS FUNÇÕES
-// ===============================
-window.abrirModalPagamento = abrirModalPagamento;
-window.carregarResumoPagamento = carregarResumoPagamento;
-window.carregarPagamentosModal = carregarPagamentosModal;
-window.lancarPagamentoModal = lancarPagamentoModal;
-window.removerPagamentoModal = removerPagamentoModal;
-window.finalizarComandaModal = finalizarComandaModal;
-window.setupPagamentoListeners = setupPagamentoListeners;
-
 // Inicialização
-document.addEventListener("DOMContentLoaded", () => {
-    setupPagamentoListeners();
-});
+document.addEventListener("DOMContentLoaded", setupPagamentoListeners);

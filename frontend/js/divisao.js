@@ -3,13 +3,17 @@
 // Modal de divisão por item
 // ===============================
 
-// Elementos do Modal de Divisão
-const modalDividirItem = document.getElementById("modalDividirItem");
-const tbodyDivisaoItens = document.getElementById("tbodyDivisaoItens");
-const totalSelecionadoItemEl = document.getElementById("totalSelecionadoItem");
-const btnAdicionarAoPagamento = document.getElementById("btnAdicionarAoPagamento");
-const btnConsiderarSelecao = document.getElementById("btnConsiderarSelecao");
-const btnImprimirDivisao = document.getElementById("btnImprimirDivisao");
+// Variáveis de elementos DOM da Divisão
+let modalDividirItem, tbodyDivisaoItens, totalSelecionadoItemEl, btnAdicionarAoPagamento, btnConsiderarSelecao, btnImprimirDivisao;
+
+function carregarElementosDivisao() {
+    modalDividirItem = document.getElementById("modalDividirItem");
+    tbodyDivisaoItens = document.getElementById("tbodyDivisaoItens");
+    totalSelecionadoItemEl = document.getElementById("totalSelecionadoItem");
+    btnAdicionarAoPagamento = document.getElementById("btnAdicionarAoPagamento");
+    btnConsiderarSelecao = document.getElementById("btnConsiderarSelecao");
+    btnImprimirDivisao = document.getElementById("btnImprimirDivisao");
+}
 
 // ===============================
 // FUNÇÕES PÚBLICAS
@@ -221,6 +225,8 @@ async function considerarSelecao(silencioso = false) {
 }
 
 function setupDivisaoListeners() {
+    carregarElementosDivisao();
+
     if (btnAdicionarAoPagamento) {
         btnAdicionarAoPagamento.onclick = () => {
             const totalSelecionadoAgora = parseFloat(btnAdicionarAoPagamento.dataset.totalRaw || 0);
@@ -240,12 +246,14 @@ function setupDivisaoListeners() {
             if (modalDividirItem) modalDividirItem.classList.add("hidden");
 
             // Abre o modal de pagamento com o que foi acumulado
-            abrirModalPagamento(totalAcumuladoFinal, itensSelecionadosParaPagamento);
+            if (typeof abrirModalPagamento === "function") {
+                abrirModalPagamento(totalAcumuladoFinal, itensSelecionadosParaPagamento);
+            }
         };
     }
 
     if (btnConsiderarSelecao) btnConsiderarSelecao.onclick = () => considerarSelecao(false);
-    if (btnImprimirDivisao) btnImprimirDivisao.onclick = imprimirDivisaoAcao;
+    if (btnImprimirDivisao) btnImprimirDivisao.onclick = () => { if (typeof imprimirDivisaoAcao === "function") imprimirDivisaoAcao(); };
 }
 
 // ===============================
@@ -258,7 +266,5 @@ window.considerarSelecao = considerarSelecao;
 window.setupDivisaoListeners = setupDivisaoListeners;
 
 // Inicialização
-document.addEventListener("DOMContentLoaded", () => {
-    setupDivisaoListeners();
-});
+document.addEventListener("DOMContentLoaded", setupDivisaoListeners);
 

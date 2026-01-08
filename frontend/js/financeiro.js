@@ -1,10 +1,15 @@
 // financeiro.js
 
-const sectionFinanceiro = document.getElementById("sectionFinanceiro");
-const navFinanceiro = document.getElementById("navFinanceiro");
-const tabelaFinanceiroBody = document.getElementById("tabelaFinanceiroBody");
-const btnSalvarFin = document.getElementById("btnSalvarFin");
-const finDataInput = document.getElementById("finData");
+// Variáveis de elementos DOM do Financeiro
+let sectionFinanceiro, navFinanceiro, tabelaFinanceiroBody, btnSalvarFin, finDataInput;
+
+function carregarElementosFinanceiro() {
+    sectionFinanceiro = document.getElementById("sectionFinanceiro");
+    navFinanceiro = document.getElementById("navFinanceiro");
+    tabelaFinanceiroBody = document.getElementById("tabelaFinanceiroBody");
+    btnSalvarFin = document.getElementById("btnSalvarFin");
+    finDataInput = document.getElementById("finData");
+}
 
 let financeiroCache = [];
 let sortFinCol = 'data';
@@ -265,13 +270,16 @@ function alternarParaFinanceiro() {
 }
 
 // Listeners
-if (navFinanceiro) navFinanceiro.onclick = (e) => { e.preventDefault(); alternarParaFinanceiro(); };
-if (btnSalvarFin) btnSalvarFin.onclick = salvarLancamentoFin;
+function setupFinanceiroListeners() {
+    carregarElementosFinanceiro();
+    setupFinanceiroEnterNavigation();
+
+    if (navFinanceiro) navFinanceiro.onclick = (e) => { e.preventDefault(); alternarParaFinanceiro(); };
+    if (btnSalvarFin) btnSalvarFin.onclick = salvarLancamentoFin;
+}
 
 // Chamar no carregamento inicial
-document.addEventListener("DOMContentLoaded", () => {
-    setupFinanceiroEnterNavigation();
-});
+document.addEventListener("DOMContentLoaded", setupFinanceiroListeners);
 
 // Global
 window.excluirRegistroFin = excluirRegistroFin;

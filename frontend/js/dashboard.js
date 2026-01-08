@@ -113,6 +113,12 @@ function initToggleVendasHoje() {
     };
 }
 
+function setupDashboardListeners() {
+    initToggleVendasHoje();
+}
+
+// Para retrocompatibilidade se carregado diretamente
+document.addEventListener("DOMContentLoaded", setupDashboardListeners);
 
 function alternarParaDashboard() {
     const sectionProdutos = document.getElementById("sectionProdutos");

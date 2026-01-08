@@ -1,10 +1,15 @@
 // colaboradores.js
 
-const sectionColaboradores = document.getElementById("sectionColaboradores");
-const navColaboradores = document.getElementById("navColaboradores");
-const tabelaColaboradoresBody = document.getElementById("tabelaColaboradoresBody");
-const btnSalvarColaborador = document.getElementById("btnSalvarColaborador");
-const btnLimparColaborador = document.getElementById("btnLimparColaborador");
+// Variáveis de elementos DOM dos Colaboradores
+let sectionColaboradores, navColaboradores, tabelaColaboradoresBody, btnSalvarColaborador, btnLimparColaborador;
+
+function carregarElementosColaboradores() {
+    sectionColaboradores = document.getElementById("sectionColaboradores");
+    navColaboradores = document.getElementById("navColaboradores");
+    tabelaColaboradoresBody = document.getElementById("tabelaColaboradoresBody");
+    btnSalvarColaborador = document.getElementById("btnSalvarColaborador");
+    btnLimparColaborador = document.getElementById("btnLimparColaborador");
+}
 
 let colaboradoresCache = [];
 let sortColabCol = 'ativo';
@@ -201,9 +206,14 @@ function alternarParaColaboradores() {
 }
 
 // Listeners
-if (navColaboradores) navColaboradores.onclick = (e) => { e.preventDefault(); alternarParaColaboradores(); };
-if (btnSalvarColaborador) btnSalvarColaborador.onclick = salvarColaborador;
-if (btnLimparColaborador) btnLimparColaborador.onclick = limparCamposColaborador;
+function setupColaboradoresListeners() {
+    carregarElementosColaboradores();
+    setupColaboradoresEnterNavigation();
+
+    if (navColaboradores) navColaboradores.onclick = (e) => { e.preventDefault(); alternarParaColaboradores(); };
+    if (btnSalvarColaborador) btnSalvarColaborador.onclick = salvarColaborador;
+    if (btnLimparColaborador) btnLimparColaborador.onclick = limparCamposColaborador;
+}
 
 function setupColaboradoresEnterNavigation() {
     const fields = [
@@ -284,9 +294,7 @@ function setupColaboradoresEnterNavigation() {
 }
 
 // Chamar no carregamento inicial se o elemento existir
-document.addEventListener("DOMContentLoaded", () => {
-    setupColaboradoresEnterNavigation();
-});
+document.addEventListener("DOMContentLoaded", setupColaboradoresListeners);
 
 // Global
 window.alterarStatusColaborador = alterarStatusColaborador;

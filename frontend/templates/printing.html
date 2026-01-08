@@ -1,0 +1,106 @@
+<!-- TEMPLATE IMPRESSAO LINGUICAO FECHAMENTO -->
+<div id="printFechamentoDiario" class="global-print-element"
+    style="width: 80mm; font-family: 'Courier New', Courier, monospace; padding: 0 2mm;">
+    <h2 style="text-align: center; margin-bottom: 5px;">FECHAMENTO DIÁRIO</h2>
+    <p id="printFechamentoData"
+        style="text-align: center; font-size: 9pt; margin-bottom: 10px; border-bottom: 1pt solid black; padding-bottom: 5px;">
+    </p>
+
+    <div id="printBlocoVendas">
+        <h3 style="font-size: 10pt; border-bottom: 1pt dashed black; margin-top: 10px; margin-bottom: 5px;">VENDAS POR
+            ITEM</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+            <thead>
+                <tr style="border-bottom: 0.5pt solid #eee;">
+                    <th style="text-align: left;">ITEM</th>
+                    <th style="text-align: right;">QTD</th>
+                </tr>
+            </thead>
+            <tbody id="printBodyVendas"></tbody>
+        </table>
+    </div>
+
+    <div id="printBlocoPagamentos">
+        <h3 style="font-size: 10pt; border-bottom: 1pt dashed black; margin-top: 10px; margin-bottom: 5px;">PAGAMENTOS
+            (SAÍDAS)</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+            <thead>
+                <tr style="border-bottom: 0.5pt solid #eee;">
+                    <th style="text-align: left;">RECEBEDOR</th>
+                    <th style="text-align: right;">VALOR</th>
+                </tr>
+            </thead>
+            <tbody id="printBodyPagamentos"></tbody>
+        </table>
+    </div>
+
+    <div id="printBlocoRecebimentosSistema">
+        <h3 style="font-size: 10pt; border-bottom: 1pt dashed black; margin-top: 10px; margin-bottom: 5px;">RECEBIMENTOS
+            (SISTEMA)</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+            <thead>
+                <tr style="border-bottom: 0.5pt solid #eee;">
+                    <th style="text-align: left;">MÉTODO</th>
+                    <th style="text-align: right;">VALOR</th>
+                </tr>
+            </thead>
+            <tbody id="printBodyRecebimentosSistema"></tbody>
+        </table>
+    </div>
+
+    <div id="printBlocoRecebimentosManual">
+        <h3 style="font-size: 10pt; border-bottom: 1pt dashed black; margin-top: 10px; margin-bottom: 5px;">RECEBIMENTOS
+            (MANUAL)</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+            <thead>
+                <tr style="border-bottom: 0.5pt solid #eee;">
+                    <th style="text-align: left;">FORMA</th>
+                    <th style="text-align: right;">VALOR</th>
+                </tr>
+            </thead>
+            <tbody id="printBodyRecebimentosManual"></tbody>
+        </table>
+    </div>
+
+    <div style="margin-top: 20px; border-top: 1pt solid black; text-align: center; padding-top: 10px;">
+        <p style="font-size: 8pt;">Conferido por: __________________</p>
+    </div>
+</div>
+
+<div id="printResumoPagamento" class="global-print-element"
+    style="width: 80mm; font-family: 'Courier New', Courier, monospace; padding: 0 2mm;">
+    <h3 style="text-align: center; margin: 2mm 0; border-bottom: 1pt dashed black; padding-bottom: 2mm;">RESUMO DE
+        PAGAMENTO</h3>
+    <div id="printResumoInfo" style="margin-bottom: 3mm; font-size: 9pt; text-align: center; line-height: 1.4;"></div>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 2mm;">
+        <thead>
+            <tr style="border-bottom: 1pt solid black;">
+                <th style="text-align: left; padding: 1mm 0; font-size: 9pt; width: 60%;">FORMA</th>
+                <th style="text-align: right; padding: 1mm 0; font-size: 9pt; width: 40%;">VALOR</th>
+            </tr>
+        </thead>
+        <tbody id="printResumoPagamentoBody" style="font-size: 9pt;"></tbody>
+    </table>
+    <div id="printResumoTotal"
+        style="text-align: right; font-weight: 800; border-top: 1pt solid black; padding-top: 2mm; font-size: 11pt; margin-bottom: 2mm;">
+    </div>
+</div>
+
+<!-- TEMPLATE IMPRESSÃO ITENS PARCIAIS (DIVISÃO) -->
+<div id="printItensParciais" class="global-print-element"
+    style="width: 80mm; font-family: 'Courier New', Courier, monospace; padding: 0 2mm; display: none;">
+    <h2 id="printParciaisTitulo" style="text-align: center; margin: 2mm 0; font-size: 12pt;"></h2>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 2mm;">
+        <thead>
+            <tr style="border-bottom: 1pt solid black;">
+                <th style="text-align: left; padding: 1mm 0; font-size: 9pt;">ITEM</th>
+                <th style="text-align: center; padding: 1mm 0; font-size: 9pt; width: 30px;">QTD</th>
+                <th style="text-align: right; padding: 1mm 0; font-size: 9pt; width: 60px;">VALOR</th>
+            </tr>
+        </thead>
+        <tbody id="printParciaisBody" style="font-size: 9pt;"></tbody>
+    </table>
+    <div id="printParciaisTotal"
+        style="text-align: right; font-weight: 800; border-top: 1pt solid black; padding-top: 2mm; font-size: 11pt; margin-bottom: 2mm;">
+    </div>
+</div>

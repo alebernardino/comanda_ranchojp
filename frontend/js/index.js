@@ -29,11 +29,51 @@ var formaPagamentoSelecionada, itensAgrupadosDivisao, itensSelecionadosParaPagam
 var produtosCache, produtoSelecionado, estadoOrdenacaoProdutos;
 
 // ===============================
+// CARREGAMENTO DE TEMPLATES
+// ===============================
+
+async function carregarTemplates() {
+  console.log("Carregando templates externos...");
+  try {
+    const [modals, sections, printing] = await Promise.all([
+      fetch("templates/modals.html").then(r => r.text()),
+      fetch("templates/sections.html").then(r => r.text()),
+      fetch("templates/printing.html").then(r => r.text())
+    ]);
+
+    document.getElementById("modalsContainer").innerHTML = modals;
+    document.getElementById("sectionsContainer").innerHTML = sections;
+    document.getElementById("printingTemplatesContainer").innerHTML = printing;
+
+    console.log("Templates carregados com sucesso!");
+
+    // Após carregar os templates, precisamos avisar os módulos de que os elementos deles agora existem
+    if (typeof setupDashboardListeners === "function") setupDashboardListeners();
+    if (typeof setupProdutosListeners === "function") setupProdutosListeners();
+    if (typeof setupComandaListeners === "function") setupComandaListeners();
+    if (typeof setupDivisaoListeners === "function") setupDivisaoListeners();
+    if (typeof setupPagamentoListeners === "function") setupPagamentoListeners();
+    if (typeof setupFechamentoListeners === "function") setupFechamentoListeners();
+    if (typeof setupColaboradoresListeners === "function") setupColaboradoresListeners();
+    if (typeof setupFinanceiroListeners === "function") setupFinanceiroListeners();
+    if (typeof setupRelatoriosListeners === "function") setupRelatoriosListeners();
+
+  } catch (err) {
+    console.error("Erro ao carregar templates:", err);
+  }
+}
+
+// ===============================
 // INICIALIZAÇÃO
 // ===============================
 
 async function init() {
   console.log("Sistema iniciando...");
+
+  // 1. Carrega os templates primeiro
+  await carregarTemplates();
+
+  // 2. Inicia os dados
   if (typeof carregarDashboard === "function") await carregarDashboard();
   if (typeof carregarProdutosBase === "function") await carregarProdutosBase();
   if (typeof carregarVendasHoje === "function") await carregarVendasHoje();

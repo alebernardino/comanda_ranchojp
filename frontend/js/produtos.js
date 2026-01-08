@@ -1,22 +1,28 @@
-const prodPageValor = document.getElementById("prodPageValor");
-const tabelaProdutosPageBody = document.getElementById("tabelaProdutosPageBody");
-const listaProdutos = document.getElementById("listaProdutos");
-const tabelaProdutosModalBody = document.querySelector("#tabelaProdutosModal tbody");
+// Variáveis de elementos DOM dos Produtos
+let prodPageValor, tabelaProdutosPageBody, listaProdutos, tabelaProdutosModalBody;
+let modalCadastroProduto, btnFecharModalCadastro, btnSalvarProdutoModal, btnSalvarProdutoPage;
+let novoCodigoInput, novaDescricaoInput, valorNovoProdutoInput, prodPageCodigo, prodPageDescricao;
+let sectionProdutos, navProdutosSessao;
 
-// Elementos do Modal de Cadastro
-const modalCadastroProduto = document.getElementById("modalCadastroProduto");
-const btnFecharModalCadastro = document.getElementById("btnFecharModalCadastro");
-const btnSalvarProdutoModal = document.getElementById("btnSalvarProdutoModal");
-const btnSalvarProdutoPage = document.getElementById("btnSalvarProdutoPage");
-const novoCodigoInput = document.getElementById("novoCodigo");
-const novaDescricaoInput = document.getElementById("novaDescricao");
-const valorNovoProdutoInput = document.getElementById("valorNovoProduto");
-const prodPageCodigo = document.getElementById("prodPageCodigo");
-const prodPageDescricao = document.getElementById("prodPageDescricao");
+function carregarElementosProdutos() {
+    prodPageValor = document.getElementById("prodPageValor");
+    tabelaProdutosPageBody = document.getElementById("tabelaProdutosPageBody");
+    listaProdutos = document.getElementById("listaProdutos");
+    tabelaProdutosModalBody = document.querySelector("#tabelaProdutosModal tbody");
 
-// Seções e Navegação
-const sectionProdutos = document.getElementById("sectionProdutos");
-const navProdutosSessao = document.getElementById("navProdutosSessao");
+    modalCadastroProduto = document.getElementById("modalCadastroProduto");
+    btnFecharModalCadastro = document.getElementById("btnFecharModalCadastro");
+    btnSalvarProdutoModal = document.getElementById("btnSalvarProdutoModal");
+    btnSalvarProdutoPage = document.getElementById("btnSalvarProdutoPage");
+    novoCodigoInput = document.getElementById("novoCodigo");
+    novaDescricaoInput = document.getElementById("novaDescricao");
+    valorNovoProdutoInput = document.getElementById("valorNovoProduto");
+    prodPageCodigo = document.getElementById("prodPageCodigo");
+    prodPageDescricao = document.getElementById("prodPageDescricao");
+
+    sectionProdutos = document.getElementById("sectionProdutos");
+    navProdutosSessao = document.getElementById("navProdutosSessao");
+}
 
 // ===============================
 // FUNÇÕES PÚBLICAS - CARREGAMENTO
@@ -429,9 +435,19 @@ function alternarParaProdutos() {
     }, 100);
 }
 
+// Listeners
+function setupProdutosListeners() {
+    carregarElementosProdutos();
+    setupProdutosEnterNavigation();
+}
+
+// Para retrocompatibilidade se carregado diretamente
+document.addEventListener("DOMContentLoaded", setupProdutosListeners);
+
 // ===============================
 // EXPOSIÇÃO GLOBAL DAS FUNÇÕES
 // ===============================
+window.setupProdutosListeners = setupProdutosListeners;
 window.carregarProdutosBase = carregarProdutosBase;
 window.carregarProdutosCadastrados = carregarProdutosCadastrados;
 window.renderizarProdutosModal = renderizarProdutosModal;
@@ -448,8 +464,3 @@ window.salvarNovoProdutoSessao = salvarNovoProdutoSessao;
 window.editProduto = editProduto;
 window.excluirProduto = excluirProduto;
 window.alternarParaProdutos = alternarParaProdutos;
-
-// Chamar no carregamento inicial
-document.addEventListener("DOMContentLoaded", () => {
-    setupProdutosEnterNavigation();
-});

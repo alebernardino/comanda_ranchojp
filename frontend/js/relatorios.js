@@ -1,7 +1,12 @@
 // relatorios.js
 
-const sectionRelatorios = document.getElementById("sectionRelatorios");
-const navRelatorios = document.getElementById("navRelatorios");
+// Variáveis de elementos DOM dos Relatórios
+let sectionRelatorios, navRelatorios;
+
+function carregarElementosRelatorios() {
+    sectionRelatorios = document.getElementById("sectionRelatorios");
+    navRelatorios = document.getElementById("navRelatorios");
+}
 
 let chartVendasInstance = null;
 let chartFluxoInstance = null;
@@ -636,25 +641,23 @@ function configurarDatasPadraoFluxo() {
 }
 
 // Listeners
-if (navRelatorios) navRelatorios.onclick = (e) => { e.preventDefault(); alternarParaRelatorios(); };
-const navFluxoBtn = document.getElementById("navFluxoCaixa");
-if (navFluxoBtn) navFluxoBtn.onclick = (e) => { e.preventDefault(); alternarParaFluxoCaixa(); };
+function setupRelatoriosListeners() {
+    carregarElementosRelatorios();
 
-const inputBuscaVendas = document.getElementById("relVendasBusca");
-if (inputBuscaVendas) {
-    inputBuscaVendas.onkeydown = (e) => {
-        if (e.key === 'Enter') carregarRelatorioVendas();
-    };
+    if (navRelatorios) navRelatorios.onclick = (e) => { e.preventDefault(); alternarParaRelatorios(); };
+
+    const navFluxoBtn = document.getElementById("navFluxoCaixa");
+    if (navFluxoBtn) navFluxoBtn.onclick = (e) => { e.preventDefault(); alternarParaFluxoCaixa(); };
+
+    const inputBuscaVendas = document.getElementById("relVendasBusca");
+    if (inputBuscaVendas) {
+        inputBuscaVendas.onkeydown = (e) => {
+            if (e.key === 'Enter') carregarRelatorioVendas();
+        };
+    }
 }
 
-// Expose global
-window.carregarRelatorioVendas = carregarRelatorioVendas;
-window.carregarRelatorioFluxo = carregarRelatorioFluxo;
-window.alternarParaRelatorios = alternarParaRelatorios;
-window.alternarParaFluxoCaixa = alternarParaFluxoCaixa;
-window.alternarSubAbaFluxo = alternarSubAbaFluxo;
-window.alternarSubAbaVendas = alternarSubAbaVendas;
-window.ordenarGeralVendas = ordenarGeralVendas;
-window.ordenarAnaliticoVendas = ordenarAnaliticoVendas;
-window.ordenarComandasVendas = ordenarComandasVendas;
-window.ordenarAnaliticoFluxo = ordenarAnaliticoFluxo;
+// Chamar no carregamento inicial
+document.addEventListener("DOMContentLoaded", setupRelatoriosListeners);
+
+window.setupRelatoriosListeners = setupRelatoriosListeners;
