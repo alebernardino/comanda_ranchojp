@@ -204,6 +204,11 @@ async function adicionarItemComanda() {
         produtoSelecionado = null;
         await carregarItensComanda();
         renderizarProdutosModal(produtosCache);
+
+        // Atualizar card no dashboard em tempo real
+        if (typeof atualizarCardComanda === "function") {
+            atualizarCardComanda(currentComandaNumero, true);
+        }
     }
 }
 

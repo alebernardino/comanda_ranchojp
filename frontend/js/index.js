@@ -137,11 +137,35 @@ function setupShellListeners() {
 document.onkeydown = (e) => {
   // ESC para fechar qualquer modal
   if (e.key === "Escape") {
+    const modalPagamento = document.getElementById("modalPagamento");
+    const modalComanda = document.getElementById("modalComanda");
+
+    // Se o modal de pagamento estiver aberto, verificar se há saldo devedor
+    if (modalPagamento && !modalPagamento.classList.contains("hidden")) {
+      const saldoDevedorEl = document.getElementById("pag-saldo-devedor");
+      const saldoDevedorText = saldoDevedorEl ? saldoDevedorEl.innerText : "R$ 0,00";
+      const saldoDevedor = parseFloat(saldoDevedorText.replace("R$", "").replace(",", ".").trim()) || 0;
+
+      // Se ainda há valor a pagar, voltar para o modal da comanda
+      if (saldoDevedor > 0) {
+        modalPagamento.classList.add("hidden");
+        if (modalComanda) {
+          modalComanda.classList.remove("hidden");
+          // Focar no campo de busca
+          setTimeout(() => {
+            const buscaCodigo = document.getElementById("buscaCodigo");
+            if (buscaCodigo) buscaCodigo.focus();
+          }, 100);
+        }
+        return; // Não executar o resto do código
+      }
+    }
+
+    // Comportamento padrão: fechar todos os modais
     const modais = document.querySelectorAll(".modal:not(.hidden)");
     modais.forEach(m => m.classList.add("hidden"));
 
     // Caso especial comanda: recarregar dashboard ao fechar
-    const modalComanda = document.getElementById("modalComanda");
     if (modalComanda && !modalComanda.classList.contains("hidden")) {
       if (typeof carregarDashboard === "function") carregarDashboard();
     }

@@ -49,6 +49,28 @@ function atualizarStats(abertas) {
     if (statsLivres) statsLivres.innerText = Math.max(0, TOTAL_COMANDAS - abertasVisiveis.length);
 }
 
+function atualizarCardComanda(numeroComanda, estaAberta) {
+    if (!grid) return;
+
+    // Encontra o card específico no grid
+    const cards = grid.children;
+    const cardIndex = numeroComanda - 1; // Array é 0-indexed
+
+    if (cardIndex >= 0 && cardIndex < cards.length) {
+        const card = cards[cardIndex];
+        if (estaAberta) {
+            card.className = "comanda-card ocupada";
+        } else {
+            card.className = "comanda-card disponivel";
+        }
+    }
+
+    // Atualizar stats também
+    if (typeof carregarDashboard === "function") {
+        carregarDashboard();
+    }
+}
+
 async function carregarVendasHoje() {
     const tbody = document.getElementById("tbodyVendasHoje");
     if (!tbody) return;
@@ -150,6 +172,7 @@ function alternarParaDashboard() {
 window.carregarDashboard = carregarDashboard;
 window.renderizarGrid = renderizarGrid;
 window.atualizarStats = atualizarStats;
+window.atualizarCardComanda = atualizarCardComanda;
 window.carregarVendasHoje = carregarVendasHoje;
 window.initToggleVendasHoje = initToggleVendasHoje;
 window.alternarParaDashboard = alternarParaDashboard;

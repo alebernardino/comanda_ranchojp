@@ -420,7 +420,8 @@ function alternarParaProdutos() {
     if (document.getElementById("sectionFechamento")) document.getElementById("sectionFechamento").classList.add("hidden");
 
     navDashboard.classList.remove("active");
-    navProdutosSessao.classList.add("active");
+    navProdutosSessao.classList.remove("active");
+    if (document.getElementById("navColaboradores")) document.getElementById("navColaboradores").classList.remove("active");
     if (document.getElementById("navFinanceiro")) document.getElementById("navFinanceiro").classList.remove("active");
     if (document.getElementById("navRelatorios")) document.getElementById("navRelatorios").classList.remove("active");
     if (document.getElementById("navFechamento")) document.getElementById("navFechamento").classList.remove("active");

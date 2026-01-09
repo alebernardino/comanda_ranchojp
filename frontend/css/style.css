@@ -1343,3 +1343,41 @@ th {
   }
 
 }
+/* Correção adicional para impressão de itens parciais - 80mm completo */
+@media print {
+  body.printing-parcial #printItensParciais {
+    width: 80mm !important;
+    max-width: 80mm !important;
+    padding: 0 2mm !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+  }
+
+  body.printing-parcial #printItensParciais table {
+    width: 100% !important;
+    table-layout: fixed !important;
+  }
+
+  body.printing-parcial #printItensParciais th,
+  body.printing-parcial #printItensParciais td {
+    padding: 1mm 1mm !important;
+  }
+
+  body.printing-parcial #printParciaisTitulo {
+    font-size: 12pt !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    margin: 2mm 0 !important;
+    width: 100% !important;
+  }
+
+  body.printing-parcial #printParciaisTotal {
+    font-size: 11pt !important;
+    font-weight: 800 !important;
+    text-align: right !important;
+    border-top: 1pt solid black !important;
+    padding-top: 2mm !important;
+    margin-bottom: 2mm !important;
+    width: 100% !important;
+  }
+}

@@ -173,7 +173,30 @@ async function finalizarComandaModal() {
 function setupPagamentoListeners() {
     carregarElementosPagamento();
 
-    if (btnFecharModalPagamento) btnFecharModalPagamento.onclick = () => { if (modalPagamento) modalPagamento.classList.add("hidden"); };
+    if (btnFecharModalPagamento) {
+        btnFecharModalPagamento.onclick = () => {
+            // Verificar se há saldo devedor
+            const saldoDevedorEl = document.getElementById("pag-saldo-devedor");
+            const saldoDevedorText = saldoDevedorEl ? saldoDevedorEl.innerText : "R$ 0,00";
+            const saldoDevedor = parseFloat(saldoDevedorText.replace("R$", "").replace(",", ".").trim()) || 0;
+
+            if (modalPagamento) modalPagamento.classList.add("hidden");
+
+            // Se ainda há valor a pagar, voltar para o modal da comanda
+            if (saldoDevedor > 0) {
+                const modalComanda = document.getElementById("modalComanda");
+                if (modalComanda) {
+                    modalComanda.classList.remove("hidden");
+                    // Focar no campo de busca
+                    setTimeout(() => {
+                        const buscaCodigo = document.getElementById("buscaCodigo");
+                        if (buscaCodigo) buscaCodigo.focus();
+                    }, 100);
+                }
+            }
+        };
+    }
+
     if (btnLancarPagamentoModal) btnLancarPagamentoModal.onclick = lancarPagamentoModal;
     if (valorPagamentoInput) valorPagamentoInput.onkeydown = e => { if (e.key === "Enter") lancarPagamentoModal(); };
     if (btnFinalizarComandaModal) btnFinalizarComandaModal.onclick = finalizarComandaModal;

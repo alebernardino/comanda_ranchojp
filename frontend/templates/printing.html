@@ -88,19 +88,19 @@
 
 <!-- TEMPLATE IMPRESSÃO ITENS PARCIAIS (DIVISÃO) -->
 <div id="printItensParciais" class="global-print-element"
-    style="width: 80mm; font-family: 'Courier New', Courier, monospace; padding: 0 2mm; display: none;">
+    style="width: 80mm; max-width: 80mm; font-family: 'Courier New', Courier, monospace; padding: 0; margin: 0; box-sizing: border-box; display: none;">
     <h2 id="printParciaisTitulo" style="text-align: center; margin: 2mm 0; font-size: 12pt;"></h2>
-    <table style="width: 100%; border-collapse: collapse; margin-bottom: 2mm;">
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 2mm; table-layout: fixed;">
         <thead>
             <tr style="border-bottom: 1pt solid black;">
-                <th style="text-align: left; padding: 1mm 0; font-size: 9pt;">ITEM</th>
-                <th style="text-align: center; padding: 1mm 0; font-size: 9pt; width: 30px;">QTD</th>
-                <th style="text-align: right; padding: 1mm 0; font-size: 9pt; width: 60px;">VALOR</th>
+                <th style="text-align: left; padding: 1mm 2mm; font-size: 9pt;">ITEM</th>
+                <th style="text-align: center; padding: 1mm 2mm; font-size: 9pt; width: 30px;">QTD</th>
+                <th style="text-align: right; padding: 1mm 2mm; font-size: 9pt; width: 60px;">VALOR</th>
             </tr>
         </thead>
         <tbody id="printParciaisBody" style="font-size: 9pt;"></tbody>
     </table>
     <div id="printParciaisTotal"
-        style="text-align: right; font-weight: 800; border-top: 1pt solid black; padding-top: 2mm; font-size: 11pt; margin-bottom: 2mm;">
+        style="text-align: right; font-weight: 800; border-top: 1pt solid black; padding: 2mm 2mm 2mm 0; font-size: 11pt; margin-bottom: 2mm;">
     </div>
 </div>

@@ -128,6 +128,14 @@ async function imprimirDivisaoAcao(itensParaImprimir = null, totalParaImprimir =
         });
     }
 
+    console.log("Imprimindo divisão:", { itensParaImprimir, totalParaImprimir });
+
+    // Validação: se não há itens, não imprimir
+    if (!itensParaImprimir || itensParaImprimir.length === 0) {
+        alert("Nenhum item selecionado para impressão");
+        return;
+    }
+
     // Se QZ Tray está ativo, usa impressão silenciosa
     if (typeof isQzTrayAtivo === "function" && isQzTrayAtivo()) {
         await imprimirItensParciais(currentComandaNumero, itensParaImprimir, totalParaImprimir);
@@ -141,6 +149,7 @@ async function imprimirDivisaoAcao(itensParaImprimir = null, totalParaImprimir =
     const printTotal = document.getElementById("printParciaisTotal");
 
     if (!printContainer || !printBody) {
+        console.error("Template de impressão não encontrado");
         window.print();
         return;
     }
@@ -152,22 +161,28 @@ async function imprimirDivisaoAcao(itensParaImprimir = null, totalParaImprimir =
     itensParaImprimir.forEach(item => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-      <td style="padding: 1mm 0;">${item.descricao}</td>
-      <td style="text-align: center;">${item.quantidade}</td>
-      <td style="text-align: right;">R$ ${formatarMoeda(item.subtotal)}</td>
+      <td style="padding: 1mm 2mm; border-bottom: 0.5pt dashed #ccc;">${item.descricao}</td>
+      <td style="padding: 1mm 2mm; text-align: center; border-bottom: 0.5pt dashed #ccc;">${item.quantidade}</td>
+      <td style="padding: 1mm 2mm; text-align: right; border-bottom: 0.5pt dashed #ccc;">R$ ${formatarMoeda(item.subtotal)}</td>
     `;
         printBody.appendChild(tr);
     });
 
     if (printTotal) printTotal.innerText = `TOTAL: R$ ${formatarMoeda(totalParaImprimir)}`;
 
+    console.log("Template preenchido:", {
+        titulo: printTitulo?.innerText,
+        linhas: printBody.children.length,
+        total: printTotal?.innerText
+    });
+
     // Mostrar o container e imprimir
-    printContainer.classList.add("active");
+    printContainer.style.display = "block";
     document.body.classList.add("printing-parcial");
 
     // Função para limpar após impressão
     const limparAposImpressao = () => {
-        printContainer.classList.remove("active");
+        printContainer.style.display = "none";
         document.body.classList.remove("printing-parcial");
 
         // Limpar completamente o conteúdo do template para evitar impressões duplicadas
