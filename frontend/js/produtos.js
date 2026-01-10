@@ -48,12 +48,20 @@ async function carregarProdutosCadastrados() {
           <td>${p.codigo}</td>
           <td><input class="input-tabela-texto" value="${p.descricao}" onblur="editProduto(${p.id}, 'descricao', this.value)"></td>
           <td><input class="input-tabela-valor" value="${p.valor.toFixed(2)}" onblur="editProduto(${p.id}, 'valor', this.value)" style="width: 80px; text-align: right;"></td>
-          <td style="text-align: center;"><input type="checkbox" ${p.ativo ? 'checked' : ''} onchange="editProduto(${p.id}, 'ativo', this.checked)"></td>
+          <td style="text-align: center;"><input type="checkbox" ${p.ativo ? 'checked' : ''} data-produto-id="${p.id}" class="checkbox-ativo"></td>
           <td style="text-align: center;">
             <button onclick="excluirProduto(${p.id})" style="background:#fee2e2; border:none; color:#ef4444; width:28px; height:28px; border-radius:50%; font-size:1.2rem; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;" title="Excluir">×</button>
           </td>
         `;
             tabelaProdutosModalBody.appendChild(tr);
+
+            // Adicionar event listener ao checkbox
+            const checkbox = tr.querySelector('.checkbox-ativo');
+            if (checkbox) {
+                checkbox.addEventListener('change', function () {
+                    editProduto(p.id, 'ativo', this.checked);
+                });
+            }
         });
     }
     produtosCache = produtos;
@@ -89,12 +97,20 @@ function renderizarTabelaProdutosPage(produtos) {
         <td style="padding: 15px;">${p.codigo}</td>
         <td style="padding: 15px;"><input class="input-tabela-texto" value="${p.descricao}" onblur="editProduto(${p.id}, 'descricao', this.value)" style="width: 100%; border:none; background:transparent;"></td>
         <td style="padding: 15px; text-align: right;"><input class="input-tabela-valor" value="${p.valor.toFixed(2)}" onblur="editProduto(${p.id}, 'valor', this.value)" style="width: 80px; text-align: right; border:none; background:transparent;"></td>
-        <td style="padding: 15px; text-align: center;"><input type="checkbox" ${p.ativo ? 'checked' : ''} onchange="editProduto(${p.id}, 'ativo', this.checked)"></td>
+        <td style="padding: 15px; text-align: center;"><input type="checkbox" ${p.ativo ? 'checked' : ''} data-produto-id="${p.id}" class="checkbox-ativo-page"></td>
         <td style="padding: 15px; text-align: center;">
           <button onclick="excluirProduto(${p.id})" style="background:#fee2e2; border:none; color:#ef4444; width:28px; height:28px; border-radius:50%; font-size:1.2rem; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;" title="Excluir">×</button>
         </td>
       `;
         tabelaProdutosPageBody.appendChild(tr);
+
+        // Adicionar event listener ao checkbox
+        const checkbox = tr.querySelector('.checkbox-ativo-page');
+        if (checkbox) {
+            checkbox.addEventListener('change', function () {
+                editProduto(p.id, 'ativo', this.checked);
+            });
+        }
     });
 }
 
@@ -302,10 +318,32 @@ async function salvarNovoProdutoSessao() {
 }
 
 async function editProduto(id, campo, novoValor) {
-    const body = {};
-    if (campo === "ativo") body[campo] = novoValor;
-    else if (campo === "valor") body[campo] = parseFloat(novoValor);
-    else body[campo] = String(novoValor);
+    // Se estiver alterando o status ativo, usa os endpoints específicos
+    if (campo === "ativo") {
+        const endpoint = novoValor ? "ativar" : "desativar";
+        await fetch(`${API_URL}/produtos/${id}/${endpoint}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+        });
+        await carregarProdutosCadastrados();
+        await carregarProdutosBase();
+        return;
+    }
+
+    // Para outros campos, precisa buscar os dados completos do produto primeiro
+    const produto = produtosCache.find(p => p.id === id);
+    if (!produto) {
+        alert("Produto não encontrado");
+        return;
+    }
+
+    // Prepara o body com todos os campos obrigatórios
+    const body = {
+        codigo: produto.codigo,
+        descricao: campo === "descricao" ? String(novoValor) : produto.descricao,
+        valor: campo === "valor" ? parseFloat(novoValor) : produto.valor,
+        ativo: produto.ativo
+    };
 
     await fetch(`${API_URL}/produtos/${id}`, {
         method: "PUT",
