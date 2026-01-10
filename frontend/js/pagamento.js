@@ -48,8 +48,7 @@ async function abrirModalPagamento(valorSugerido = null, itensBreakdown = null) 
 }
 
 async function carregarResumoPagamento(valorSugerido = null) {
-    const res = await fetch(`${API_URL}/comandas/${currentComandaNumero}/resumo`);
-    const data = await res.json();
+    const data = await getResumoComanda(currentComandaNumero);
     totalComandaGlobal = data.total_itens;
     totalPagoGlobal = data.total_pago;
     saldoDevedorGlobal = Math.max(0, totalComandaGlobal - totalPagoGlobal);
@@ -75,8 +74,7 @@ async function carregarResumoPagamento(valorSugerido = null) {
 }
 
 async function carregarPagamentosModal() {
-    const res = await fetch(`${API_URL}/comandas/${currentComandaNumero}/pagamentos`);
-    const pagamentos = await res.json();
+    const pagamentos = await getPagamentosComanda(currentComandaNumero);
     if (tabelaPagamentosBody) {
         tabelaPagamentosBody.innerHTML = "";
         pagamentos.forEach(p => {
@@ -91,13 +89,13 @@ async function lancarPagamentoModal() {
     const v = parseFloat(valorPagamentoInput ? valorPagamentoInput.value : 0);
     if (isNaN(v) || v <= 0) return alert("Valor inválido");
 
-    const res = await fetch(`${API_URL}/comandas/${currentComandaNumero}/pagamentos`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ forma: formaPagamentoSelecionada, valor: v, itens: itensSelecionadosParaPagamento })
-    });
+    try {
+        await addPagamento(currentComandaNumero, {
+            forma: formaPagamentoSelecionada,
+            valor: v,
+            itens: itensSelecionadosParaPagamento
+        });
 
-    if (res.ok) {
         if (valorPagamentoInput) valorPagamentoInput.value = "";
 
         // Limpa breakdown acumulado após lançar
@@ -127,14 +125,14 @@ async function lancarPagamentoModal() {
             const btnFinalizar = document.getElementById("btnFinalizarComandaModal");
             if (btnFinalizar) btnFinalizar.focus();
         }
-    } else {
-        const err = await res.json(); alert(err.detail);
+    } catch (error) {
+        alert(error.message || "Erro ao lançar pagamento");
     }
 }
 
 async function removerPagamentoModal(id) {
     if (!confirm("Remover este pagamento?")) return;
-    await fetch(`${API_URL}/pagamentos/${id}`, { method: "DELETE" });
+    await deletePagamento(id);
     await carregarResumoPagamento();
     await carregarPagamentosModal();
 }
@@ -150,24 +148,14 @@ async function finalizarComandaModal() {
         await imprimirResumoPagamento();
     }
 
-    const res = await fetch(
-        `${API_URL}/comandas/${currentComandaNumero}/fechar`,
-        { method: "POST" }
-    );
-
-    if (!res.ok) {
-        let msg = "Erro ao fechar comanda";
-        try {
-            const data = await res.json();
-            if (data.detail) msg = data.detail;
-        } catch (e) { }
-        alert(msg);
-        return;
+    try {
+        await finalizarComanda(currentComandaNumero);
+        if (modalPagamento) modalPagamento.classList.add("hidden");
+        if (modalComanda) modalComanda.classList.add("hidden");
+        carregarDashboard();
+    } catch (error) {
+        alert(error.message || "Erro ao fechar comanda");
     }
-
-    if (modalPagamento) modalPagamento.classList.add("hidden");
-    if (modalComanda) modalComanda.classList.add("hidden");
-    carregarDashboard();
 }
 
 function setupPagamentoListeners() {

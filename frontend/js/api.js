@@ -136,7 +136,7 @@ async function deletePagamento(id) {
 }
 
 async function finalizarComanda(numero) {
-  return apiPost(`/comandas/${numero}/finalizar`);
+  return apiPost(`/comandas/${numero}/fechar`);
 }
 
 // ===============================
