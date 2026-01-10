@@ -66,8 +66,7 @@ async function imprimirFechamentoFinal() {
     try {
         const now = new Date();
         const hoje = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, '0') + "-" + String(now.getDate()).padStart(2, '0');
-        const res = await fetch(`${API_URL}/relatorios/vendas?data_inicio=${hoje}T00:00:00&data_fim=${hoje}T23:59:59`);
-        const data = await res.json();
+        const data = await getRelatorioVendas('dia', `${hoje}T00:00:00`, `${hoje}T23:59:59`, '');
 
         // Preparar dados de recebimentos manuais
         let valCred = 0, valDeb = 0, valPix = 0;

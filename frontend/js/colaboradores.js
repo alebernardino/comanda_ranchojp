@@ -17,8 +17,7 @@ let sortColabAsc = false;
 
 async function carregarColaboradores() {
     try {
-        const res = await fetch(`${API_URL}/colaboradores/`);
-        colaboradoresCache = await res.json();
+        colaboradoresCache = await getColaboradores();
         filtrarERenderizarColaboradores();
     } catch (err) {
         console.error("Erro ao carregar colaboradores:", err);
@@ -130,21 +129,12 @@ async function salvarColaborador() {
     };
 
     try {
-        const res = await fetch(`${API_URL}/colaboradores/`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-
-        if (res.ok) {
-            limparCamposColaborador();
-            await carregarColaboradores();
-        } else {
-            const err = await res.json();
-            alert(err.detail || "Erro ao salvar colaborador");
-        }
+        await createColaborador(payload);
+        limparCamposColaborador();
+        await carregarColaboradores();
     } catch (err) {
         console.error(err);
+        alert(err.message || "Erro ao salvar colaborador");
     }
 }
 
@@ -170,14 +160,11 @@ function limparCamposColaborador() {
 
 async function alterarStatusColaborador(id, ativo) {
     try {
-        await fetch(`${API_URL}/colaboradores/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ativo })
-        });
+        await updateColaborador(id, { ativo });
         await carregarColaboradores();
     } catch (err) {
         console.error(err);
+        alert(err.message || "Erro ao alterar status");
     }
 }
 

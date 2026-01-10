@@ -179,6 +179,17 @@ async function deleteFinanceiro(id) {
 // API DE RELATÓRIOS
 // ===============================
 
-async function getRelatorioVendas(dataInicio, dataFim) {
-  return apiGet(`/relatorios/vendas?data_inicio=${dataInicio}&data_fim=${dataFim}`);
+async function getRelatorioVendas(periodo, dataInicio, dataFim, busca) {
+  let url = `/relatorios/vendas?periodo=${periodo}`;
+  if (dataInicio) url += `&data_inicio=${encodeURIComponent(dataInicio)}`;
+  if (dataFim) url += `&data_fim=${encodeURIComponent(dataFim)}`;
+  if (busca) url += `&busca=${encodeURIComponent(busca)}`;
+  return apiGet(url);
+}
+
+async function getRelatorioFluxoCaixa(periodo, dataInicio, dataFim) {
+  let url = `/relatorios/fluxo-caixa?periodo=${periodo}`;
+  if (dataInicio) url += `&data_inicio=${encodeURIComponent(dataInicio)}`;
+  if (dataFim) url += `&data_fim=${encodeURIComponent(dataFim)}`;
+  return apiGet(url);
 }

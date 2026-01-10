@@ -17,8 +17,7 @@ let sortFinAsc = false;
 
 async function carregarFinanceiro() {
     try {
-        const res = await fetch(`${API_URL}/financeiro/`);
-        financeiroCache = await res.json();
+        financeiroCache = await getFinanceiro();
         filtrarERenderizarFinanceiro();
     } catch (err) {
         console.error("Erro ao carregar registros financeiros:", err);
@@ -98,14 +97,11 @@ function renderizarTabelaFinanceiro(lista) {
 
 async function toggleStatusPagamento(id, statusAtual) {
     try {
-        const res = await fetch(`${API_URL}/financeiro/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ pago: !statusAtual })
-        });
-        if (res.ok) await carregarFinanceiro();
+        await updateFinanceiro(id, { pago: !statusAtual });
+        await carregarFinanceiro();
     } catch (err) {
         console.error(err);
+        alert(err.message || "Erro ao alterar status de pagamento");
     }
 }
 
@@ -152,27 +148,18 @@ async function salvarLancamentoFin() {
     };
 
     try {
-        const res = await fetch(`${API_URL}/financeiro/`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
+        await createFinanceiro(payload);
 
-        if (res.ok) {
-            limparFormFinanceiro();
-            await carregarFinanceiro();
-            // Recolhe o form
-            const content = document.getElementById('formFinanceiroContent');
-            if (content) content.style.display = 'none';
-            const icon = document.getElementById('iconToggleFin');
-            if (icon) icon.innerText = '➕';
-        } else {
-            const err = await res.json();
-            alert(err.detail || "Erro ao salvar lançamento");
-        }
+        limparFormFinanceiro();
+        await carregarFinanceiro();
+        // Recolhe o form
+        const content = document.getElementById('formFinanceiroContent');
+        if (content) content.style.display = 'none';
+        const icon = document.getElementById('iconToggleFin');
+        if (icon) icon.innerText = '➕';
     } catch (err) {
         console.error("Erro ao salvar:", err);
-        alert("Erro de conexão ao salvar");
+        alert(err.message || "Erro de conexão ao salvar");
     }
 }
 
@@ -197,10 +184,11 @@ function configurarDataPadrao() {
 async function excluirRegistroFin(id) {
     if (!confirm("Tem certeza que deseja remover este registro?")) return;
     try {
-        const res = await fetch(`${API_URL}/financeiro/${id}`, { method: "DELETE" });
-        if (res.ok) await carregarFinanceiro();
+        await deleteFinanceiro(id);
+        await carregarFinanceiro();
     } catch (err) {
         console.error(err);
+        alert(err.message || "Erro ao excluir registro");
     }
 }
 

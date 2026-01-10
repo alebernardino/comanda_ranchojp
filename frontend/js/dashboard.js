@@ -17,12 +17,13 @@ const TOTAL_COMANDAS = 300;
 
 async function carregarDashboard() {
     try {
-        const res = await fetch(`${API_URL}/comandas/`);
-        const abertas = await res.json();
+        const comandas = await getComandas();
+        const abertasArray = comandas.filter(c => c.status === "aberta");
         const mapaAbertas = {};
-        abertas.forEach(c => { mapaAbertas[c.numero] = c; });
+        abertasArray.forEach(c => { mapaAbertas[c.numero] = c; });
+
         renderizarGrid(mapaAbertas);
-        atualizarStats(abertas);
+        atualizarStats(abertasArray);
     } catch (err) {
         console.error("Erro ao carregar dashboard:", err);
     }
@@ -84,8 +85,7 @@ async function carregarVendasHoje() {
         const hojeInicio = `${ano}-${mes}-${dia} 00:00:00`;
         const hojeFim = `${ano}-${mes}-${dia} 23:59:59`;
 
-        const res = await fetch(`${API_URL}/relatorios/vendas?data_inicio=${hojeInicio}&data_fim=${hojeFim}`);
-        const resposta = await res.json();
+        const resposta = await getRelatorioVendas('dia', hojeInicio, hojeFim, '');
 
         // A API retorna um objeto com várias propriedades, usamos 'geral' que contém os produtos
         const dados = resposta.geral || [];

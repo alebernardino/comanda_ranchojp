@@ -4,8 +4,7 @@
 
 async function imprimirResumoPagamento() {
     try {
-        const res = await fetch(`${API_URL}/comandas/${currentComandaNumero}/pagamentos`);
-        const pagamentos = await res.json();
+        const pagamentos = await getPagamentosComanda(currentComandaNumero);
 
         let total = 0;
         const pagamentosFormatados = pagamentos.map(p => {

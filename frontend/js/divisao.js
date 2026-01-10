@@ -23,9 +23,13 @@ async function abrirModalDividirItem() {
     if (modalDividirItem) modalDividirItem.classList.remove("hidden");
     const tituloPartial = document.getElementById("tituloPartialPrint");
     if (tituloPartial) tituloPartial.innerText = `Comanda ${currentComandaNumero} | valor parcial`;
-    const res = await fetch(`${API_URL}/comandas/${currentComandaNumero}/itens`);
-    if (!res.ok) return;
-    const itens = await res.json();
+    let itens;
+    try {
+        itens = await getItensComanda(currentComandaNumero);
+    } catch (error) {
+        console.error("Erro ao carregar itens da comanda:", error);
+        return;
+    }
 
     const mapa = {};
     itens.forEach(i => {

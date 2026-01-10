@@ -45,13 +45,11 @@ async function carregarRelatorioVendas(periodo = 'dia', btn = null) {
         dataFim = document.getElementById("relVendasFim").value;
     }
 
-    let url = `/relatorios/vendas?periodo=${periodo}`;
-    if (dataInicio) url += `&data_inicio=${encodeURIComponent(dataInicio + "T00:00:00")}`;
-    if (dataFim) url += `&data_fim=${encodeURIComponent(dataFim + "T23:59:59")}`;
-    if (busca) url += `&busca=${encodeURIComponent(busca)}`;
+    const dIni = dataInicio ? dataInicio + "T00:00:00" : null;
+    const dFim = dataFim ? dataFim + "T23:59:59" : null;
 
     try {
-        const data = await apiGet(url);
+        const data = await getRelatorioVendas(periodo, dIni, dFim, busca);
         if (!data) return;
 
         dadosGeralVendas = data.geral || [];
@@ -203,11 +201,10 @@ async function carregarRelatorioFluxo(periodo = 'dia', btn = null) {
     }
 
     try {
-        let url = `/relatorios/fluxo-caixa?periodo=${periodo}`;
-        if (dInicio) url += `&data_inicio=${encodeURIComponent(dInicio + "T00:00:00")}`;
-        if (dFim) url += `&data_fim=${encodeURIComponent(dFim + "T23:59:59")}`;
+        const dIniFull = dInicio ? dInicio + "T00:00:00" : null;
+        const dFimFull = dFim ? dFim + "T23:59:59" : null;
 
-        const data = await apiGet(url);
+        const data = await getRelatorioFluxoCaixa(periodo, dIniFull, dFimFull);
         if (!data) return;
 
         renderizarPivotsFluxo(data.pivot_entradas, 'entradas', periodo);
