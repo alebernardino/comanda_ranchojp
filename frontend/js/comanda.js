@@ -43,14 +43,10 @@ async function abrirComanda(numero) {
     }
     currentComandaNumero = numero;
     itensSelecionadosParaPagamento = JSON.parse(sessionStorage.getItem(`comanda_${numero}_selecao`) || "null");
-    try {
-        // Tenta buscar ou criar a comanda em uma única chamada para evitar 404 no console
-        const res = await fetch(`${API_URL}/comandas/garantir/${numero}`, { method: "POST" });
 
-        if (!res.ok) {
-            return alert("Erro ao acessar/criar comanda");
-        }
-        // Se 200, ela existe e está tudo bem, seguimos para abrir.
+    try {
+        // Tenta buscar ou criar a comanda em uma única chamada
+        await garantirComanda(numero);
 
         if (modalComanda) modalComanda.classList.remove("hidden");
         await carregarDadosComanda();
@@ -70,12 +66,14 @@ async function abrirComanda(numero) {
                 }
             }
         }, 150);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+        console.error(err);
+        alert("Erro ao acessar/criar comanda");
+    }
 }
 
 async function carregarDadosComanda() {
-    const res = await fetch(`${API_URL}/comandas/${currentComandaNumero}`);
-    const comanda = await res.json();
+    const comanda = await getComanda(currentComandaNumero);
     if (tituloComanda) tituloComanda.innerText = `Comanda ${comanda.numero}`;
     if (nomeComanda) nomeComanda.value = comanda.nome || "";
     if (telefoneComanda) telefoneComanda.value = comanda.telefone || "";
@@ -85,8 +83,7 @@ async function carregarDadosComanda() {
 }
 
 async function carregarItensComanda() {
-    const res = await fetch(`${API_URL}/comandas/${currentComandaNumero}/itens`);
-    const itens = await res.json();
+    const itens = await getItensComanda(currentComandaNumero);
     renderizarTabelaItens(itens);
 }
 
@@ -125,22 +122,18 @@ function renderizarTabelaItens(itens) {
 
 async function removerItemUnico(id) {
     if (!confirm("Remover este item?")) return;
-    await fetch(`${API_URL}/itens/${id}`, { method: "DELETE" });
+    await deleteItem(id);
     await carregarItensComanda();
 }
 
 async function adicionarMaisItemIndex(item) {
-    const res = await fetch(`${API_URL}/comandas/${currentComandaNumero}/itens`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            codigo: String(item.codigo),
-            descricao: String(item.descricao),
-            quantidade: 1,
-            valor: item.valor
-        })
+    await addItemComanda(currentComandaNumero, {
+        codigo: String(item.codigo),
+        descricao: String(item.descricao),
+        quantidade: 1,
+        valor: item.valor
     });
-    if (res.ok) await carregarItensComanda();
+    await carregarItensComanda();
 }
 
 async function removerUmItemIndex(item) {
@@ -153,29 +146,21 @@ async function removerUmItemIndex(item) {
 
     // Se quantidade > 1, decrementa via PUT
     const novaQtd = item.quantidade - 1;
-    await fetch(`${API_URL}/itens/${item.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            codigo: String(item.codigo),
-            descricao: String(item.descricao),
-            quantidade: novaQtd,
-            valor: item.valor
-        })
+    await updateItem(item.id, {
+        codigo: String(item.codigo),
+        descricao: String(item.descricao),
+        quantidade: novaQtd,
+        valor: item.valor
     });
     await carregarItensComanda();
 }
 
 async function atualizarComandaAPI() {
     if (!currentComandaNumero) return;
-    await fetch(`${API_URL}/comandas/${currentComandaNumero}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            numero: currentComandaNumero,
-            nome: (nomeComanda ? nomeComanda.value.trim() : null) || null,
-            telefone: (telefoneComanda ? telefoneComanda.value.trim() : null) || null
-        })
+    await updateComanda(currentComandaNumero, {
+        numero: currentComandaNumero,
+        nome: (nomeComanda ? nomeComanda.value.trim() : null) || null,
+        telefone: (telefoneComanda ? telefoneComanda.value.trim() : null) || null
     });
 }
 
@@ -190,13 +175,14 @@ async function adicionarItemComanda() {
     const qtd = parseInt(qtdProduto ? qtdProduto.value : 1) || 1;
     const val = parseFloat(valorProduto ? valorProduto.value : 0) || produtoSelecionado.valor;
 
-    const res = await fetch(`${API_URL}/comandas/${currentComandaNumero}/itens`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ codigo: String(produtoSelecionado.codigo), descricao: String(produtoSelecionado.descricao), quantidade: qtd, valor: val })
-    });
+    try {
+        await addItemComanda(currentComandaNumero, {
+            codigo: String(produtoSelecionado.codigo),
+            descricao: String(produtoSelecionado.descricao),
+            quantidade: qtd,
+            valor: val
+        });
 
-    if (res.ok) {
         if (buscaCodigo) { buscaCodigo.value = ""; buscaCodigo.focus(); }
         if (buscaDescricao) buscaDescricao.value = "";
         if (qtdProduto) qtdProduto.value = "";
@@ -209,6 +195,8 @@ async function adicionarItemComanda() {
         if (typeof atualizarCardComanda === "function") {
             atualizarCardComanda(currentComandaNumero, true);
         }
+    } catch (error) {
+        alert(error.message || "Erro ao adicionar item");
     }
 }
 
