@@ -1,7 +1,8 @@
 import sqlite3
 import os
 
-db_path = "/home/ale_bernardino/code/comanda/comanda_ranchojp/backend/app/database/comanda.db"
+# Caminho relativo ao diretório backend/
+db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "app", "database", "comanda.db")
 
 def check_column():
     conn = sqlite3.connect(db_path)
