@@ -1,5 +1,9 @@
 const API_URL = "http://127.0.0.1:8000";
 
+// ===============================
+// FUNÇÕES BASE DE API
+// ===============================
+
 async function apiRequest(path, method = "GET", body = null) {
   const options = {
     method,
@@ -44,4 +48,137 @@ async function apiPut(path, body) {
 
 async function apiDelete(path) {
   return apiRequest(path, "DELETE");
+}
+
+// ===============================
+// API DE PRODUTOS
+// ===============================
+
+async function getProdutos(busca = null) {
+  const path = busca ? `/produtos/?busca=${encodeURIComponent(busca)}` : "/produtos/";
+  return apiGet(path);
+}
+
+async function createProduto(data) {
+  return apiPost("/produtos/", data);
+}
+
+async function updateProduto(id, data) {
+  return apiPut(`/produtos/${id}`, data);
+}
+
+async function deleteProduto(id) {
+  return apiDelete(`/produtos/${id}`);
+}
+
+async function ativarProduto(id) {
+  return apiPost(`/produtos/${id}/ativar`);
+}
+
+async function desativarProduto(id) {
+  return apiPost(`/produtos/${id}/desativar`);
+}
+
+// ===============================
+// API DE COMANDAS
+// ===============================
+
+async function getComandas() {
+  return apiGet("/comandas/");
+}
+
+async function getComanda(numero) {
+  return apiGet(`/comandas/${numero}`);
+}
+
+async function garantirComanda(numero) {
+  return apiPost(`/comandas/garantir/${numero}`);
+}
+
+async function updateComanda(numero, data) {
+  return apiPut(`/comandas/${numero}`, data);
+}
+
+async function getItensComanda(numero) {
+  return apiGet(`/comandas/${numero}/itens`);
+}
+
+async function addItemComanda(numero, data) {
+  return apiPost(`/comandas/${numero}/itens`, data);
+}
+
+async function updateItem(itemId, data) {
+  return apiPut(`/itens/${itemId}`, data);
+}
+
+async function deleteItem(itemId) {
+  return apiDelete(`/itens/${itemId}`);
+}
+
+async function getResumoComanda(numero) {
+  return apiGet(`/comandas/${numero}/resumo`);
+}
+
+// ===============================
+// API DE PAGAMENTOS
+// ===============================
+
+async function getPagamentosComanda(numero) {
+  return apiGet(`/comandas/${numero}/pagamentos`);
+}
+
+async function addPagamento(numero, data) {
+  return apiPost(`/comandas/${numero}/pagamentos`, data);
+}
+
+async function deletePagamento(id) {
+  return apiDelete(`/pagamentos/${id}`);
+}
+
+async function finalizarComanda(numero) {
+  return apiPost(`/comandas/${numero}/finalizar`);
+}
+
+// ===============================
+// API DE COLABORADORES
+// ===============================
+
+async function getColaboradores() {
+  return apiGet("/colaboradores/");
+}
+
+async function createColaborador(data) {
+  return apiPost("/colaboradores/", data);
+}
+
+async function updateColaborador(id, data) {
+  return apiPut(`/colaboradores/${id}`, data);
+}
+
+// ===============================
+// API DE FINANCEIRO
+// ===============================
+
+async function getFinanceiro() {
+  return apiGet("/financeiro/");
+}
+
+async function createFinanceiro(data) {
+  return apiPost("/financeiro/", data);
+}
+
+async function updateFinanceiro(id, data) {
+  return apiPut(`/financeiro/${id}`, data);
+}
+
+async function deleteFinanceiro(id) {
+  return apiDelete(`/financeiro/${id}`);
+}
+
+// ===============================
+// API DE RELATÓRIOS
+// ===============================
+
+async function getRelatorioVendas(dataInicio, dataFim) {
+  return apiGet(`/relatorios/vendas?data_inicio=${dataInicio}&data_fim=${dataFim}`);
 }

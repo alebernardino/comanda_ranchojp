@@ -29,14 +29,12 @@ function carregarElementosProdutos() {
 // ===============================
 
 async function carregarProdutosBase() {
-    const res = await fetch(`${API_URL}/produtos/`);
-    produtosCache = await res.json();
+    produtosCache = await getProdutos();
     produtosCache.sort((a, b) => a.codigo.localeCompare(b.codigo, undefined, { numeric: true }));
 }
 
 async function carregarProdutosCadastrados() {
-    const res = await fetch(`${API_URL}/produtos`);
-    const produtos = await res.json();
+    const produtos = await getProdutos();
     produtos.sort((a, b) => a.codigo.localeCompare(b.codigo, undefined, { numeric: true }));
     if (tabelaProdutosModalBody) {
         tabelaProdutosModalBody.innerHTML = "";
@@ -274,16 +272,16 @@ async function salvarNovoProduto() {
     }
 
     if (!cod || !desc || isNaN(val)) return alert("Dados inválidos");
-    const res = await fetch(`${API_URL}/produtos/`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ codigo: cod, descricao: desc, valor: val })
-    });
-    if (res.ok) {
+
+    try {
+        await createProduto({ codigo: cod, descricao: desc, valor: val });
         if (novoCodigoInput) novoCodigoInput.value = "";
         if (novaDescricaoInput) novaDescricaoInput.value = "";
         if (valorNovoProdutoInput) valorNovoProdutoInput.value = "";
         await carregarProdutosCadastrados();
         await carregarProdutosBase();
+    } catch (error) {
+        alert(error.message || "Erro ao salvar produto");
     }
 }
 
@@ -300,33 +298,33 @@ async function salvarNovoProdutoSessao() {
 
     if (!cod || !desc || isNaN(val)) return alert("Dados obrigatórios faltando");
 
-    const res = await fetch(`${API_URL}/produtos/`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ codigo: cod, descricao: desc, valor: val })
-    });
-    if (res.ok) {
+    try {
+        await createProduto({ codigo: cod, descricao: desc, valor: val });
         prodPageCodigo.value = "";
         prodPageDescricao.value = "";
         prodPageValor.value = "";
         await carregarProdutosCadastrados();
         await carregarProdutosBase();
         prodPageCodigo.focus();
-    } else {
-        const err = await res.json();
-        alert(err.detail || "Erro ao salvar");
+    } catch (error) {
+        alert(error.message || "Erro ao salvar");
     }
 }
 
 async function editProduto(id, campo, novoValor) {
     // Se estiver alterando o status ativo, usa os endpoints específicos
     if (campo === "ativo") {
-        const endpoint = novoValor ? "ativar" : "desativar";
-        await fetch(`${API_URL}/produtos/${id}/${endpoint}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" }
-        });
-        await carregarProdutosCadastrados();
-        await carregarProdutosBase();
+        try {
+            if (novoValor) {
+                await ativarProduto(id);
+            } else {
+                await desativarProduto(id);
+            }
+            await carregarProdutosCadastrados();
+            await carregarProdutosBase();
+        } catch (error) {
+            alert(error.message || "Erro ao alterar status do produto");
+        }
         return;
     }
 
@@ -345,24 +343,24 @@ async function editProduto(id, campo, novoValor) {
         ativo: produto.ativo
     };
 
-    await fetch(`${API_URL}/produtos/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-    });
-    await carregarProdutosCadastrados();
-    await carregarProdutosBase();
+    try {
+        await updateProduto(id, body);
+        await carregarProdutosCadastrados();
+        await carregarProdutosBase();
+    } catch (error) {
+        alert(error.message || "Erro ao atualizar produto");
+    }
 }
 
 async function excluirProduto(id) {
     if (!confirm("Deseja excluir este produto?")) return;
-    const res = await fetch(`${API_URL}/produtos/${id}`, { method: "DELETE" });
-    if (res.ok) {
+
+    try {
+        await deleteProduto(id);
         await carregarProdutosCadastrados();
         await carregarProdutosBase();
-    } else {
-        const err = await res.json();
-        alert(err.detail || "Erro ao excluir");
+    } catch (error) {
+        alert(error.message || "Erro ao excluir");
     }
 }
 
