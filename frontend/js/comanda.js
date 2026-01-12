@@ -27,9 +27,6 @@ function carregarElementosComanda() {
     sectionComandas = document.getElementById("sectionComandas");
 }
 
-// Função legada removida em favor da nova estrutura
-// function carregarElementosComanda() { ... }
-
 // ===============================
 // FUNÇÕES PÚBLICAS
 // ===============================
@@ -287,9 +284,6 @@ function setupComandaListeners() {
     if (btnImprimirModal) btnImprimirModal.onclick = () => { if (typeof imprimirComandaAcao === "function") imprimirComandaAcao(); };
     if (btnPagamentoModal) btnPagamentoModal.onclick = () => { if (typeof abrirModalPagamento === "function") abrirModalPagamento(); };
 }
-
-// Inicialização
-// document.addEventListener("DOMContentLoaded", setupComandaListeners);
 
 // ===============================
 // EXPOSIÇÃO GLOBAL DAS FUNÇÕES
