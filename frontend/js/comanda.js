@@ -95,9 +95,29 @@ function renderizarTabelaItens(itens) {
     itens.forEach(i => { if (!mapa[i.id]) mapa[i.id] = i; });
 
     const itensLista = Object.values(mapa).sort((a, b) => String(a.codigo).localeCompare(String(b.codigo), undefined, { numeric: true }));
+    const formatarQuantidade = (valor) => {
+        const numero = Number(valor);
+        if (Number.isNaN(numero)) return "0";
+        return numero.toLocaleString("pt-BR", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        });
+    };
+    const selecaoAtual = JSON.parse(sessionStorage.getItem(`comanda_${currentComandaNumero}_selecao`) || "null") || [];
+    const selecionadosPorItem = selecaoAtual.reduce((acc, item) => {
+        const qtd = Number(item.quantidade) || 0;
+        if (qtd <= 0) return acc;
+        acc[item.id] = (acc[item.id] || 0) + qtd;
+        return acc;
+    }, {});
 
     itensLista.forEach(item => {
         total += item.subtotal;
+        const qtdTotal = Number(item.quantidade) || 0;
+        const qtdPaga = Number(item.quantidade_paga) || 0;
+        const qtdConsiderada = Number(selecionadosPorItem[item.id]) || 0;
+        const qtdPagaVisual = Math.min(qtdPaga + qtdConsiderada, qtdTotal);
+        const qtdRestante = Math.max(qtdTotal - qtdPagaVisual, 0);
         const tr = document.createElement("tr");
         tr.innerHTML = `
       <td>${item.codigo}</td>
@@ -106,12 +126,14 @@ function renderizarTabelaItens(itens) {
         <div class="qtd-container">
           <button class="btn-qtd" onclick="removerUmItemIndex(${JSON.stringify(item).replace(/"/g, '&quot;')})">-</button>
           <button class="btn-qtd" onclick="adicionarMaisItemIndex(${JSON.stringify(item).replace(/"/g, '&quot;')})">+</button>
-          <span class="qtd-item">${item.quantidade}</span>
+          <span class="qtd-item">${formatarQuantidade(qtdTotal)}</span>
           <button class="btn-remover-mini" onclick="removerItemUnico(${item.id})">×</button>
         </div>
       </td>
-      <td>R$ ${formatarMoeda(item.valor)}</td>
-      <td style="text-align: right;">R$ ${formatarMoeda(item.subtotal)}</td>
+      <td style="text-align: right;">${formatarQuantidade(qtdPagaVisual)}</td>
+      <td style="text-align: right;">${formatarQuantidade(qtdRestante)}</td>
+      <td style="text-align: right; white-space: nowrap;">R$ ${formatarMoeda(item.valor)}</td>
+      <td style="text-align: right; white-space: nowrap;">R$ ${formatarMoeda(item.subtotal)}</td>
     `;
         tabelaItensBody.appendChild(tr);
     });

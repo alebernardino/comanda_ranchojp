@@ -127,6 +127,11 @@ async function getClientePorTelefone(telefone) {
   return apiGet(`/clientes/por-telefone?telefone=${encodeURIComponent(telefone)}`);
 }
 
+async function getClientes(busca = null) {
+  const path = busca ? `/clientes/?busca=${encodeURIComponent(busca)}` : "/clientes/";
+  return apiGet(path);
+}
+
 // ===============================
 // API DE PAGAMENTOS
 // ===============================

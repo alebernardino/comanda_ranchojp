@@ -221,6 +221,9 @@ async function considerarSelecao(silencioso = false) {
     totalSelecionadoItemEl.innerText = `R$ ${formatarMoeda(totalAcumuladoVal)}`;
 
     renderizarTabelaDivisao();
+    if (typeof carregarItensComanda === "function") {
+        await carregarItensComanda();
+    }
 
     // Perguntar se quer imprimir
     if (!silencioso && confirm("Deseja imprimir o comprovante?")) {
@@ -271,4 +274,3 @@ window.setupDivisaoListeners = setupDivisaoListeners;
 
 // Inicialização
 document.addEventListener("DOMContentLoaded", setupDivisaoListeners);
-

@@ -35,6 +35,7 @@ function alternarParaFechamento() {
     if (typeof sectionComandas !== 'undefined' && sectionComandas) sectionComandas.classList.add("hidden");
     if (typeof sectionProdutos !== 'undefined' && sectionProdutos) sectionProdutos.classList.add("hidden");
     if (document.getElementById("sectionColaboradores")) document.getElementById("sectionColaboradores").classList.add("hidden");
+    if (document.getElementById("sectionClientes")) document.getElementById("sectionClientes").classList.add("hidden");
     if (document.getElementById("sectionFinanceiro")) document.getElementById("sectionFinanceiro").classList.add("hidden");
     if (document.getElementById("sectionRelatorios")) document.getElementById("sectionRelatorios").classList.add("hidden");
     if (document.getElementById("sectionFluxoCaixa")) document.getElementById("sectionFluxoCaixa").classList.add("hidden");
@@ -49,6 +50,7 @@ function alternarParaFechamento() {
     if (typeof navDashboard !== 'undefined' && navDashboard) navDashboard.classList.remove("active");
     if (typeof navProdutosSessao !== 'undefined' && navProdutosSessao) navProdutosSessao.classList.remove("active");
     if (document.getElementById("navColaboradores")) document.getElementById("navColaboradores").classList.remove("active");
+    if (document.getElementById("navClientes")) document.getElementById("navClientes").classList.remove("active");
     if (document.getElementById("navFinanceiro")) document.getElementById("navFinanceiro").classList.remove("active");
     if (document.getElementById("navRelatorios")) document.getElementById("navRelatorios").classList.remove("active");
     const navFC = document.getElementById("navFluxoCaixa");
@@ -347,4 +349,3 @@ window.formatarCampoMoeda = formatarCampoMoeda;
 window.parseMoedaInput = parseMoedaInput;
 window.adicionarLinhaFechamento = adicionarLinhaFechamento;
 window.atualizarTotaisFechamento = atualizarTotaisFechamento;
-

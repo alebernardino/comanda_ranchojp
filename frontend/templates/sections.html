@@ -66,6 +66,46 @@
     </div>
 </div>
 
+<!-- SESSÃO CLIENTES -->
+<div id="sectionClientes" class="hidden" style="padding: 20px;">
+    <div class="page-title" style="margin-bottom: 25px;">
+        <h1 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.8rem; color: #1e293b; font-weight: 800;">
+            Lista de Clientes</h1>
+        <p style="margin: 5px 0 0; color: #64748b; font-size: 0.9rem;">Consulte clientes cadastrados por telefone</p>
+    </div>
+    <div class="card"
+        style="background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 15px;">
+        <div class="form-cadastro"
+            style="display: flex; flex-direction: row; gap: 15px; align-items: flex-end; background: transparent; border: none; padding: 0; margin-bottom: 0;">
+            <div style="flex: 1;">
+                <label
+                    style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Telefone</label>
+                <input id="clienteFiltroTelefone" placeholder="Ex: 16999999999" style="width: 100%;">
+            </div>
+            <div style="flex: 2;">
+                <label
+                    style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Nome</label>
+                <input id="clienteFiltroNome" placeholder="Ex: Maria da Silva" style="width: 100%;">
+            </div>
+        </div>
+    </div>
+
+    <div class="card"
+        style="background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                <tr>
+                    <th style="padding: 15px; text-align: left;">Nome</th>
+                    <th style="padding: 15px; text-align: left; width: 170px;">Telefone</th>
+                    <th style="padding: 15px; text-align: center; width: 190px;">Criado em</th>
+                    <th style="padding: 15px; text-align: center; width: 190px;">Atualizado em</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaClientesBody"></tbody>
+        </table>
+    </div>
+</div>
+
 <!-- SESSÃO COLABORADORES -->
 <div id="sectionColaboradores" class="hidden" style="padding: 20px;">
     <div class="page-title" style="margin-bottom: 25px;">

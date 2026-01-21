@@ -36,9 +36,9 @@ async function carregarTemplates() {
   console.log("Carregando templates externos...");
   try {
     const [modals, sections, printing] = await Promise.all([
-      fetch("templates/modals.html").then(r => r.text()),
-      fetch("templates/sections.html").then(r => r.text()),
-      fetch("templates/printing.html").then(r => r.text())
+      fetch("templates/modals.html?v=2").then(r => r.text()),
+      fetch("templates/sections.html?v=2").then(r => r.text()),
+      fetch("templates/printing.html?v=2").then(r => r.text())
     ]);
 
     document.getElementById("modalsContainer").innerHTML = modals;
@@ -55,6 +55,7 @@ async function carregarTemplates() {
     if (typeof setupPagamentoListeners === "function") setupPagamentoListeners();
     if (typeof setupFechamentoListeners === "function") setupFechamentoListeners();
     if (typeof setupColaboradoresListeners === "function") setupColaboradoresListeners();
+    if (typeof setupClientesListeners === "function") setupClientesListeners();
     if (typeof setupFinanceiroListeners === "function") setupFinanceiroListeners();
     if (typeof setupRelatoriosListeners === "function") setupRelatoriosListeners();
 

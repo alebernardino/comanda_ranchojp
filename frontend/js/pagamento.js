@@ -114,6 +114,9 @@ async function lancarPagamentoModal() {
 
         await carregarResumoPagamento();
         await carregarPagamentosModal();
+        if (typeof carregarItensComanda === "function") {
+            await carregarItensComanda();
+        }
 
         // Verificar saldo restante e focar no elemento apropriado
         if (saldoDevedorGlobal > 0) {
@@ -135,6 +138,9 @@ async function removerPagamentoModal(id) {
     await deletePagamento(id);
     await carregarResumoPagamento();
     await carregarPagamentosModal();
+    if (typeof carregarItensComanda === "function") {
+        await carregarItensComanda();
+    }
 }
 
 async function finalizarComandaModal() {

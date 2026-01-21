@@ -171,6 +171,7 @@ async function alterarStatusColaborador(id, ativo) {
 function alternarParaColaboradores() {
     document.getElementById("sectionComandas").classList.add("hidden");
     document.getElementById("sectionProdutos").classList.add("hidden");
+    if (document.getElementById("sectionClientes")) document.getElementById("sectionClientes").classList.add("hidden");
     if (document.getElementById("sectionFinanceiro")) document.getElementById("sectionFinanceiro").classList.add("hidden");
     if (document.getElementById("sectionRelatorios")) document.getElementById("sectionRelatorios").classList.add("hidden");
     if (document.getElementById("sectionFechamento")) document.getElementById("sectionFechamento").classList.add("hidden");
@@ -178,6 +179,7 @@ function alternarParaColaboradores() {
 
     document.getElementById("navDashboard").classList.remove("active");
     document.getElementById("navProdutosSessao").classList.remove("active");
+    if (document.getElementById("navClientes")) document.getElementById("navClientes").classList.remove("active");
     if (document.getElementById("navColaboradores")) document.getElementById("navColaboradores").classList.remove("active");
     if (document.getElementById("navFinanceiro")) document.getElementById("navFinanceiro").classList.remove("active");
     if (document.getElementById("navRelatorios")) document.getElementById("navRelatorios").classList.remove("active");
