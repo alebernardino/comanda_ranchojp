@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Comanda Rancho JP
+Comment=Sistema de Comandas
+Exec=/opt/comanda/scripts/iniciar_sistema.sh
+Icon=utilities-terminal
+Terminal=true
+Type=Application
+Categories=Office;Finance;
