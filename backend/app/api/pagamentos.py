@@ -84,6 +84,29 @@ def adicionar_pagamento(numero: int, pagamento: PagamentoCreate, db: sqlite3.Con
                 """,
                 (item_pago["quantidade"], item_pago["id"]),
             )
+            cursor.execute(
+                """
+                UPDATE estoque_produtos
+                SET quantidade = quantidade - ?,
+                    atualizado_em = CURRENT_TIMESTAMP
+                WHERE produto_id = (
+                    SELECT p.id FROM produtos p
+                    JOIN itens_comanda ic ON ic.codigo = p.codigo
+                    WHERE ic.id = ?
+                )
+                """,
+                (item_pago["quantidade"], item_pago["id"]),
+            )
+            cursor.execute(
+                """
+                INSERT INTO estoque_movimentos (produto_id, tipo, quantidade, motivo, origem, referencia)
+                SELECT p.id, 'saida', ?, 'Pagamento de comanda', 'comanda', ?
+                FROM produtos p
+                JOIN itens_comanda ic ON ic.codigo = p.codigo
+                WHERE ic.id = ?
+                """,
+                (item_pago["quantidade"], f"comanda:{numero}", item_pago["id"]),
+            )
             
     pagamento_id = cursor.lastrowid
     db.commit()

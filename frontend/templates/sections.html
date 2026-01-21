@@ -66,6 +66,95 @@
     </div>
 </div>
 
+<!-- SESSÃO CONFIGURACAO -->
+<div id="sectionConfiguracao" class="hidden" style="padding: 20px;">
+    <div class="page-title" style="margin-bottom: 25px;">
+        <h1 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.8rem; color: #1e293b; font-weight: 800;">
+            Configuração do Sistema</h1>
+        <p style="margin: 5px 0 0; color: #64748b; font-size: 0.9rem;">Módulos ativos e parâmetros atuais</p>
+    </div>
+    <div class="card"
+        style="background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 15px;">
+        <h3 style="margin: 0 0 10px; font-size: 1rem; color: #1e293b;">Módulos ativos</h3>
+        <div id="configPlanoInfo" style="margin-bottom: 15px; font-weight: 700; color: #0f172a;"></div>
+        <div style="display: grid; gap: 10px; max-width: 360px;">
+            <label style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                <input type="checkbox" id="cfgDivisaoItem">
+                Divisão por item
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                <input type="checkbox" id="cfgEstoque">
+                Controle de estoque
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                <input type="checkbox" id="cfgClientes">
+                Lista de clientes
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                <input type="checkbox" id="cfgColaboradores">
+                Colaboradores
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                <input type="checkbox" id="cfgUsuarios">
+                Gestão de usuários
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                <input type="checkbox" id="cfgRelatorios">
+                Relatórios
+            </label>
+            <button id="btnSalvarConfig" style="background: #10b981; padding: 10px 16px; font-weight: 700; width: fit-content;">
+                Salvar
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<!-- SESSÃO USUARIOS -->
+<div id="sectionUsuarios" class="hidden" style="padding: 20px;">
+    <div class="page-title" style="margin-bottom: 25px;">
+        <h1 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.8rem; color: #1e293b; font-weight: 800;">
+            Gestão de Usuários</h1>
+        <p style="margin: 5px 0 0; color: #64748b; font-size: 0.9rem;">Perfis de acesso e status</p>
+    </div>
+    <div class="card"
+        style="background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 15px;">
+        <div id="usuarioAviso" style="margin-bottom: 10px; color: #ef4444; font-weight: 600;"></div>
+        <form id="formUsuarios" style="display: grid; grid-template-columns: 2fr 2fr 1fr auto; gap: 12px; align-items: end;">
+            <div>
+                <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Usuário</label>
+                <input id="usuarioNome" placeholder="Ex: operador01" style="width: 100%;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Senha</label>
+                <input id="usuarioSenha" type="password" placeholder="Senha" style="width: 100%;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Perfil</label>
+                <select id="usuarioPerfil" style="width: 100%;">
+                    <option value="operador">Operador</option>
+                    <option value="admin">Administrador</option>
+                </select>
+            </div>
+            <button style="background: #10b981; padding: 10px 16px; font-weight: 700;">Adicionar</button>
+        </form>
+    </div>
+    <div class="card"
+        style="background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                <tr>
+                    <th style="padding: 15px; text-align: left;">Usuário</th>
+                    <th style="padding: 15px; text-align: center; width: 140px;">Perfil</th>
+                    <th style="padding: 15px; text-align: center; width: 140px;">Status</th>
+                    <th style="padding: 15px; text-align: center; width: 80px;">Ação</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaUsuariosBody"></tbody>
+        </table>
+    </div>
+</div>
+
 <!-- SESSÃO CLIENTES -->
 <div id="sectionClientes" class="hidden" style="padding: 20px;">
     <div class="page-title" style="margin-bottom: 25px;">
@@ -102,6 +191,76 @@
                 </tr>
             </thead>
             <tbody id="tabelaClientesBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- SESSÃO ESTOQUE -->
+<div id="sectionEstoque" class="hidden" style="padding: 20px;">
+    <div class="page-title" style="margin-bottom: 25px;">
+        <h1 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.8rem; color: #1e293b; font-weight: 800;">
+            Controle de Estoque</h1>
+        <p style="margin: 5px 0 0; color: #64748b; font-size: 0.9rem;">Entradas, saídas e ajustes com alerta de mínimo</p>
+    </div>
+
+    <div class="card"
+        style="background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 15px;">
+        <div class="form-cadastro"
+            style="display: flex; flex-direction: row; gap: 15px; align-items: flex-end; background: transparent; border: none; padding: 0; margin-bottom: 0;">
+            <div style="flex: 2;">
+                <label
+                    style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Produto</label>
+                <select id="estoqueProduto" style="width: 100%;">
+                    <option value="">Selecione...</option>
+                </select>
+            </div>
+            <div style="flex: 1;">
+                <label
+                    style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Quantidade</label>
+                <input id="estoqueQuantidade" type="number" step="0.01" placeholder="0" style="width: 100%;">
+            </div>
+            <div style="flex: 2;">
+                <label
+                    style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Motivo</label>
+                <input id="estoqueMotivo" placeholder="Compra, ajuste, perda..." style="width: 100%;">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button id="btnEntradaEstoque" style="background: #10b981; padding: 10px 16px; font-weight: 700;">Entrada</button>
+                <button id="btnSaidaEstoque" style="background: #ef4444; padding: 10px 16px; font-weight: 700;">Saída</button>
+                <button id="btnAjusteEstoque" style="background: #f59e0b; padding: 10px 16px; font-weight: 700;">Ajuste</button>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 15px; align-items: flex-end; margin-top: 20px;">
+            <div style="flex: 1;">
+                <label
+                    style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Mínimo</label>
+                <input id="estoqueMinimo" type="number" step="0.01" placeholder="0" style="width: 100%;">
+            </div>
+            <button id="btnAtualizarMinimo" style="background: #64748b; padding: 10px 16px; font-weight: 700;">Atualizar mínimo</button>
+        </div>
+    </div>
+
+    <div class="card"
+        style="background: white; padding: 15px 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 15px;">
+        <label
+            style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Busca</label>
+        <input id="estoqueBusca" placeholder="Código ou descrição..." style="width: 100%;">
+    </div>
+
+    <div class="card"
+        style="background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                <tr>
+                    <th style="padding: 15px; text-align: center; width: 100px;">Código</th>
+                    <th style="padding: 15px; text-align: left;">Descrição</th>
+                    <th style="padding: 15px; text-align: right; width: 110px;">Qtd</th>
+                    <th style="padding: 15px; text-align: right; width: 110px;">Mínimo</th>
+                    <th style="padding: 15px; text-align: center; width: 190px;">Atualizado em</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaEstoqueBody"></tbody>
         </table>
     </div>
 </div>

@@ -1,6 +1,7 @@
 import sqlite3
 from pathlib import Path
 from datetime import datetime
+import bcrypt
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "comanda.db"
@@ -44,6 +45,84 @@ def migrate():
         )
         """
     )
+
+    # Tabelas de estoque
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS estoque_produtos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            produto_id INTEGER NOT NULL UNIQUE,
+            quantidade REAL NOT NULL DEFAULT 0,
+            minimo REAL NOT NULL DEFAULT 0,
+            atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (produto_id) REFERENCES produtos (id)
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS estoque_movimentos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            produto_id INTEGER NOT NULL,
+            tipo TEXT NOT NULL,
+            quantidade REAL NOT NULL,
+            motivo TEXT,
+            origem TEXT,
+            referencia TEXT,
+            criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (produto_id) REFERENCES produtos (id)
+        )
+        """
+    )
+
+    # Backfill estoque_produtos para produtos existentes
+    cursor.execute("SELECT id FROM produtos")
+    produtos = cursor.fetchall()
+    for p in produtos:
+        cursor.execute(
+            "INSERT OR IGNORE INTO estoque_produtos (produto_id, quantidade, minimo) VALUES (?, 0, 0)",
+            (p["id"],),
+        )
+    conn.commit()
+
+    # Tabelas de usuarios e sessoes
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            senha_hash TEXT NOT NULL,
+            perfil TEXT NOT NULL DEFAULT 'operador',
+            ativo INTEGER DEFAULT 1,
+            criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS sessoes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario_id INTEGER NOT NULL,
+            token_hash TEXT NOT NULL UNIQUE,
+            criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+            expira_em DATETIME NOT NULL,
+            FOREIGN KEY (usuario_id) REFERENCES usuarios (id)
+        )
+        """
+    )
+    conn.commit()
+
+    # Criar usuario admin padrao se nao existir
+    cursor.execute("SELECT id FROM usuarios LIMIT 1")
+    if not cursor.fetchone():
+        senha_padrao = "admin123"
+        senha_hash = bcrypt.hashpw(senha_padrao.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        cursor.execute(
+            "INSERT INTO usuarios (username, senha_hash, perfil, ativo) VALUES (?, ?, 'admin', 1)",
+            ("admin", senha_hash),
+        )
+        conn.commit()
+        print("Usuario admin criado: admin / admin123")
 
     # Migração da tabela comandas: remover UNIQUE de numero e adicionar coluna codigo
     cursor.execute("PRAGMA table_info(comandas)")

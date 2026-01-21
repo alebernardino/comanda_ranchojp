@@ -71,6 +71,11 @@ def criar_produto(produto: ProdutoCreate, db: sqlite3.Connection = Depends(get_d
     db.commit()
 
     produto_id = cursor.lastrowid
+    cursor.execute(
+        "INSERT OR IGNORE INTO estoque_produtos (produto_id, quantidade, minimo) VALUES (?, 0, 0)",
+        (produto_id,),
+    )
+    db.commit()
 
     cursor.execute(
         "SELECT id, codigo, descricao, valor, ativo FROM produtos WHERE id = ?",

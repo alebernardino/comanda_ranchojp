@@ -55,8 +55,7 @@ body {
 }
 
 .sidebar.collapsed .brand-text,
-.sidebar.collapsed .nav-text,
-.sidebar.collapsed .sidebar-footer {
+.sidebar.collapsed .nav-text {
     display: none;
 }
 

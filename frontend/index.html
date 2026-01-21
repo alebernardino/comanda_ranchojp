@@ -22,6 +22,22 @@
 </head>
 
 <body>
+  <div id="loginScreen"
+    style="display: none; position: fixed; inset: 0; background: #0f172a; color: #e2e8f0; z-index: 9999; align-items: center; justify-content: center;">
+    <div style="width: 100%; max-width: 420px; background: #111827; border-radius: 16px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.35);">
+      <h2 style="margin: 0 0 10px; font-family: 'Outfit', sans-serif; font-size: 1.8rem;">Acesso ao Sistema</h2>
+      <p style="margin: 0 0 20px; color: #94a3b8;">Faça login para continuar</p>
+      <form id="loginForm" style="display: grid; gap: 12px;">
+        <input id="loginUsername" placeholder="Usuário" autocomplete="username"
+          style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #1f2937; background: #0b1220; color: #e2e8f0;">
+        <input id="loginPassword" type="password" placeholder="Senha" autocomplete="current-password"
+          style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #1f2937; background: #0b1220; color: #e2e8f0;">
+        <button id="btnLogin" type="submit"
+          style="margin-top: 6px; background: #10b981; padding: 12px; font-weight: 700; border-radius: 8px;">Entrar</button>
+      </form>
+      <div id="loginError" style="margin-top: 12px; color: #fca5a5; font-weight: 600;"></div>
+    </div>
+  </div>
   <!-- Header de Impressão Global -->
   <div id="globalPrintHeader" class="global-print-element">
     <h1>Restaurante Rancho JP</h1>
@@ -64,6 +80,15 @@
         </a>
         <a href="#" class="nav-item" id="navFechamento">
           <span class="nav-icon">🔒</span> <span class="nav-text">Fechamento</span>
+        </a>
+        <a href="#" class="nav-item" id="navEstoque">
+          <span class="nav-icon">🧮</span> <span class="nav-text">Estoque</span>
+        </a>
+        <a href="#" class="nav-item" id="navUsuarios">
+          <span class="nav-icon">👤</span> <span class="nav-text">Usuários</span>
+        </a>
+        <a href="#" class="nav-item" id="navConfiguracao">
+          <span class="nav-icon">⚙️</span> <span class="nav-text">Config</span>
         </a>
       </nav>
 
@@ -153,6 +178,12 @@
           </div>
         </div>
       </div>
+      <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+        <button id="btnLogout"
+          style="width: 100%; background: #ef4444; padding: 10px 12px; font-size: 0.85rem; font-weight: 700; border-radius: 8px;">
+          Sair
+        </button>
+      </div>
     </div>
   </aside>
 
@@ -180,11 +211,15 @@
   <script src="js/fechamento.js?v=100"></script>
   <script src="js/colaboradores.js?v=104"></script>
   <script src="js/clientes.js?v=101"></script>
+  <script src="js/estoque.js?v=100"></script>
+  <script src="js/configuracao.js?v=100"></script>
+  <script src="js/usuarios.js?v=100"></script>
+  <script src="js/auth.js?v=100"></script>
   <script src="js/financeiro.js?v=100"></script>
   <script src="js/relatorios.js?v=100"></script>
 
   <!-- Orquestrador Loader -->
-  <script src="js/index.js?v=108"></script>
+  <script src="js/index.js?v=114"></script>
 </body>
 
 </html>

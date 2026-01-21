@@ -237,6 +237,9 @@ function alternarParaFinanceiro() {
     document.getElementById("sectionProdutos").classList.add("hidden");
     document.getElementById("sectionColaboradores").classList.add("hidden");
     if (document.getElementById("sectionClientes")) document.getElementById("sectionClientes").classList.add("hidden");
+    if (document.getElementById("sectionEstoque")) document.getElementById("sectionEstoque").classList.add("hidden");
+    if (document.getElementById("sectionConfiguracao")) document.getElementById("sectionConfiguracao").classList.add("hidden");
+    if (document.getElementById("sectionUsuarios")) document.getElementById("sectionUsuarios").classList.add("hidden");
     if (document.getElementById("sectionRelatorios")) document.getElementById("sectionRelatorios").classList.add("hidden");
     if (document.getElementById("sectionFechamento")) document.getElementById("sectionFechamento").classList.add("hidden");
     sectionFinanceiro.classList.remove("hidden");
@@ -245,6 +248,9 @@ function alternarParaFinanceiro() {
     document.getElementById("navProdutosSessao").classList.remove("active");
     document.getElementById("navColaboradores").classList.remove("active");
     if (document.getElementById("navClientes")) document.getElementById("navClientes").classList.remove("active");
+    if (document.getElementById("navEstoque")) document.getElementById("navEstoque").classList.remove("active");
+    if (document.getElementById("navConfiguracao")) document.getElementById("navConfiguracao").classList.remove("active");
+    if (document.getElementById("navUsuarios")) document.getElementById("navUsuarios").classList.remove("active");
     if (document.getElementById("navRelatorios")) document.getElementById("navRelatorios").classList.remove("active");
     if (document.getElementById("navFechamento")) document.getElementById("navFechamento").classList.remove("active");
     navFinanceiro.classList.add("active");

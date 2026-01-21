@@ -36,6 +36,9 @@ function alternarParaFechamento() {
     if (typeof sectionProdutos !== 'undefined' && sectionProdutos) sectionProdutos.classList.add("hidden");
     if (document.getElementById("sectionColaboradores")) document.getElementById("sectionColaboradores").classList.add("hidden");
     if (document.getElementById("sectionClientes")) document.getElementById("sectionClientes").classList.add("hidden");
+    if (document.getElementById("sectionEstoque")) document.getElementById("sectionEstoque").classList.add("hidden");
+    if (document.getElementById("sectionConfiguracao")) document.getElementById("sectionConfiguracao").classList.add("hidden");
+    if (document.getElementById("sectionUsuarios")) document.getElementById("sectionUsuarios").classList.add("hidden");
     if (document.getElementById("sectionFinanceiro")) document.getElementById("sectionFinanceiro").classList.add("hidden");
     if (document.getElementById("sectionRelatorios")) document.getElementById("sectionRelatorios").classList.add("hidden");
     if (document.getElementById("sectionFluxoCaixa")) document.getElementById("sectionFluxoCaixa").classList.add("hidden");
@@ -51,6 +54,9 @@ function alternarParaFechamento() {
     if (typeof navProdutosSessao !== 'undefined' && navProdutosSessao) navProdutosSessao.classList.remove("active");
     if (document.getElementById("navColaboradores")) document.getElementById("navColaboradores").classList.remove("active");
     if (document.getElementById("navClientes")) document.getElementById("navClientes").classList.remove("active");
+    if (document.getElementById("navEstoque")) document.getElementById("navEstoque").classList.remove("active");
+    if (document.getElementById("navConfiguracao")) document.getElementById("navConfiguracao").classList.remove("active");
+    if (document.getElementById("navUsuarios")) document.getElementById("navUsuarios").classList.remove("active");
     if (document.getElementById("navFinanceiro")) document.getElementById("navFinanceiro").classList.remove("active");
     if (document.getElementById("navRelatorios")) document.getElementById("navRelatorios").classList.remove("active");
     const navFC = document.getElementById("navFluxoCaixa");

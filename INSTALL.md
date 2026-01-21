@@ -23,6 +23,7 @@
    pip download -r requirements.txt -d wheels
    ```
 3. Gere o zip do projeto (com a pasta `backend/wheels`)
+   - Importante: não inclua `backend/app/database/comanda.db` no zip para começar zerado
 
 #### Passo 1: Instalar o Python
 1. Execute o instalador do Python
@@ -33,6 +34,19 @@
 1. Duplo clique em `C:\Comanda\scripts\iniciar_sistema.bat`
 2. O script instala dependências offline automaticamente (a partir de `backend\wheels`)
 3. Aguarde o navegador abrir
+
+#### (Opcional) Script para preparar pacote offline
+No computador com internet, use:
+```bat
+scripts\preparar_offline.bat
+```
+Ele cria a pasta `backend\wheels` com as dependências.
+
+#### (Opcional) Empacotar no Linux sem levar o banco local
+```bash
+scripts/empacotar_windows_offline.sh
+```
+Gera `dist/comanda_ranchojp_windows_offline.zip` sem o `comanda.db`.
 
 ### Passo 2: Instalar Python
 1. Baixe Python 3.10+ de https://python.org
@@ -80,6 +94,25 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+### Instalação Offline (Linux)
+
+#### Passo 0: Preparar o pacote (em outra máquina com internet)
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip download -r requirements.txt -d wheels
+```
+Inclua a pasta `backend/wheels` no zip do projeto.
+
+#### Passo 3 (Offline): Instalar dependências
+```bash
+cd /opt/comanda/backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --no-index --find-links=./wheels -r requirements.txt
+```
+
 ### Passo 4: Criar atalho no Desktop
 ```bash
 cp /opt/comanda/scripts/ComandaRanchoJP.desktop ~/Desktop/
@@ -113,3 +146,44 @@ Em caso de problemas, verifique se:
 1. Python 3.10+ está instalado
 2. As portas 5500 e 8000 estão livres
 3. O firewall permite conexões locais
+
+---
+
+## Usuários e Login
+
+Ao rodar a migração pela primeira vez, o sistema cria um usuário administrador:
+- Usuário: `admin`
+- Senha: `admin123`
+
+Recomendação: altere a senha criando outro administrador e desativando o usuário padrão.
+
+---
+
+## Licenciamento Offline (mensal)
+
+### 1) Gerar chaves (uma vez)
+No computador do administrador:
+```bash
+python3 scripts/gerar_chaves_licenca.py
+```
+Copie o conteúdo de `licenca_public_key.b64` para `backend/app/license_public_key.txt`.
+Guarde `licenca_private_key.b64` em local seguro.
+
+### 2) Gerar licença mensal
+```bash
+python3 scripts/gerar_licenca.py --cliente "Rancho JP" --expira 2026-02-28 --plano essencial --chave-privada licenca_private_key.b64 --saida licenca.json
+```
+
+### 3) Instalar licença no sistema
+Copie o `licenca.json` para:
+```
+backend/app/database/licenca.json
+```
+Ou envie via endpoint:
+```
+POST /licenca/instalar
+```
+com o JSON da licença.
+
+### (Opcional) Bypass para ambiente de testes
+Defina a variável `LICENSE_BYPASS=1` antes de iniciar o backend.

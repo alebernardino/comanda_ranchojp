@@ -56,6 +56,9 @@ async function carregarTemplates() {
     if (typeof setupFechamentoListeners === "function") setupFechamentoListeners();
     if (typeof setupColaboradoresListeners === "function") setupColaboradoresListeners();
     if (typeof setupClientesListeners === "function") setupClientesListeners();
+    if (typeof setupEstoqueListeners === "function") setupEstoqueListeners();
+    if (typeof setupConfiguracaoListeners === "function") setupConfiguracaoListeners();
+    if (typeof setupUsuariosListeners === "function") setupUsuariosListeners();
     if (typeof setupFinanceiroListeners === "function") setupFinanceiroListeners();
     if (typeof setupRelatoriosListeners === "function") setupRelatoriosListeners();
 
@@ -63,6 +66,84 @@ async function carregarTemplates() {
     console.error("Erro ao carregar templates:", err);
   }
 }
+
+function aplicarConfigModulos(config) {
+  const modulos = (config && config.modulos) || {};
+  const plano = config && config.plano ? config.plano : "total";
+  const mensagemUpgrade = "Disponível no Plano Total. Fale com o suporte para ativar.";
+  const mensagemConfig = "Módulo desativado. Ative em Configuração.";
+  const divisaoAtiva = modulos.divisao_item !== false;
+  const estoqueAtivo = modulos.estoque !== false;
+  const clientesAtivo = modulos.clientes !== false;
+  const colaboradoresAtivo = modulos.colaboradores !== false;
+  const usuariosAtivo = modulos.usuarios !== false;
+  const relatoriosAtivo = modulos.relatorios !== false;
+
+  const aplicarEstadoModulo = (el, ativo, motivo) => {
+    if (!el) return;
+    el.style.opacity = ativo ? "" : "0.45";
+    el.style.filter = ativo ? "" : "grayscale(1)";
+    el.dataset.moduloAtivo = ativo ? "1" : "0";
+    if (!ativo) {
+      el.dataset.moduloMotivo = motivo;
+    } else {
+      delete el.dataset.moduloMotivo;
+    }
+  };
+
+  const aplicarBloqueioClick = (el) => {
+    if (!el || el.dataset.moduloBind === "1") return;
+    el.addEventListener("click", (event) => {
+      if (el.dataset.moduloAtivo === "0") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (el.dataset.moduloMotivo === "upgrade") {
+          alert(mensagemUpgrade);
+        } else {
+          alert(mensagemConfig);
+        }
+      }
+    }, true);
+    el.dataset.moduloBind = "1";
+  };
+
+  const btnDividirItemModal = document.getElementById("btnDividirItemModal");
+  aplicarEstadoModulo(btnDividirItemModal, divisaoAtiva, plano === "essencial" ? "upgrade" : "config");
+  aplicarBloqueioClick(btnDividirItemModal);
+
+  const navEstoque = document.getElementById("navEstoque");
+  aplicarEstadoModulo(navEstoque, estoqueAtivo, plano === "essencial" ? "upgrade" : "config");
+  aplicarBloqueioClick(navEstoque);
+  const sectionEstoque = document.getElementById("sectionEstoque");
+  if (sectionEstoque && !estoqueAtivo) sectionEstoque.classList.add("hidden");
+
+  const navClientes = document.getElementById("navClientes");
+  aplicarEstadoModulo(navClientes, clientesAtivo, plano === "essencial" ? "upgrade" : "config");
+  aplicarBloqueioClick(navClientes);
+  const sectionClientes = document.getElementById("sectionClientes");
+  if (sectionClientes && !clientesAtivo) sectionClientes.classList.add("hidden");
+
+  const navColaboradores = document.getElementById("navColaboradores");
+  aplicarEstadoModulo(navColaboradores, colaboradoresAtivo, plano === "essencial" ? "upgrade" : "config");
+  aplicarBloqueioClick(navColaboradores);
+  const sectionColaboradores = document.getElementById("sectionColaboradores");
+  if (sectionColaboradores && !colaboradoresAtivo) sectionColaboradores.classList.add("hidden");
+
+  const navUsuarios = document.getElementById("navUsuarios");
+  aplicarEstadoModulo(navUsuarios, usuariosAtivo, plano === "essencial" ? "upgrade" : "config");
+  aplicarBloqueioClick(navUsuarios);
+  const sectionUsuarios = document.getElementById("sectionUsuarios");
+  if (sectionUsuarios && !usuariosAtivo) sectionUsuarios.classList.add("hidden");
+
+  const navRelatorios = document.getElementById("navRelatorios");
+  aplicarEstadoModulo(navRelatorios, relatoriosAtivo, plano === "essencial" ? "upgrade" : "config");
+  aplicarBloqueioClick(navRelatorios);
+  const sectionRelatorios = document.getElementById("sectionRelatorios");
+  if (sectionRelatorios && !relatoriosAtivo) sectionRelatorios.classList.add("hidden");
+  const sectionFluxo = document.getElementById("sectionFluxoCaixa");
+  if (sectionFluxo && !relatoriosAtivo) sectionFluxo.classList.add("hidden");
+}
+window.aplicarConfigModulos = aplicarConfigModulos;
 
 // ===============================
 // INICIALIZAÇÃO
@@ -74,12 +155,22 @@ async function init() {
   // 1. Carrega os templates primeiro
   await carregarTemplates();
 
+  // 2. Carrega configuracao de modulos
+  try {
+    const config = await getConfig();
+    window.appConfig = config;
+    aplicarConfigModulos(config);
+  } catch (err) {
+    console.warn("Nao foi possivel carregar configuracao:", err);
+  }
+
   // 2. Inicia os dados
   if (typeof carregarDashboard === "function") await carregarDashboard();
   if (typeof carregarProdutosBase === "function") await carregarProdutosBase();
   if (typeof carregarVendasHoje === "function") await carregarVendasHoje();
   if (typeof initToggleVendasHoje === "function") initToggleVendasHoje();
 }
+window.startApp = init;
 
 // ===============================
 // LISTENERS DE LAYOUT E GERAIS
@@ -240,6 +331,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Pequeno delay para garantir que todos os outros módulos (scripts) foram interpretados
   setTimeout(() => {
-    init();
+    if (typeof window.authBoot === "function") {
+      window.authBoot();
+    } else {
+      init();
+    }
   }, 100);
 });

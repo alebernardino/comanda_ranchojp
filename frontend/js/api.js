@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = `${window.location.protocol}//${window.location.hostname}:8000`;
 
 // ===============================
 // FUNÇÕES BASE DE API
@@ -7,7 +7,8 @@ const API_URL = "http://127.0.0.1:8000";
 async function apiRequest(path, method = "GET", body = null) {
   const options = {
     method,
-    headers: { "Content-Type": "application/json" }
+    headers: { "Content-Type": "application/json" },
+    credentials: "include"
   };
 
   if (body) {
@@ -130,6 +131,59 @@ async function getClientePorTelefone(telefone) {
 async function getClientes(busca = null) {
   const path = busca ? `/clientes/?busca=${encodeURIComponent(busca)}` : "/clientes/";
   return apiGet(path);
+}
+
+// ===============================
+// API DE ESTOQUE
+// ===============================
+
+async function getEstoque(busca = null) {
+  const path = busca ? `/estoque/?busca=${encodeURIComponent(busca)}` : "/estoque/";
+  return apiGet(path);
+}
+
+async function estoqueEntrada(payload) {
+  return apiPost("/estoque/entrada", payload);
+}
+
+async function estoqueSaida(payload) {
+  return apiPost("/estoque/saida", payload);
+}
+
+async function estoqueAjuste(payload) {
+  return apiPost("/estoque/ajuste", payload);
+}
+
+async function atualizarMinimoEstoque(produtoId, minimo) {
+  return apiPut(`/estoque/minimo/${produtoId}?minimo=${encodeURIComponent(minimo)}`);
+}
+
+// ===============================
+// API DE CONFIGURACAO
+// ===============================
+
+async function getConfig() {
+  return apiGet("/config/");
+}
+
+async function updateConfig(payload) {
+  return apiPost("/config/", payload);
+}
+
+// ===============================
+// API DE USUARIOS
+// ===============================
+
+async function getUsuarios() {
+  return apiGet("/usuarios/");
+}
+
+async function createUsuario(payload) {
+  return apiPost("/usuarios/", payload);
+}
+
+async function updateUsuarioStatus(id, ativo) {
+  return apiPut(`/usuarios/${id}/status`, { ativo });
 }
 
 // ===============================

@@ -1,0 +1,10 @@
+{
+  "modulos": {
+    "divisao_item": true,
+    "estoque": true,
+    "clientes": true,
+    "colaboradores": true,
+    "usuarios": true,
+    "relatorios": true
+  }
+}

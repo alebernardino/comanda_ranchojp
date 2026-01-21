@@ -26,7 +26,12 @@ if [ ! -d ".venv" ]; then
     echo "[AVISO] Ambiente virtual não encontrado. Criando..."
     python3 -m venv .venv
     source .venv/bin/activate
-    pip install -r requirements.txt
+    if [ -d "wheels" ]; then
+        echo "[INFO] Instalando dependências offline via ./wheels"
+        pip install --no-index --find-links=./wheels -r requirements.txt
+    else
+        pip install -r requirements.txt
+    fi
 else
     source .venv/bin/activate
 fi
