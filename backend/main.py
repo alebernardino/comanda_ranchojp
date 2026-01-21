@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import comandas, produtos, itens_comanda, pagamentos, colaboradores, financeiro, relatorios
+from app.database.init_db import init_db
 
 app = FastAPI(title="Comanda Rancho JP")
 
@@ -14,6 +15,10 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+@app.on_event("startup")
+def startup():
+    init_db()
 
 @app.get("/")
 def health_check():

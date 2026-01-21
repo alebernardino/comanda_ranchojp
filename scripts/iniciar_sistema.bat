@@ -32,7 +32,12 @@ IF EXIST ".venv\Scripts\activate.bat" (
     echo [AVISO] Ambiente virtual nao encontrado. Criando...
     python -m venv .venv
     call .venv\Scripts\activate.bat
-    pip install -r requirements.txt
+    IF EXIST "wheels" (
+        echo [INFO] Instalando dependencias offline via .\wheels
+        pip install --no-index --find-links=.\wheels -r requirements.txt
+    ) ELSE (
+        pip install -r requirements.txt
+    )
 )
 
 REM Inicia o backend em segundo plano

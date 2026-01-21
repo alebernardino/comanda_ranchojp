@@ -13,6 +13,27 @@
    └── README.md
    ```
 
+### Instalação Offline (sem internet)
+
+#### Passo 0: Preparar o pacote (em outra máquina com internet)
+1. Baixe o instalador do Python 3.10+ (Windows x64) e leve junto
+2. Baixe as dependências:
+   ```bash
+   cd backend
+   pip download -r requirements.txt -d wheels
+   ```
+3. Gere o zip do projeto (com a pasta `backend/wheels`)
+
+#### Passo 1: Instalar o Python
+1. Execute o instalador do Python
+2. **IMPORTANTE:** Marque "Add Python to PATH"
+3. Reinicie o computador
+
+#### Passo 2: Rodar o sistema
+1. Duplo clique em `C:\Comanda\scripts\iniciar_sistema.bat`
+2. O script instala dependências offline automaticamente (a partir de `backend\wheels`)
+3. Aguarde o navegador abrir
+
 ### Passo 2: Instalar Python
 1. Baixe Python 3.10+ de https://python.org
 2. **IMPORTANTE:** Marque "Add Python to PATH" durante instalação
@@ -28,6 +49,11 @@
 1. Duplo clique no atalho
 2. Aguarde o navegador abrir
 3. Comece a usar!
+
+### Banco zerado (opcional)
+Se quiser garantir um banco limpo em uma instalação:
+1. Apague o arquivo `C:\Comanda\backend\app\database\comanda.db` (se existir)
+2. Execute `C:\Comanda\scripts\zerar_banco.bat`
 
 ---
 
