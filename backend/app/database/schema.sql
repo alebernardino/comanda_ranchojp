@@ -3,7 +3,8 @@
 -- =========================
 CREATE TABLE IF NOT EXISTS comandas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    numero INTEGER NOT NULL UNIQUE,
+    numero INTEGER NOT NULL,
+    codigo TEXT NOT NULL UNIQUE,
     nome TEXT,
     telefone TEXT,
     status TEXT NOT NULL DEFAULT 'aberta',
@@ -63,6 +64,17 @@ CREATE TABLE IF NOT EXISTS colaboradores (
     funcao TEXT,
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
     ativo INTEGER DEFAULT 1
+);
+
+-- =========================
+-- TABELA: clientes
+-- =========================
+CREATE TABLE IF NOT EXISTS clientes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT NOT NULL,
+    telefone TEXT NOT NULL UNIQUE,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME
 );
 
 -- =========================

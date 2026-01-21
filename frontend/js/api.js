@@ -120,6 +120,14 @@ async function getResumoComanda(numero) {
 }
 
 // ===============================
+// API DE CLIENTES
+// ===============================
+
+async function getClientePorTelefone(telefone) {
+  return apiGet(`/clientes/por-telefone?telefone=${encodeURIComponent(telefone)}`);
+}
+
+// ===============================
 // API DE PAGAMENTOS
 // ===============================
 

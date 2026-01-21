@@ -52,9 +52,9 @@ async function abrirComanda(numero) {
         setTimeout(() => {
             const temItens = tabelaItensBody && tabelaItensBody.children.length > 0;
             if (!temItens) {
-                if (nomeComanda) {
-                    nomeComanda.focus();
-                    nomeComanda.select();
+                if (telefoneComanda) {
+                    telefoneComanda.focus();
+                    telefoneComanda.select();
                 }
             } else {
                 if (buscaCodigo) {
@@ -74,6 +74,9 @@ async function carregarDadosComanda() {
     if (tituloComanda) tituloComanda.innerText = `Comanda ${comanda.numero}`;
     if (nomeComanda) nomeComanda.value = comanda.nome || "";
     if (telefoneComanda) telefoneComanda.value = comanda.telefone || "";
+    if (telefoneComanda && !nomeComanda.value.trim()) {
+        await preencherNomePorTelefone();
+    }
     if (pessoasComanda) pessoasComanda.value = comanda.quantidade_pessoas || 1;
     if (qtdPessoasInput) qtdPessoasInput.textContent = comanda.quantidade_pessoas || 1;
     renderizarProdutosModal(produtosCache);
@@ -161,6 +164,21 @@ async function atualizarComandaAPI() {
     });
 }
 
+async function preencherNomePorTelefone() {
+    const telefone = telefoneComanda ? telefoneComanda.value.trim() : "";
+    if (!telefone) return;
+    try {
+        const cliente = await getClientePorTelefone(telefone);
+        if (nomeComanda && !nomeComanda.value.trim()) {
+            nomeComanda.value = cliente.nome || "";
+        }
+    } catch (err) {
+        if (err.message && err.message !== "Cliente não encontrado") {
+            console.error(err);
+        }
+    }
+}
+
 async function adicionarItemComanda() {
     if (!produtoSelecionado) {
         const cod = buscaCodigo ? buscaCodigo.value.trim() : "";
@@ -228,11 +246,11 @@ function setupComandaListeners() {
 
     if (nomeComanda) {
         nomeComanda.onblur = () => atualizarComandaAPI();
-        nomeComanda.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); if (telefoneComanda) telefoneComanda.focus(); } };
+        nomeComanda.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); if (pessoasComanda) pessoasComanda.focus(); } };
     }
     if (telefoneComanda) {
-        telefoneComanda.onblur = () => atualizarComandaAPI();
-        telefoneComanda.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); if (pessoasComanda) pessoasComanda.focus(); } };
+        telefoneComanda.onblur = async () => { await preencherNomePorTelefone(); await atualizarComandaAPI(); };
+        telefoneComanda.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); if (nomeComanda) nomeComanda.focus(); } };
     }
     if (pessoasComanda) {
         pessoasComanda.oninput = () => { if (qtdPessoasInput) qtdPessoasInput.textContent = pessoasComanda.value; atualizarDivisaoTotal(); };

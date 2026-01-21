@@ -3,7 +3,8 @@ from datetime import datetime
 
 
 class ItemComandaCreate(BaseModel):
-    codigo: int
+    codigo: str
+    descricao: str
     quantidade: float
     valor: float
 

@@ -1,4 +1,3 @@
-from pydantic import BaseModel
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Depends
@@ -12,23 +11,6 @@ from app.models.item_comanda import (
 )
 
 router = APIRouter(tags=["Itens da Comanda"])
-
-class ItemComandaCreate(BaseModel):
-    codigo: str
-    descricao: str
-    quantidade: float
-    valor: float
-
-class ItemComandaResponse(ItemComandaCreate):
-    id: int
-    subtotal: float
-    quantidade_paga: float
-    criado_em: datetime
-
-    class Config:
-        from_attributes = True
-
-print("FIELDS ItemComandaCreate:", ItemComandaCreate.model_fields)
 
 @router.get(
     "/comandas/{numero}/itens",
@@ -147,7 +129,6 @@ def atualizar_item(item_id: int, item: ItemComandaCreate, db: sqlite3.Connection
         (item_id,),
     )
     if not cursor.fetchone():
-        conn.close()
         raise HTTPException(status_code=404, detail="Item não encontrado")
 
     subtotal = item.quantidade * item.valor
@@ -191,7 +172,6 @@ def remover_item(item_id: int, db: sqlite3.Connection = Depends(get_db)):
         (item_id,),
     )
     if not cursor.fetchone():
-        conn.close()
         raise HTTPException(status_code=404, detail="Item não encontrado")
 
     cursor.execute(

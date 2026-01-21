@@ -11,6 +11,7 @@ class ComandaCreate(BaseModel):
 
 class ComandaResponse(ComandaCreate):
     id: int
+    codigo: str
     status: str
     criada_em: datetime
     finalizada_em: Optional[datetime]

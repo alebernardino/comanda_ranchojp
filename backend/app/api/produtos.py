@@ -46,7 +46,6 @@ def criar_produto(produto: ProdutoCreate, db: sqlite3.Connection = Depends(get_d
 
     # Valida código (3 dígitos)
     if not (produto.codigo.isdigit() and len(produto.codigo) == 3):
-        conn.close()
         raise HTTPException(
             status_code=400,
             detail="O código do produto deve ter exatamente 3 dígitos numéricos"
@@ -94,7 +93,6 @@ def atualizar_produto(produto_id: int, produto: ProdutoCreate, db: sqlite3.Conne
 
     # Valida código (3 dígitos)
     if not (produto.codigo.isdigit() and len(produto.codigo) == 3):
-        conn.close()
         raise HTTPException(
             status_code=400,
             detail="O código do produto deve ter exatamente 3 dígitos numéricos"
@@ -155,8 +153,6 @@ def _set_status(produto_id: int, ativo: bool, db: sqlite3.Connection):
 
     return dict(row)
 
-    return dict(row)
-
 
 @router.delete("/{produto_id}")
 def excluir_produto(produto_id: int, db: sqlite3.Connection = Depends(get_db)):
@@ -173,7 +169,6 @@ def excluir_produto(produto_id: int, db: sqlite3.Connection = Depends(get_db)):
     cursor.execute("SELECT codigo FROM produtos WHERE id = ?", (produto_id,))
     cod = cursor.fetchone()["codigo"]
     
-    cursor.execute("SELECT id FROM itens_comanda WHERE codigo = ?", (cod,))
     cursor.execute("SELECT id FROM itens_comanda WHERE codigo = ?", (cod,))
     if cursor.fetchone():
         raise HTTPException(
