@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rancho JP - Sistema de Comandas</title>
+  <title>ComandaFacil - Sistema de Comandas</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -19,12 +19,14 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="icon" href="assents/img/logo-comandafacil.png" type="image/png">
 </head>
 
 <body>
   <div id="loginScreen"
     style="display: none; position: fixed; inset: 0; background: #0f172a; color: #e2e8f0; z-index: 9999; align-items: center; justify-content: center;">
-    <div style="width: 100%; max-width: 420px; background: #111827; border-radius: 16px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.35);">
+    <div
+      style="width: 100%; max-width: 420px; background: #111827; border-radius: 16px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.35);">
       <h2 style="margin: 0 0 10px; font-family: 'Outfit', sans-serif; font-size: 1.8rem;">Acesso ao Sistema</h2>
       <p style="margin: 0 0 20px; color: #94a3b8;">Faça login para continuar</p>
       <form id="loginForm" style="display: grid; gap: 12px;">
@@ -40,7 +42,7 @@
   </div>
   <!-- Header de Impressão Global -->
   <div id="globalPrintHeader" class="global-print-element">
-    <h1>Restaurante Rancho JP</h1>
+    <h1>ComandaFacil</h1>
   </div>
 
   <!-- Sidebar Esquerda (Navegação) -->
@@ -52,10 +54,9 @@
 
       <div class="sidebar-brand">
         <div class="brand-logo" style="display: flex; align-items: center; gap: 12px;">
-          <div
-            style="background: #38bdf8; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #0f172a; font-size: 1.2rem; font-weight: 900; flex-shrink: 0;">
-            R</div>
-          <span class="brand-text">Rancho JP</span>
+          <img src="assents/img/logo-comandafacil.png" alt="ComandaFacil"
+            style="width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;">
+          <span class="brand-text">ComandaFacil</span>
         </div>
       </div>
 
@@ -87,14 +88,11 @@
         <a href="#" class="nav-item" id="navUsuarios">
           <span class="nav-icon">👤</span> <span class="nav-text">Usuários</span>
         </a>
-        <a href="#" class="nav-item" id="navConfiguracao">
-          <span class="nav-icon">⚙️</span> <span class="nav-text">Config</span>
-        </a>
       </nav>
 
-      <div class="sidebar-footer"
-        style="padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 20px;">
-        <p style="font-size: 0.75rem; color: #64748b; margin: 0;">Rancho JP v2.0</p>
+
+      <div class="sidebar-footer">
+        <p style="font-size: 0.75rem; color: #64748b; margin: 0;">ComandaFacil v2.0</p>
       </div>
     </div>
   </aside>
@@ -106,7 +104,7 @@
     <div id="sectionComandas">
       <header class="page-header">
         <div class="page-title">
-          <h1 id="mainTitle">Painel de Comandas</h1>
+          <h1 id="mainTitle">Painel de Comandas | Restaurante Rancho JP</h1>
         </div>
         <div class="quick-actions" id="headerActions">
           <div class="quick-input-group">
@@ -178,12 +176,17 @@
           </div>
         </div>
       </div>
-      <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
-        <button id="btnLogout"
-          style="width: 100%; background: #ef4444; padding: 10px 12px; font-size: 0.85rem; font-weight: 700; border-radius: 8px;">
-          Sair
+      <div class="sidebar-right-footer">
+        <a href="#" class="sidebar-right-action" id="navConfiguracao">
+          <span class="nav-icon"><i class="fas fa-gear"></i></span>
+          <span class="nav-text">Configuracao</span>
+        </a>
+        <button id="btnLogout" type="button" class="sidebar-right-action sidebar-right-logout">
+          <span class="nav-icon"><i class="fas fa-right-from-bracket"></i></span>
+          <span class="nav-text">Sair</span>
         </button>
       </div>
+
     </div>
   </aside>
 

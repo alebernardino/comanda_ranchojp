@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 import sqlite3
 
 from app.database.dependencies import get_db
-from app.auth import autenticar_usuario, criar_sessao, encerrar_sessao
+from app.auth import autenticar_usuario, criar_sessao, encerrar_sessao, buscar_usuario_por_sessao
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -52,8 +52,13 @@ def logout(request: Request, db: sqlite3.Connection = Depends(get_db)):
 
 
 @router.get("/me")
-def me(request: Request):
+def me(request: Request, db: sqlite3.Connection = Depends(get_db)):
     user = getattr(request.state, "user", None)
     if not user:
-        raise HTTPException(status_code=401, detail="nao_autenticado")
+        token = request.cookies.get("session_id")
+        if not token:
+            raise HTTPException(status_code=401, detail="nao_autenticado")
+        user = buscar_usuario_por_sessao(db, token)
+        if not user:
+            raise HTTPException(status_code=401, detail="nao_autenticado")
     return {"usuario": {"id": user["id"], "username": user["username"], "perfil": user["perfil"]}}

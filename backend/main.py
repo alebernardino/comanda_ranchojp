@@ -50,7 +50,7 @@ async def enforce_license(request: Request, call_next):
 async def enforce_auth(request: Request, call_next):
     if request.method == "OPTIONS":
         return await call_next(request)
-    if request.url.path in ("/", "/auth/login", "/auth/logout", "/auth/me", "/licenca/status", "/licenca/instalar"):
+    if request.url.path in ("/", "/auth/login", "/auth/logout", "/licenca/status", "/licenca/instalar"):
         return await call_next(request)
 
     token = request.cookies.get("session_id")
