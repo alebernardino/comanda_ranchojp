@@ -159,7 +159,7 @@ Recomendação: altere a senha criando outro administrador e desativando o usuá
 
 ---
 
-## Licenciamento Offline (mensal)
+## Licenciamento Offline (por meses)
 
 ### 1) Gerar chaves (uma vez)
 No computador do administrador:
@@ -169,9 +169,9 @@ python3 scripts/gerar_chaves_licenca.py
 Copie o conteúdo de `licenca_public_key.b64` para `backend/app/license_public_key.txt`.
 Guarde `licenca_private_key.b64` em local seguro.
 
-### 2) Gerar licença mensal
+### 2) Gerar licença por meses
 ```bash
-python3 scripts/gerar_licenca.py --cliente "Rancho JP" --expira 2026-02-28 --plano essencial --chave-privada licenca_private_key.b64 --saida licenca.json
+python3 scripts/gerar_licenca.py --cliente "Rancho JP" --meses 4 --plano essencial --chave-privada licenca_private_key.b64 --saida licenca.json
 ```
 
 ### 3) Instalar licença no sistema

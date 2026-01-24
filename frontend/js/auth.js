@@ -62,9 +62,12 @@ function diasRestantes(expiraEm) {
   if (!expiraEm) return null;
   const data = new Date(expiraEm);
   if (Number.isNaN(data.getTime())) return null;
+  // Considera o fim do dia da expiração
+  data.setHours(23, 59, 59, 999);
   const agora = new Date();
   const diffMs = data.getTime() - agora.getTime();
-  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  const dias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  return Math.max(dias, 0);
 }
 
 async function verificarVigenciaLicenca() {
@@ -72,7 +75,7 @@ async function verificarVigenciaLicenca() {
     const status = await apiGet("/licenca/status");
     if (!status || !status.dados) return;
     const dias = diasRestantes(status.dados.expira_em);
-    if (dias !== null && dias <= 10 && dias >= 0) {
+    if (dias !== null && dias <= 10) {
       alert(`A licença expira em ${dias} dia(s).`);
     }
   } catch (err) {

@@ -98,7 +98,10 @@ def validar_licenca() -> LicenseStatus:
         return LicenseStatus(valid=False, reason="expiracao_invalida")
 
     if datetime.now() > expira:
-        return LicenseStatus(valid=False, reason="licenca_expirada", data=data)
+        downgraded = dict(data)
+        downgraded["plano"] = "essencial"
+        downgraded["expirada"] = True
+        return LicenseStatus(valid=True, reason="licenca_expirada_basico", data=downgraded)
 
     return LicenseStatus(valid=True, reason="ok", data=data)
 
