@@ -9,6 +9,7 @@ from app.database.connection import get_connection
 from app.auth import buscar_usuario_por_sessao
 
 app = FastAPI(title="Comanda Rancho JP")
+#teste
 
 # 🔥 CORS (ESSENCIAL PARA O FRONTEND)
 app.add_middleware(
