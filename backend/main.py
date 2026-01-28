@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import comandas, produtos, itens_comanda, pagamentos, colaboradores, financeiro, relatorios, clientes, estoque, licenca, configuracao, auth, usuarios
+from app.api import comandas, produtos, itens_comanda, pagamentos, colaboradores, financeiro, relatorios, clientes, estoque, licenca, configuracao, auth, usuarios, impressoras
 from app.database.init_db import init_db
 from app.license import validar_licenca
 from app.database.connection import get_connection
@@ -91,3 +91,4 @@ app.include_router(licenca.router)
 app.include_router(configuracao.router)
 app.include_router(auth.router)
 app.include_router(usuarios.router)
+app.include_router(impressoras.router)

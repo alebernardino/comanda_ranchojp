@@ -108,6 +108,67 @@
         </div>
     </div>
 
+    <div class="card"
+        style="background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 15px;">
+        <h3 style="margin: 0 0 10px; font-size: 1rem; color: #1e293b;">Impressora (ESC/POS)</h3>
+        <p style="margin: 0 0 12px; color: #64748b; font-size: 0.85rem;">
+            Configure a porta e o modo de impressão. Para impressão direta via COM, o backend usa ESC/POS.
+        </p>
+        <div style="display: grid; gap: 10px; max-width: 420px;">
+            <label style="display: grid; gap: 6px; font-weight: 600;">
+                Modo de impressão
+                <select id="printerMode">
+                    <option value="qz">QZ Tray (silencioso)</option>
+                    <option value="browser">Navegador</option>
+                    <option value="serial">Serial (COM/USB)</option>
+                    <option value="simulado">Simulado (log)</option>
+                </select>
+            </label>
+            <label style="display: grid; gap: 6px; font-weight: 600;">
+                Porta COM
+                <input id="printerPort" list="printerPortList" placeholder="Ex: COM3">
+                <datalist id="printerPortList"></datalist>
+            </label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <label style="display: grid; gap: 6px; font-weight: 600;">
+                    Baudrate
+                    <select id="printerBaudrate">
+                        <option value="9600">9600</option>
+                        <option value="115200">115200</option>
+                    </select>
+                </label>
+                <label style="display: grid; gap: 6px; font-weight: 600;">
+                    Largura do papel
+                    <select id="printerPaperWidth">
+                        <option value="80">80mm</option>
+                        <option value="58">58mm</option>
+                    </select>
+                </label>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <label style="display: grid; gap: 6px; font-weight: 600;">
+                    Encoding
+                    <select id="printerEncoding">
+                        <option value="cp860">CP860 (PT-BR)</option>
+                        <option value="cp850">CP850</option>
+                        <option value="utf-8">UTF-8</option>
+                    </select>
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; font-weight: 600; margin-top: 22px;">
+                    <input type="checkbox" id="printerAutoCut">
+                    Cortar papel automaticamente
+                </label>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button id="btnAtualizarPortas" style="background: #e2e8f0; color: #1e293b; font-weight: 700;">Atualizar portas</button>
+                <button id="btnTestarImpressora" style="background: #f59e0b; font-weight: 700;">Testar conexão</button>
+                <button id="btnImprimirTeste" style="background: #3b82f6; font-weight: 700;">Imprimir teste</button>
+                <button id="btnSalvarImpressora" style="background: #10b981; font-weight: 700;">Salvar impressora</button>
+            </div>
+            <div id="printerStatus" style="margin-top: 6px; font-weight: 700; color: #0f172a;"></div>
+        </div>
+    </div>
+
 </div>
 
 <!-- SESSÃO USUARIOS -->

@@ -15,6 +15,7 @@ const PRINTER_CONFIG = {
 // Estado da conexão
 let qzConnected = false;
 let qzAvailable = false;
+let backendPrinterConfig = null;
 
 // ===============================
 // INICIALIZAÇÃO DO QZ TRAY
@@ -85,11 +86,36 @@ async function initQzTray() {
   }
 }
 
+async function loadBackendPrinterConfig() {
+  if (typeof getPrinterConfig !== "function") return null;
+  try {
+    backendPrinterConfig = await getPrinterConfig();
+    return backendPrinterConfig;
+  } catch (err) {
+    console.warn("Não foi possível carregar config de impressora:", err);
+    backendPrinterConfig = null;
+    return null;
+  }
+}
+
+function getBackendPrinterMode() {
+  return backendPrinterConfig?.mode || "qz";
+}
+
+function shouldUseBackendPrinter() {
+  const mode = getBackendPrinterMode();
+  return mode === "serial" || mode === "simulado";
+}
+
 // ===============================
 // FUNÇÃO PRINCIPAL DE IMPRESSÃO
 // ===============================
 
-async function imprimirSilencioso(conteudoHTML, titulo = "Impressão") {
+async function imprimirSilencioso(conteudoHTML, titulo = "Impressão", conteudoTexto = null) {
+  if (shouldUseBackendPrinter() && conteudoTexto) {
+    return await imprimirViaBackend(conteudoTexto, titulo);
+  }
+
   // Se QZ Tray está conectado, usa impressão silenciosa
   if (qzConnected && qzAvailable) {
     return await imprimirViaQZ(conteudoHTML, titulo);
@@ -144,28 +170,45 @@ function imprimirViaBrowser() {
   return true;
 }
 
+async function imprimirViaBackend(texto, titulo) {
+  if (typeof printRawText !== "function") return false;
+  try {
+    await printRawText({ text: texto, cut: true, title: titulo });
+    console.log("✅ Impressão serial enviada:", titulo);
+    return true;
+  } catch (err) {
+    console.error("Erro na impressão serial:", err);
+    alert("Impressora não conectada ou porta indisponível.");
+    return false;
+  }
+}
+
 // ===============================
 // FUNÇÕES DE IMPRESSÃO ESPECÍFICAS
 // ===============================
 
 async function imprimirComanda(comandaNumero, nomeCliente, telefone, itens, total) {
   const html = gerarHTMLComanda(comandaNumero, nomeCliente, telefone, itens, total);
-  return await imprimirSilencioso(html, `Comanda ${comandaNumero}`);
+  const texto = gerarTextoComanda(comandaNumero, nomeCliente, telefone, itens, total);
+  return await imprimirSilencioso(html, `Comanda ${comandaNumero}`, texto);
 }
 
 async function imprimirItensParciais(comandaNumero, itens, total) {
   const html = gerarHTMLItensParciais(comandaNumero, itens, total);
-  return await imprimirSilencioso(html, `Parcial Comanda ${comandaNumero}`);
+  const texto = gerarTextoItensParciais(comandaNumero, itens, total);
+  return await imprimirSilencioso(html, `Parcial Comanda ${comandaNumero}`, texto);
 }
 
 async function imprimirResumoPag(comandaNumero, pagamentos, total) {
   const html = gerarHTMLResumoPagamento(comandaNumero, pagamentos, total);
-  return await imprimirSilencioso(html, `Pagamento Comanda ${comandaNumero}`);
+  const texto = gerarTextoResumoPagamento(comandaNumero, pagamentos, total);
+  return await imprimirSilencioso(html, `Pagamento Comanda ${comandaNumero}`, texto);
 }
 
 async function imprimirFechamento(data, vendas, pagamentos, recebimentosSistema, recebimentosManuais) {
   const html = gerarHTMLFechamento(data, vendas, pagamentos, recebimentosSistema, recebimentosManuais);
-  return await imprimirSilencioso(html, `Fechamento ${data}`);
+  const texto = gerarTextoFechamento(data, vendas, pagamentos, recebimentosSistema, recebimentosManuais);
+  return await imprimirSilencioso(html, `Fechamento ${data}`, texto);
 }
 
 // ===============================
@@ -431,6 +474,185 @@ function gerarHTMLFechamento(data, vendas, pagamentos, recebimentosSistema, rece
 }
 
 // ===============================
+// GERADORES DE TEXTO (ESC/POS)
+// ===============================
+
+function getTextColumns() {
+  const paperWidth = backendPrinterConfig?.paperWidth || PRINTER_CONFIG.paperWidth || 80;
+  return paperWidth <= 58 ? 32 : 48;
+}
+
+function padRight(text, width) {
+  const t = text.length > width ? text.slice(0, width) : text;
+  return t + " ".repeat(Math.max(0, width - t.length));
+}
+
+function padLeft(text, width) {
+  const t = text.length > width ? text.slice(0, width) : text;
+  return " ".repeat(Math.max(0, width - t.length)) + t;
+}
+
+function centerText(text, width) {
+  const t = text.length > width ? text.slice(0, width) : text;
+  const left = Math.floor((width - t.length) / 2);
+  const right = width - t.length - left;
+  return " ".repeat(left) + t + " ".repeat(right);
+}
+
+function linhaSeparadora(width, char = "-") {
+  return char.repeat(width);
+}
+
+function gerarTextoComanda(comandaNumero, nomeCliente, telefone, itens, total) {
+  const cols = getTextColumns();
+  const linhas = [];
+  linhas.push(centerText("RESTAURANTE RANCHO JP", cols));
+  linhas.push(centerText(`COMANDA ${comandaNumero}`, cols));
+  linhas.push(linhaSeparadora(cols));
+  if (nomeCliente) linhas.push(`CLIENTE: ${nomeCliente}`);
+  if (telefone) linhas.push(`TEL: ${telefone}`);
+  linhas.push(`DATA: ${new Date().toLocaleString("pt-BR")}`);
+  linhas.push(linhaSeparadora(cols));
+
+  const colCodigo = 6;
+  const colQtd = 4;
+  const colValor = 10;
+  const colDesc = cols - colCodigo - colQtd - colValor - 3;
+  linhas.push(
+    padRight("COD", colCodigo) + " " +
+    padRight("ITEM", colDesc) + " " +
+    padLeft("QTD", colQtd) + " " +
+    padLeft("VALOR", colValor)
+  );
+  linhas.push(linhaSeparadora(cols));
+
+  itens.forEach(item => {
+    const valor = `R$ ${formatarMoeda(item.subtotal)}`;
+    linhas.push(
+      padRight(String(item.codigo || ""), colCodigo) + " " +
+      padRight(String(item.descricao || ""), colDesc) + " " +
+      padLeft(String(item.quantidade || ""), colQtd) + " " +
+      padLeft(valor, colValor)
+    );
+  });
+
+  linhas.push(linhaSeparadora(cols));
+  linhas.push(padLeft(`TOTAL: R$ ${formatarMoeda(total)}`, cols));
+  linhas.push(linhaSeparadora(cols));
+  linhas.push(centerText("@restauranteranchojp", cols));
+  linhas.push(centerText("(16) 991211765", cols));
+  linhas.push("");
+  return linhas.join("\n");
+}
+
+function gerarTextoItensParciais(comandaNumero, itens, total) {
+  const cols = getTextColumns();
+  const linhas = [];
+  linhas.push(centerText("RESTAURANTE RANCHO JP", cols));
+  linhas.push(centerText(`COMANDA ${comandaNumero}`, cols));
+  linhas.push(linhaSeparadora(cols));
+
+  const colQtd = 4;
+  const colValor = 10;
+  const colDesc = cols - colQtd - colValor - 2;
+  linhas.push(
+    padRight("ITEM", colDesc) + " " +
+    padLeft("QTD", colQtd) + " " +
+    padLeft("VALOR", colValor)
+  );
+  linhas.push(linhaSeparadora(cols));
+
+  itens.forEach(item => {
+    const valor = `R$ ${formatarMoeda(item.subtotal)}`;
+    linhas.push(
+      padRight(String(item.descricao || ""), colDesc) + " " +
+      padLeft(String(item.quantidade || ""), colQtd) + " " +
+      padLeft(valor, colValor)
+    );
+  });
+
+  linhas.push(linhaSeparadora(cols));
+  linhas.push(padLeft(`TOTAL: R$ ${formatarMoeda(total)}`, cols));
+  linhas.push(linhaSeparadora(cols));
+  linhas.push(centerText("@restauranteranchojp", cols));
+  linhas.push(centerText("(16) 991211765", cols));
+  linhas.push("");
+  return linhas.join("\n");
+}
+
+function gerarTextoResumoPagamento(comandaNumero, pagamentos, total) {
+  const cols = getTextColumns();
+  const linhas = [];
+  linhas.push(centerText("RESUMO DE PAGAMENTO", cols));
+  linhas.push(`COMANDA: ${comandaNumero}`);
+  linhas.push(`DATA: ${new Date().toLocaleString("pt-BR")}`);
+  linhas.push(linhaSeparadora(cols));
+
+  const colForma = cols - 12 - 1;
+  pagamentos.forEach(pag => {
+    const valor = `R$ ${formatarMoeda(pag.valor)}`;
+    linhas.push(
+      padRight(String(pag.forma || ""), colForma) + " " +
+      padLeft(valor, 12)
+    );
+  });
+
+  linhas.push(linhaSeparadora(cols));
+  linhas.push(padLeft(`TOTAL: R$ ${formatarMoeda(total)}`, cols));
+  linhas.push(linhaSeparadora(cols));
+  linhas.push("");
+  return linhas.join("\n");
+}
+
+function gerarTextoFechamento(data, vendas, pagamentos, recebimentosSistema, recebimentosManuais) {
+  const cols = getTextColumns();
+  const linhas = [];
+  linhas.push(centerText("FECHAMENTO DIARIO", cols));
+  linhas.push(`DATA: ${data}`);
+  linhas.push(linhaSeparadora(cols));
+
+  if (vendas.length > 0) {
+    linhas.push("VENDAS POR ITEM");
+    vendas.forEach(v => {
+      linhas.push(padRight(String(v.descricao || ""), cols - 6) + padLeft(String(v.quantidade || ""), 6));
+    });
+    linhas.push(linhaSeparadora(cols));
+  }
+
+  if (pagamentos.length > 0) {
+    linhas.push("PAGAMENTOS (SAIDAS)");
+    pagamentos.forEach(p => {
+      const valor = `R$ ${formatarMoeda(p.total)}`;
+      linhas.push(padRight(String(p.fornecedor || ""), cols - 12) + padLeft(valor, 12));
+    });
+    linhas.push(linhaSeparadora(cols));
+  }
+
+  if (recebimentosSistema.length > 0) {
+    linhas.push("RECEBIMENTOS (SISTEMA)");
+    recebimentosSistema.forEach(r => {
+      const valor = `R$ ${formatarMoeda(r.total)}`;
+      linhas.push(padRight(String(r.forma || ""), cols - 12) + padLeft(valor, 12));
+    });
+    linhas.push(linhaSeparadora(cols));
+  }
+
+  const manualFiltrado = recebimentosManuais.filter(m => m.valor > 0);
+  if (manualFiltrado.length > 0) {
+    linhas.push("RECEBIMENTOS (MANUAL)");
+    manualFiltrado.forEach(m => {
+      const valor = `R$ ${formatarMoeda(m.valor)}`;
+      linhas.push(padRight(String(m.forma || ""), cols - 12) + padLeft(valor, 12));
+    });
+    linhas.push(linhaSeparadora(cols));
+  }
+
+  linhas.push("Conferido por: __________________");
+  linhas.push("");
+  return linhas.join("\n");
+}
+
+// ===============================
 // VERIFICAR STATUS DO QZ TRAY
 // ===============================
 
@@ -439,6 +661,13 @@ function isQzTrayAtivo() {
 }
 
 function getStatusImpressora() {
+  if (shouldUseBackendPrinter()) {
+    return {
+      status: "serial",
+      impressora: backendPrinterConfig?.port || "Porta não configurada",
+      metodo: backendPrinterConfig?.mode === "simulado" ? "Simulado (log)" : "Serial (ESC/POS)"
+    };
+  }
   if (qzConnected) {
     return {
       status: "conectado",
@@ -456,6 +685,7 @@ function getStatusImpressora() {
 // Tentar conectar ao iniciar
 document.addEventListener("DOMContentLoaded", () => {
   setTimeout(() => {
+    loadBackendPrinterConfig();
     initQzTray().then(conectado => {
       if (conectado) {
         console.log("🖨️ Sistema de impressão silenciosa ativo");
@@ -465,3 +695,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }, 1000);
 });
+
+window.refreshPrinterConfig = loadBackendPrinterConfig;

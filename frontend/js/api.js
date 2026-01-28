@@ -171,6 +171,30 @@ async function updateConfig(payload) {
 }
 
 // ===============================
+// API DE IMPRESSORA (ESC/POS)
+// ===============================
+
+async function getPrinterConfig() {
+  return apiGet("/printer/config");
+}
+
+async function updatePrinterConfig(payload) {
+  return apiPost("/printer/config", payload);
+}
+
+async function getPrinterPorts() {
+  return apiGet("/printer/ports");
+}
+
+async function testPrinterPort(payload) {
+  return apiPost("/printer/test", payload);
+}
+
+async function printRawText(payload) {
+  return apiPost("/printer/print", payload);
+}
+
+// ===============================
 // API DE USUARIOS
 // ===============================
 
