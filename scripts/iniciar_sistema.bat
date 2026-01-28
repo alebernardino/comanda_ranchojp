@@ -8,6 +8,9 @@ TITLE Comanda Rancho JP - Iniciando...
 REM Define o diretório do projeto
 SET BASEDIR=%~dp0..
 
+REM Bypass de licença para esta máquina (acesso total offline)
+set LICENSE_BYPASS=1
+
 echo.
 echo ========================================
 echo   COMANDA RANCHO JP - Iniciando...
