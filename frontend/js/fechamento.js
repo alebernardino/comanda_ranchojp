@@ -95,18 +95,19 @@ async function imprimirFechamentoFinal() {
             { forma: "VOUCHER", valor: valVou }
         ];
 
-        // Se QZ Tray está ativo, usa impressão silenciosa
-        if (typeof isQzTrayAtivo === "function" && isQzTrayAtivo()) {
-            const dataFormatada = `${now.toLocaleDateString("pt-BR")} ${now.toLocaleTimeString("pt-BR")}`;
-            const vendas = isVendas ? data.geral.map(v => ({ descricao: v.descricao, quantidade: v.total_qtd })) : [];
-            const pagamentos = isPagamentos ? data.saidas.map(s => ({ fornecedor: s.fornecedor, total: s.total })) : [];
-            const recebimentosSistema = isSistema ? data.fechamento.map(f => ({ forma: f.forma, total: f.total })) : [];
-            const manuais = isManual ? recebimentosManuais : [];
+        // Sempre tenta o fluxo central de impressão primeiro (serial/QZ/backend).
+        const dataFormatada = `${now.toLocaleDateString("pt-BR")} ${now.toLocaleTimeString("pt-BR")}`;
+        const vendas = isVendas ? data.geral.map(v => ({ descricao: v.descricao, quantidade: v.total_qtd })) : [];
+        const pagamentos = isPagamentos ? data.saidas.map(s => ({ fornecedor: s.fornecedor, total: s.total })) : [];
+        const recebimentosSistema = isSistema ? data.fechamento.map(f => ({ forma: f.forma, total: f.total })) : [];
+        const manuais = isManual ? recebimentosManuais : [];
 
-            await imprimirFechamento(dataFormatada, vendas, pagamentos, recebimentosSistema, manuais);
-
-            if (modalImpressaoFechamento) modalImpressaoFechamento.classList.add("hidden");
-            return;
+        if (typeof imprimirFechamento === "function") {
+            const ok = await imprimirFechamento(dataFormatada, vendas, pagamentos, recebimentosSistema, manuais);
+            if (ok) {
+                if (modalImpressaoFechamento) modalImpressaoFechamento.classList.add("hidden");
+                return;
+            }
         }
 
         // Fallback: impressão via navegador

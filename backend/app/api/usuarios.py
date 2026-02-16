@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 import sqlite3
-import bcrypt
 
 from app.database.dependencies import get_db
 from app.auth import require_admin
+from app.passwords import hash_password
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
@@ -35,7 +35,7 @@ def criar_usuario(payload: dict, request: Request, db: sqlite3.Connection = Depe
     if cursor.fetchone():
         raise HTTPException(status_code=400, detail="usuario_ja_existe")
 
-    senha_hash = bcrypt.hashpw(senha.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    senha_hash = hash_password(senha)
     cursor.execute(
         "INSERT INTO usuarios (username, senha_hash, perfil, ativo) VALUES (?, ?, ?, 1)",
         (username, senha_hash, perfil),

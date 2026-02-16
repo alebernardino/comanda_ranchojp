@@ -6,8 +6,8 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import sqlite3
-import bcrypt
 from fastapi import Request, HTTPException
+from app.passwords import verify_password
 
 SESSION_HOURS = 12
 
@@ -75,7 +75,7 @@ def autenticar_usuario(db: sqlite3.Connection, username: str, senha: str) -> Opt
         return None
     if not row["ativo"]:
         return None
-    if not bcrypt.checkpw(senha.encode("utf-8"), row["senha_hash"].encode("utf-8")):
+    if not verify_password(senha, row["senha_hash"]):
         return None
     return dict(row)
 

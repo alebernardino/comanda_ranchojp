@@ -48,6 +48,9 @@ async function loginSubmit(e) {
   try {
     const resp = await apiPost("/auth/login", { username, senha });
     window.currentUser = resp.usuario;
+    if (typeof window.refreshPrinterConfig === "function") {
+      await window.refreshPrinterConfig();
+    }
     ocultarLogin();
     await verificarVigenciaLicenca();
     if (typeof window.startApp === "function") {
@@ -87,6 +90,9 @@ async function authBoot() {
   carregarElementosLogin();
   const ok = await verificarSessao();
   if (ok) {
+    if (typeof window.refreshPrinterConfig === "function") {
+      await window.refreshPrinterConfig();
+    }
     ocultarLogin();
     await verificarVigenciaLicenca();
     if (typeof window.startApp === "function") {

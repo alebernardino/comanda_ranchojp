@@ -194,6 +194,10 @@ async function printRawText(payload) {
   return apiPost("/printer/print", payload);
 }
 
+async function printDocument(payload) {
+  return apiPost("/printer/print-document", payload);
+}
+
 // ===============================
 // API DE USUARIOS
 // ===============================

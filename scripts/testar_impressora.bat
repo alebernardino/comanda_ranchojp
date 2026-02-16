@@ -8,10 +8,13 @@ set BASEDIR=%~dp0..
 
 cd /d "%BASEDIR%\backend"
 
+set "ARGS=%*"
+if "%~1"=="" set "ARGS=--mode serial --port COM3 --baudrate 9600"
+
 IF EXIST ".venv\Scripts\python.exe" (
-    .venv\Scripts\python.exe .\scripts\testar_impressora.py %*
+    .venv\Scripts\python.exe .\scripts\testar_impressora.py %ARGS%
 ) ELSE (
-    python .\scripts\testar_impressora.py %*
+    python .\scripts\testar_impressora.py %ARGS%
 )
 
 pause

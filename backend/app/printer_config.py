@@ -7,8 +7,8 @@ from typing import Any, Dict
 CONFIG_PATH = Path(__file__).resolve().parent / "database" / "printer.json"
 
 DEFAULT_PRINTER_CONFIG: Dict[str, Any] = {
-    "mode": "qz",  # qz | browser | serial | simulado
-    "port": "",
+    "mode": "serial",  # qz | browser | serial | simulado
+    "port": "COM3",
     "baudrate": 9600,
     "bytesize": 8,
     "parity": "N",

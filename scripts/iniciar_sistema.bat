@@ -38,8 +38,36 @@ IF EXIST ".venv\Scripts\activate.bat" (
     IF EXIST "wheels" (
         echo [INFO] Instalando dependencias offline via .\wheels
         pip install --no-index --find-links=.\wheels -r requirements.txt
+        IF ERRORLEVEL 1 (
+            echo [AVISO] Falha na instalacao offline. Tentando instalacao online...
+            pip install -r requirements.txt
+        )
     ) ELSE (
         pip install -r requirements.txt
+    )
+    IF ERRORLEVEL 1 (
+        echo [ERRO] Nao foi possivel instalar as dependencias.
+        pause
+        exit /b 1
+    )
+)
+
+python -c "import uvicorn" >nul 2>&1
+IF ERRORLEVEL 1 (
+    echo [AVISO] Dependencias incompletas no ambiente virtual. Reinstalando...
+    IF EXIST "wheels" (
+        pip install --no-index --find-links=.\wheels -r requirements.txt
+        IF ERRORLEVEL 1 (
+            echo [AVISO] Falha na reinstalacao offline. Tentando online...
+            pip install -r requirements.txt
+        )
+    ) ELSE (
+        pip install -r requirements.txt
+    )
+    IF ERRORLEVEL 1 (
+        echo [ERRO] Nao foi possivel preparar o ambiente virtual.
+        pause
+        exit /b 1
     )
 )
 

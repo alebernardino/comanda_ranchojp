@@ -99,7 +99,7 @@ async function loadBackendPrinterConfig() {
 }
 
 function getBackendPrinterMode() {
-  return backendPrinterConfig?.mode || "qz";
+  return backendPrinterConfig?.mode || null;
 }
 
 function shouldUseBackendPrinter() {
@@ -111,9 +111,18 @@ function shouldUseBackendPrinter() {
 // FUNÇÃO PRINCIPAL DE IMPRESSÃO
 // ===============================
 
-async function imprimirSilencioso(conteudoHTML, titulo = "Impressão", conteudoTexto = null) {
-  if (shouldUseBackendPrinter() && conteudoTexto) {
-    return await imprimirViaBackend(conteudoTexto, titulo);
+async function imprimirSilencioso(conteudoHTML, titulo = "Impressão", conteudoTexto = null, backendDoc = null) {
+  if (!backendPrinterConfig) {
+    await loadBackendPrinterConfig();
+  }
+
+  if (shouldUseBackendPrinter()) {
+    if (backendDoc) {
+      return await imprimirViaBackendDocumento(backendDoc, titulo);
+    }
+    if (conteudoTexto) {
+      return await imprimirViaBackend(conteudoTexto, titulo);
+    }
   }
 
   // Se QZ Tray está conectado, usa impressão silenciosa
@@ -183,6 +192,19 @@ async function imprimirViaBackend(texto, titulo) {
   }
 }
 
+async function imprimirViaBackendDocumento(doc, titulo) {
+  if (typeof printDocument !== "function") return false;
+  try {
+    await printDocument(doc);
+    console.log("✅ Impressão serial enviada (documento):", titulo);
+    return true;
+  } catch (err) {
+    console.error("Erro na impressão serial (documento):", err);
+    alert("Impressora não conectada ou porta indisponível.");
+    return false;
+  }
+}
+
 // ===============================
 // FUNÇÕES DE IMPRESSÃO ESPECÍFICAS
 // ===============================
@@ -190,25 +212,45 @@ async function imprimirViaBackend(texto, titulo) {
 async function imprimirComanda(comandaNumero, nomeCliente, telefone, itens, total) {
   const html = gerarHTMLComanda(comandaNumero, nomeCliente, telefone, itens, total);
   const texto = gerarTextoComanda(comandaNumero, nomeCliente, telefone, itens, total);
-  return await imprimirSilencioso(html, `Comanda ${comandaNumero}`, texto);
+  const doc = {
+    kind: "comanda",
+    data: { comandaNumero, nomeCliente, telefone, itens, total },
+    cut: true
+  };
+  return await imprimirSilencioso(html, `Comanda ${comandaNumero}`, texto, doc);
 }
 
 async function imprimirItensParciais(comandaNumero, itens, total) {
   const html = gerarHTMLItensParciais(comandaNumero, itens, total);
   const texto = gerarTextoItensParciais(comandaNumero, itens, total);
-  return await imprimirSilencioso(html, `Parcial Comanda ${comandaNumero}`, texto);
+  const doc = {
+    kind: "parcial",
+    data: { comandaNumero, itens, total },
+    cut: true
+  };
+  return await imprimirSilencioso(html, `Parcial Comanda ${comandaNumero}`, texto, doc);
 }
 
 async function imprimirResumoPag(comandaNumero, pagamentos, total) {
   const html = gerarHTMLResumoPagamento(comandaNumero, pagamentos, total);
   const texto = gerarTextoResumoPagamento(comandaNumero, pagamentos, total);
-  return await imprimirSilencioso(html, `Pagamento Comanda ${comandaNumero}`, texto);
+  const doc = {
+    kind: "pagamento",
+    data: { comandaNumero, pagamentos, total },
+    cut: true
+  };
+  return await imprimirSilencioso(html, `Pagamento Comanda ${comandaNumero}`, texto, doc);
 }
 
 async function imprimirFechamento(data, vendas, pagamentos, recebimentosSistema, recebimentosManuais) {
   const html = gerarHTMLFechamento(data, vendas, pagamentos, recebimentosSistema, recebimentosManuais);
   const texto = gerarTextoFechamento(data, vendas, pagamentos, recebimentosSistema, recebimentosManuais);
-  return await imprimirSilencioso(html, `Fechamento ${data}`, texto);
+  const doc = {
+    kind: "fechamento",
+    data: { data, vendas, pagamentos, recebimentosSistema, recebimentosManuais },
+    cut: true
+  };
+  return await imprimirSilencioso(html, `Fechamento ${data}`, texto, doc);
 }
 
 // ===============================
@@ -657,7 +699,9 @@ function gerarTextoFechamento(data, vendas, pagamentos, recebimentosSistema, rec
 // ===============================
 
 function isQzTrayAtivo() {
-  return qzConnected && qzAvailable;
+  // Mantem compatibilidade com chamadas antigas: "ativo" agora inclui
+  // impressao via backend (serial/simulado), alem do QZ Tray.
+  return shouldUseBackendPrinter() || (qzConnected && qzAvailable);
 }
 
 function getStatusImpressora() {
