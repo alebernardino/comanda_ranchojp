@@ -9,6 +9,11 @@ from pydantic import BaseModel
 router = APIRouter(prefix="/financeiro", tags=["Financeiro"])
 
 class PagamentoUpdate(BaseModel):
+    data: Optional[datetime] = None
+    nome: Optional[str] = None
+    item_servico: Optional[str] = None
+    valor: Optional[float] = None
+    forma_pagamento: Optional[str] = None
     pago: Optional[bool] = None
 
 @router.get("/", response_model=List[PagamentoGeral])
@@ -44,10 +49,38 @@ def atualizar_pagamento(id: int, u: PagamentoUpdate, db: sqlite3.Connection = De
     if not cursor.fetchone():
         raise HTTPException(status_code=404, detail="Não encontrado")
     
+    campos = []
+    valores = []
+
+    if u.data is not None:
+        campos.append("data = ?")
+        valores.append(u.data.isoformat())
+    if u.nome is not None:
+        campos.append("nome = ?")
+        valores.append(u.nome)
+    if u.item_servico is not None:
+        campos.append("item_servico = ?")
+        valores.append(u.item_servico)
+    if u.valor is not None:
+        campos.append("valor = ?")
+        valores.append(u.valor)
+    if u.forma_pagamento is not None:
+        campos.append("forma_pagamento = ?")
+        valores.append(u.forma_pagamento)
     if u.pago is not None:
-        cursor.execute("UPDATE pagamentos_gerais SET pago = ? WHERE id = ?", (int(u.pago), id))
-        db.commit()
-    
+        campos.append("pago = ?")
+        valores.append(int(u.pago))
+
+    if not campos:
+        return {"status": "sucesso"}
+
+    valores.append(id)
+    cursor.execute(
+        f"UPDATE pagamentos_gerais SET {', '.join(campos)} WHERE id = ?",
+        tuple(valores)
+    )
+    db.commit()
+
     return {"status": "sucesso"}
 
 @router.delete("/{id}")

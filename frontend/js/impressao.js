@@ -12,10 +12,10 @@ async function imprimirResumoPagamento() {
             return { forma: p.forma, valor: p.valor };
         });
 
-        // Se QZ Tray está ativo, usa impressão silenciosa
-        if (typeof isQzTrayAtivo === "function" && isQzTrayAtivo()) {
-            await imprimirResumoPag(currentComandaNumero, pagamentosFormatados, total);
-            return;
+        // Sempre tenta o fluxo central de impressão primeiro (serial/QZ/backend).
+        if (typeof imprimirResumoPag === "function") {
+            const ok = await imprimirResumoPag(currentComandaNumero, pagamentosFormatados, total);
+            if (ok) return;
         }
 
         // Fallback: impressão via navegador
@@ -60,43 +60,43 @@ async function imprimirResumoPagamento() {
 }
 
 async function imprimirComandaAcao() {
-    // Se QZ Tray está ativo, usa impressão silenciosa
-    if (typeof isQzTrayAtivo === "function" && isQzTrayAtivo()) {
-        const itens = [];
-        let totalVal = 0;
+    const itens = [];
+    let totalVal = 0;
 
-        const linhas = tabelaItensBody.querySelectorAll("tr");
-        linhas.forEach(tr => {
-            const tds = tr.querySelectorAll("td");
-            if (tds.length >= 5) {
-                const codigo = tds[0].innerText.trim();
-                const descricao = tds[1].innerText.trim();
-                const quantidade = parseFloat(tds[2].querySelector(".qtd-item")?.innerText || tds[2].innerText) || 0;
-                const valor = parseMoeda(tds[3].innerText);
-                const subtotal = parseMoeda(tds[4].innerText);
-                itens.push({ codigo, descricao, quantidade, valor, subtotal });
-                totalVal += subtotal;
-            }
-        });
+    const linhas = tabelaItensBody.querySelectorAll("tr");
+    linhas.forEach(tr => {
+        const tds = tr.querySelectorAll("td");
+        if (tds.length >= 7) {
+            const codigo = tds[0].innerText.trim();
+            const descricao = tds[1].innerText.trim();
+            const quantidade = parseFloat(tds[2].querySelector(".qtd-item")?.innerText || tds[2].innerText) || 0;
+            const valor = parseMoeda(tds[5].innerText);
+            const subtotal = parseMoeda(tds[6].innerText);
+            itens.push({ codigo, descricao, quantidade, valor, subtotal });
+            totalVal += subtotal;
+        }
+    });
 
-        const nome = nomeComanda ? nomeComanda.value : "";
-        const tel = telefoneComanda ? telefoneComanda.value : "";
+    const nome = nomeComanda ? nomeComanda.value : "";
+    const tel = telefoneComanda ? telefoneComanda.value : "";
 
-        await imprimirComanda(currentComandaNumero, nome, tel, itens, totalVal);
-        return;
+    if (typeof imprimirComanda === "function") {
+        const ok = await imprimirComanda(currentComandaNumero, nome, tel, itens, totalVal);
+        if (ok) return;
     }
 
-    // Fallback: impressão via navegador
-    // Função para limpar após impressão
-    const limparAposImpressao = () => {
-        document.body.classList.remove("printing-comanda");
-        window.removeEventListener('afterprint', limparAposImpressao);
-    };
+    // Fallback: ainda imprime o cupom correto (não a tela/modal)
+    try {
+        if (typeof gerarHTMLComanda === "function" && typeof imprimirViaBrowser === "function") {
+            const html = gerarHTMLComanda(currentComandaNumero, nome, tel, itens, totalVal);
+            imprimirViaBrowser(html, `Comanda ${currentComandaNumero}`);
+            return;
+        }
+    } catch (err) {
+        console.error("Erro no fallback do cupom:", err);
+    }
 
-    // Adicionar listener para limpar após impressão
-    window.addEventListener('afterprint', limparAposImpressao);
-
-    document.body.classList.add("printing-comanda");
+    // Último fallback absoluto
     window.print();
 }
 
@@ -135,10 +135,10 @@ async function imprimirDivisaoAcao(itensParaImprimir = null, totalParaImprimir =
         return;
     }
 
-    // Se QZ Tray está ativo, usa impressão silenciosa
-    if (typeof isQzTrayAtivo === "function" && isQzTrayAtivo()) {
-        await imprimirItensParciais(currentComandaNumero, itensParaImprimir, totalParaImprimir);
-        return;
+    // Sempre tenta o fluxo central de impressão primeiro (serial/QZ/backend).
+    if (typeof imprimirItensParciais === "function") {
+        const ok = await imprimirItensParciais(currentComandaNumero, itensParaImprimir, totalParaImprimir);
+        if (ok) return;
     }
 
     // Fallback: impressão via navegador
@@ -207,4 +207,3 @@ async function imprimirDivisaoAcao(itensParaImprimir = null, totalParaImprimir =
 window.imprimirResumoPagamento = imprimirResumoPagamento;
 window.imprimirComandaAcao = imprimirComandaAcao;
 window.imprimirDivisaoAcao = imprimirDivisaoAcao;
-

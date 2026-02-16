@@ -1,7 +1,7 @@
 import sqlite3
 from pathlib import Path
 from datetime import datetime
-import bcrypt
+from app.passwords import hash_password
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "comanda.db"
@@ -116,7 +116,7 @@ def migrate():
     cursor.execute("SELECT id FROM usuarios LIMIT 1")
     if not cursor.fetchone():
         senha_padrao = "admin123"
-        senha_hash = bcrypt.hashpw(senha_padrao.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        senha_hash = hash_password(senha_padrao)
         cursor.execute(
             "INSERT INTO usuarios (username, senha_hash, perfil, ativo) VALUES (?, ?, 'admin', 1)",
             ("admin", senha_hash),

@@ -20,6 +20,10 @@ let sortDirecaoVendas = 'desc';
 
 let dadosComandasVendas = [];
 let sortDirecaoComandas = 'desc';
+let dadosFechamentoVendas = [];
+let sortDirecaoFechamento = 'desc';
+let dadosPagamentosVendas = [];
+let sortDirecaoPagamentos = 'desc';
 
 let dadosAnaliticoFluxo = { entradas: [], saidas: [] };
 let sortDirecaoFluxo = { entradas: 'desc', saidas: 'desc' };
@@ -62,11 +66,11 @@ async function carregarRelatorioVendas(periodo = 'dia', btn = null) {
         dadosComandasVendas = data.comandas || [];
         renderizarComandasVendas(dadosComandasVendas);
 
-        const dadosFechamento = data.fechamento || [];
-        renderizarFechamentoVendas(dadosFechamento);
+        dadosFechamentoVendas = data.fechamento || [];
+        renderizarFechamentoVendas(dadosFechamentoVendas);
 
-        const dadosSaidas = data.saidas || [];
-        renderizarPagamentosVendas(dadosSaidas);
+        dadosPagamentosVendas = data.saidas || [];
+        renderizarPagamentosVendas(dadosPagamentosVendas);
 
         console.log("Relatório de vendas carregado com sucesso.");
     } catch (err) {
@@ -343,8 +347,21 @@ function alternarSubAbaVendas(sub, btn) {
 function ordenarAnaliticoVendas(campo) {
     sortDirecaoVendas = sortDirecaoVendas === 'asc' ? 'desc' : 'asc';
     dadosAnaliticoVendas.sort((a, b) => {
-        const valA = a[campo];
-        const valB = b[campo];
+        let valA = a[campo];
+        let valB = b[campo];
+
+        if (campo === 'data') {
+            valA = valA ? new Date(valA).getTime() : 0;
+            valB = valB ? new Date(valB).getTime() : 0;
+        } else if (campo === 'quantidade' || campo === 'comanda_numero' || campo === 'valor') {
+            valA = Number(valA) || 0;
+            valB = Number(valB) || 0;
+        } else {
+            valA = String(valA || '').toLowerCase();
+            valB = String(valB || '').toLowerCase();
+        }
+
+        if (valA === valB) return 0;
         if (sortDirecaoVendas === 'asc') return valA > valB ? 1 : -1;
         return valA < valB ? 1 : -1;
     });
@@ -375,8 +392,20 @@ function renderizarAnaliticoVendas(analitico) {
 function ordenarComandasVendas(campo) {
     sortDirecaoComandas = sortDirecaoComandas === 'asc' ? 'desc' : 'asc';
     dadosComandasVendas.sort((a, b) => {
-        const valA = a[campo];
-        const valB = b[campo];
+        let valA = a[campo];
+        let valB = b[campo];
+
+        if (campo === 'data') {
+            valA = valA ? new Date(valA).getTime() : 0;
+            valB = valB ? new Date(valB).getTime() : 0;
+        } else if (campo === 'numero' || campo === 'total') {
+            valA = Number(valA) || 0;
+            valB = Number(valB) || 0;
+        } else {
+            valA = String(valA || '').toLowerCase();
+            valB = String(valB || '').toLowerCase();
+        }
+
         if (valA === valB) return 0;
         if (sortDirecaoComandas === 'asc') return valA > valB ? 1 : -1;
         return valA < valB ? 1 : -1;
@@ -401,9 +430,23 @@ function renderizarComandasVendas(comandas) {
             <td style="padding: 10px; text-align: center; font-weight: 700; color: #64748b;">#${c.numero}</td>
             <td style="padding: 10px; font-size: 0.85rem; color: #64748b;">${formasStr}</td>
             <td style="padding: 10px; text-align: right; font-weight: 800; color: #10b981;">R$ ${formatarMoeda(c.total)}</td>
+            <td style="padding: 10px; text-align: center;">
+                <button onclick="excluirMesaFechada(${c.id})" style="background:#fee2e2; border:none; color:#ef4444; width:28px; height:28px; border-radius:50%; font-size:1.1rem; font-weight:700; cursor:pointer;" title="Excluir mesa fechada">×</button>
+            </td>
         `;
         tbody.appendChild(tr);
     });
+}
+
+async function excluirMesaFechada(comandaId) {
+    if (!confirm("Excluir esta mesa fechada? Esta ação remove itens e pagamentos vinculados.")) return;
+    try {
+        await deleteComandaFinalizada(comandaId);
+        await carregarRelatorioVendas();
+    } catch (err) {
+        console.error(err);
+        alert(err.message || "Erro ao excluir mesa fechada");
+    }
 }
 
 function renderizarFechamentoVendas(fechamento) {
@@ -428,6 +471,27 @@ function renderizarFechamentoVendas(fechamento) {
     if (elTotal) elTotal.innerText = `R$ ${formatarMoeda(totalGeral)}`;
 }
 
+function ordenarFechamentoVendas(campo) {
+    sortDirecaoFechamento = sortDirecaoFechamento === 'asc' ? 'desc' : 'asc';
+    dadosFechamentoVendas.sort((a, b) => {
+        let valA = a[campo];
+        let valB = b[campo];
+
+        if (campo === 'total') {
+            valA = Number(valA) || 0;
+            valB = Number(valB) || 0;
+        } else {
+            valA = String(valA || '').toLowerCase();
+            valB = String(valB || '').toLowerCase();
+        }
+
+        if (valA === valB) return 0;
+        if (sortDirecaoFechamento === 'asc') return valA > valB ? 1 : -1;
+        return valA < valB ? 1 : -1;
+    });
+    renderizarFechamentoVendas(dadosFechamentoVendas);
+}
+
 function renderizarPagamentosVendas(saidas) {
     const tbody = document.getElementById("tabelaRelVendasPagamentosBody");
     if (!tbody) return;
@@ -449,6 +513,27 @@ function renderizarPagamentosVendas(saidas) {
 
     const elTotal = document.getElementById("totalRelVendasPagamentosValor");
     if (elTotal) elTotal.innerText = `R$ ${formatarMoeda(totalGeral)}`;
+}
+
+function ordenarPagamentosVendas(campo) {
+    sortDirecaoPagamentos = sortDirecaoPagamentos === 'asc' ? 'desc' : 'asc';
+    dadosPagamentosVendas.sort((a, b) => {
+        let valA = a[campo];
+        let valB = b[campo];
+
+        if (campo === 'total') {
+            valA = Number(valA) || 0;
+            valB = Number(valB) || 0;
+        } else {
+            valA = String(valA || '').toLowerCase();
+            valB = String(valB || '').toLowerCase();
+        }
+
+        if (valA === valB) return 0;
+        if (sortDirecaoPagamentos === 'asc') return valA > valB ? 1 : -1;
+        return valA < valB ? 1 : -1;
+    });
+    renderizarPagamentosVendas(dadosPagamentosVendas);
 }
 
 function alternarSubAbaFluxo(sub, btn) {
@@ -674,3 +759,6 @@ function setupRelatoriosListeners() {
 document.addEventListener("DOMContentLoaded", setupRelatoriosListeners);
 
 window.setupRelatoriosListeners = setupRelatoriosListeners;
+window.excluirMesaFechada = excluirMesaFechada;
+window.ordenarFechamentoVendas = ordenarFechamentoVendas;
+window.ordenarPagamentosVendas = ordenarPagamentosVendas;

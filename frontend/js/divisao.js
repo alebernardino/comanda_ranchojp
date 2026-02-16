@@ -153,18 +153,21 @@ function renderizarTabelaDivisao() {
 }
 
 function atualizarTotalSelecionadoItem() {
-    let total = 0;
+    let totalSelecionadoAgora = 0;
+    let totalAcumulado = 0;
     itensAgrupadosDivisao.forEach(i => {
-        total += ((i.selecionado || 0) + (i.total_considerado || 0)) * i.valor;
+        totalSelecionadoAgora += (i.selecionado || 0) * i.valor;
+        totalAcumulado += (i.total_considerado || 0) * i.valor;
     });
-    if (totalSelecionadoItemEl) totalSelecionadoItemEl.innerText = `R$ ${formatarMoeda(total)}`;
-    if (btnAdicionarAoPagamento) btnAdicionarAoPagamento.dataset.totalRaw = total;
-    if (btnAdicionarAoPagamento) btnAdicionarAoPagamento.dataset.totalAcumulado = total;
+    // Exibe somente a seleção atual (momento atual da tela)
+    if (totalSelecionadoItemEl) totalSelecionadoItemEl.innerText = `R$ ${formatarMoeda(totalSelecionadoAgora)}`;
+    if (btnAdicionarAoPagamento) btnAdicionarAoPagamento.dataset.totalRaw = totalSelecionadoAgora;
+    if (btnAdicionarAoPagamento) btnAdicionarAoPagamento.dataset.totalAcumulado = totalAcumulado;
 }
 
 async function considerarSelecao(silencioso = false) {
-    const total = parseFloat(btnAdicionarAoPagamento.dataset.totalRaw || 0);
-    if (total <= 0) {
+    const totalSelecionadoAgora = parseFloat(btnAdicionarAoPagamento.dataset.totalRaw || 0);
+    if (totalSelecionadoAgora <= 0) {
         if (!silencioso) alert("Selecione pelo menos um item");
         return;
     }
@@ -218,7 +221,6 @@ async function considerarSelecao(silencioso = false) {
     sessionStorage.setItem(`comanda_${currentComandaNumero}_selecao`, JSON.stringify(itensSelecionadosParaPagamento));
 
     btnAdicionarAoPagamento.dataset.totalAcumulado = totalAcumuladoVal;
-    totalSelecionadoItemEl.innerText = `R$ ${formatarMoeda(totalAcumuladoVal)}`;
 
     renderizarTabelaDivisao();
     if (typeof carregarItensComanda === "function") {
@@ -227,7 +229,7 @@ async function considerarSelecao(silencioso = false) {
 
     // Perguntar se quer imprimir
     if (!silencioso && confirm("Deseja imprimir o comprovante?")) {
-        imprimirDivisaoAcao(itensParaImprimir, total);
+        imprimirDivisaoAcao(itensParaImprimir, totalSelecionadoAgora);
     }
 }
 
@@ -235,7 +237,7 @@ function setupDivisaoListeners() {
     carregarElementosDivisao();
 
     if (btnAdicionarAoPagamento) {
-        btnAdicionarAoPagamento.onclick = () => {
+        btnAdicionarAoPagamento.onclick = async () => {
             const totalSelecionadoAgora = parseFloat(btnAdicionarAoPagamento.dataset.totalRaw || 0);
 
             // Se não tem nada selecionado agora nem acumulado antes, avisa
@@ -245,7 +247,7 @@ function setupDivisaoListeners() {
 
             if (totalSelecionadoAgora > 0) {
                 // "Considera" o que está selecionado agora antes de abrir o pagamento
-                considerarSelecao(true);
+                await considerarSelecao(true);
             }
 
             const totalAcumuladoFinal = parseFloat(btnAdicionarAoPagamento.dataset.totalAcumulado || 0);

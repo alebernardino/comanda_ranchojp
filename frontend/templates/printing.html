@@ -6,20 +6,6 @@
         style="text-align: center; font-size: 9pt; margin-bottom: 10px; border-bottom: 1pt solid black; padding-bottom: 5px;">
     </p>
 
-    <div id="printBlocoVendas">
-        <h3 style="font-size: 10pt; border-bottom: 1pt dashed black; margin-top: 10px; margin-bottom: 5px;">VENDAS POR
-            ITEM</h3>
-        <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
-            <thead>
-                <tr style="border-bottom: 0.5pt solid #eee;">
-                    <th style="text-align: left;">ITEM</th>
-                    <th style="text-align: right;">QTD</th>
-                </tr>
-            </thead>
-            <tbody id="printBodyVendas"></tbody>
-        </table>
-    </div>
-
     <div id="printBlocoPagamentos">
         <h3 style="font-size: 10pt; border-bottom: 1pt dashed black; margin-top: 10px; margin-bottom: 5px;">PAGAMENTOS
             (SAÍDAS)</h3>
@@ -62,9 +48,20 @@
         </table>
     </div>
 
-    <div style="margin-top: 20px; border-top: 1pt solid black; text-align: center; padding-top: 10px;">
-        <p style="font-size: 8pt;">Conferido por: __________________</p>
+    <div id="printBlocoVendas">
+        <h3 style="font-size: 10pt; border-bottom: 1pt dashed black; margin-top: 10px; margin-bottom: 5px;">VENDAS POR
+            ITEM</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+            <thead>
+                <tr style="border-bottom: 0.5pt solid #eee;">
+                    <th style="text-align: left;">ITEM</th>
+                    <th style="text-align: right;">QTD</th>
+                </tr>
+            </thead>
+            <tbody id="printBodyVendas"></tbody>
+        </table>
     </div>
+
 </div>
 
 <div id="printResumoPagamento" class="global-print-element"

@@ -5,7 +5,7 @@
 
 // Variáveis de elementos DOM do Pagamento
 let modalPagamento, btnFecharModalPagamento, tituloPagamentoModal, valorPagamentoInput, btnLancarPagamentoModal;
-let tabelaPagamentosBody, pagTotalComandaEl, pagTotalPagoEl, pagSaldoDevedorEl, btnFinalizarComandaModal;
+let tabelaPagamentosBody, pagTotalComandaEl, pagTotalPagoEl, pagSaldoDevedorEl, pagTrocoEl, btnFinalizarComandaModal;
 let metodosButtons, btnVoltarDivisaoModal;
 
 function carregarElementosPagamento() {
@@ -18,6 +18,7 @@ function carregarElementosPagamento() {
     pagTotalComandaEl = document.getElementById("pag-total-comanda");
     pagTotalPagoEl = document.getElementById("pag-total-pago");
     pagSaldoDevedorEl = document.getElementById("pag-saldo-devedor");
+    pagTrocoEl = document.getElementById("pag-troco");
     btnFinalizarComandaModal = document.getElementById("btnFinalizarComandaModal");
     metodosButtons = document.querySelectorAll("#modalPagamento .metodo-btn");
     btnVoltarDivisaoModal = document.getElementById("btnVoltarDivisaoModal");
@@ -71,6 +72,17 @@ async function carregarResumoPagamento(valorSugerido = null) {
             btnFinalizarComandaModal.innerText = "Finalizar Comanda (F10)";
         }
     }
+
+    atualizarTrocoPagamento();
+}
+
+function atualizarTrocoPagamento() {
+    if (!pagTrocoEl) return;
+    const valorDigitado = parseFloat(valorPagamentoInput ? valorPagamentoInput.value : 0) || 0;
+    const troco = (formaPagamentoSelecionada === "Dinheiro" && valorDigitado > saldoDevedorGlobal)
+        ? (valorDigitado - saldoDevedorGlobal)
+        : 0;
+    pagTrocoEl.innerText = `R$ ${formatarMoeda(troco)}`;
 }
 
 async function carregarPagamentosModal() {
@@ -89,6 +101,7 @@ async function lancarPagamentoModal() {
     const v = parseFloat(valorPagamentoInput ? valorPagamentoInput.value : 0);
     if (isNaN(v) || v <= 0) return alert("Valor inválido");
 
+    if (btnLancarPagamentoModal) btnLancarPagamentoModal.disabled = true;
     try {
         await addPagamento(currentComandaNumero, {
             forma: formaPagamentoSelecionada,
@@ -128,8 +141,19 @@ async function lancarPagamentoModal() {
             const btnFinalizar = document.getElementById("btnFinalizarComandaModal");
             if (btnFinalizar) btnFinalizar.focus();
         }
+        atualizarTrocoPagamento();
     } catch (error) {
+        // Sincroniza estado para evitar inconsistência visual em caso de falha de rede.
+        try {
+            await carregarResumoPagamento();
+            await carregarPagamentosModal();
+            if (typeof carregarItensComanda === "function") {
+                await carregarItensComanda();
+            }
+        } catch (_) { }
         alert(error.message || "Erro ao lançar pagamento");
+    } finally {
+        if (btnLancarPagamentoModal) btnLancarPagamentoModal.disabled = false;
     }
 }
 
@@ -159,6 +183,7 @@ async function finalizarComandaModal() {
         if (modalPagamento) modalPagamento.classList.add("hidden");
         if (modalComanda) modalComanda.classList.add("hidden");
         carregarDashboard();
+        if (typeof focarCampoQuickComanda === "function") focarCampoQuickComanda();
     } catch (error) {
         alert(error.message || "Erro ao fechar comanda");
     }
@@ -187,12 +212,15 @@ function setupPagamentoListeners() {
                         if (buscaCodigo) buscaCodigo.focus();
                     }, 100);
                 }
+            } else if (typeof focarCampoQuickComanda === "function") {
+                focarCampoQuickComanda();
             }
         };
     }
 
     if (btnLancarPagamentoModal) btnLancarPagamentoModal.onclick = lancarPagamentoModal;
     if (valorPagamentoInput) valorPagamentoInput.onkeydown = e => { if (e.key === "Enter") lancarPagamentoModal(); };
+    if (valorPagamentoInput) valorPagamentoInput.oninput = atualizarTrocoPagamento;
     if (btnFinalizarComandaModal) btnFinalizarComandaModal.onclick = finalizarComandaModal;
 
     if (btnVoltarDivisaoModal) {
@@ -207,6 +235,7 @@ function setupPagamentoListeners() {
             metodosButtons.forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
             formaPagamentoSelecionada = btn.dataset.forma;
+            atualizarTrocoPagamento();
             if (valorPagamentoInput) {
                 valorPagamentoInput.focus();
                 valorPagamentoInput.select();

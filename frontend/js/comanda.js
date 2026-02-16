@@ -87,6 +87,24 @@ async function carregarItensComanda() {
     renderizarTabelaItens(itens);
 }
 
+function parseValorComandaInput(valor) {
+    let txt = String(valor ?? "").trim();
+    if (!txt) return NaN;
+    txt = txt.replace(/\s/g, "");
+    const hasComma = txt.includes(",");
+    const hasDot = txt.includes(".");
+    if (hasComma && hasDot) {
+        if (txt.lastIndexOf(",") > txt.lastIndexOf(".")) {
+            txt = txt.replace(/\./g, "").replace(",", ".");
+        } else {
+            txt = txt.replace(/,/g, "");
+        }
+    } else if (hasComma) {
+        txt = txt.replace(",", ".");
+    }
+    return parseFloat(txt);
+}
+
 function renderizarTabelaItens(itens) {
     if (!tabelaItensBody) return;
     tabelaItensBody.innerHTML = "";
@@ -119,6 +137,7 @@ function renderizarTabelaItens(itens) {
         const qtdPagaVisual = Math.min(qtdPaga + qtdConsiderada, qtdTotal);
         const qtdRestante = Math.max(qtdTotal - qtdPagaVisual, 0);
         const tr = document.createElement("tr");
+        const valorFormatado = Number(item.valor || 0).toFixed(2).replace(".", ",");
         tr.innerHTML = `
       <td>${item.codigo}</td>
       <td>${item.descricao}</td>
@@ -132,7 +151,19 @@ function renderizarTabelaItens(itens) {
       </td>
       <td style="text-align: right;">${formatarQuantidade(qtdPagaVisual)}</td>
       <td style="text-align: right;">${formatarQuantidade(qtdRestante)}</td>
-      <td style="text-align: right; white-space: nowrap;">R$ ${formatarMoeda(item.valor)}</td>
+      <td style="text-align: right; white-space: nowrap;">
+        <div style="display:inline-flex; align-items:center; gap:4px; border:1px solid #cbd5e1; border-radius:6px; padding:2px 6px; background:#fff;">
+          <span style="font-weight:700; color:#64748b;">R$</span>
+          <input
+            type="text"
+            value="${valorFormatado}"
+            data-valor-original="${Number(item.valor || 0)}"
+            onblur="salvarValorItemComandaInline(${item.id}, this)"
+            onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}"
+            style="width:72px; border:none; outline:none; text-align:right; font-weight:700; color:#0f172a; background:transparent;"
+          />
+        </div>
+      </td>
       <td style="text-align: right; white-space: nowrap;">R$ ${formatarMoeda(item.subtotal)}</td>
     `;
         tabelaItensBody.appendChild(tr);
@@ -145,6 +176,35 @@ function renderizarTabelaItens(itens) {
 async function removerItemUnico(id) {
     if (!confirm("Remover este item?")) return;
     await deleteItem(id);
+    await carregarItensComanda();
+}
+
+async function salvarValorItemComandaInline(itemId, inputEl) {
+    if (!inputEl) return;
+    const novoValor = parseValorComandaInput(inputEl.value);
+    const original = Number(inputEl.dataset.valorOriginal || 0);
+
+    if (Number.isNaN(novoValor) || novoValor <= 0) {
+        alert("Valor inválido");
+        inputEl.value = original.toFixed(2).replace(".", ",");
+        return;
+    }
+
+    if (Math.abs(novoValor - original) < 0.0001) {
+        inputEl.value = original.toFixed(2).replace(".", ",");
+        return;
+    }
+
+    const item = (await getItensComanda(currentComandaNumero)).find(i => i.id === itemId);
+    if (!item) return;
+
+    await updateItem(item.id, {
+        codigo: String(item.codigo),
+        descricao: String(item.descricao),
+        quantidade: Number(item.quantidade) || 0,
+        valor: novoValor
+    });
+
     await carregarItensComanda();
 }
 
@@ -250,6 +310,7 @@ function setupComandaListeners() {
         btnFecharModalComanda.onclick = () => {
             modalComanda.classList.add("hidden");
             if (typeof carregarDashboard === "function") carregarDashboard();
+            if (typeof focarCampoQuickComanda === "function") focarCampoQuickComanda();
         };
     }
 
@@ -334,6 +395,7 @@ window.carregarDadosComanda = carregarDadosComanda;
 window.carregarItensComanda = carregarItensComanda;
 window.renderizarTabelaItens = renderizarTabelaItens;
 window.removerItemUnico = removerItemUnico;
+window.salvarValorItemComandaInline = salvarValorItemComandaInline;
 window.adicionarMaisItemIndex = adicionarMaisItemIndex;
 window.removerUmItemIndex = removerUmItemIndex;
 window.atualizarComandaAPI = atualizarComandaAPI;

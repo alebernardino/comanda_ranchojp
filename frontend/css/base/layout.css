@@ -276,6 +276,14 @@ body {
     box-shadow: none;
 }
 
+#quickNumero {
+    caret-color: #ef4444;
+}
+
+#quickNumero:focus {
+    background: #f8fafc;
+}
+
 .quick-input-group button {
     margin: 0;
 }
@@ -411,6 +419,34 @@ body {
 }
 
 .sidebar-right.collapsed #toggleVendasHojeBtn {
+    justify-content: center;
+    padding: 15px 5px;
+}
+
+.sidebar-right.collapsed #toggleConsumoAbertoBtn span:first-child {
+    font-size: 1.5rem;
+}
+
+.sidebar-right.collapsed #toggleConsumoAbertoBtn span:not(:first-child),
+.sidebar-right.collapsed #consumoAbertoContainer {
+    display: none !important;
+}
+
+.sidebar-right.collapsed #toggleConsumoAbertoBtn {
+    justify-content: center;
+    padding: 15px 5px;
+}
+
+.sidebar-right.collapsed #toggleTotalResumoBtn span:first-child {
+    font-size: 1.5rem;
+}
+
+.sidebar-right.collapsed #toggleTotalResumoBtn span:not(:first-child),
+.sidebar-right.collapsed #totalResumoContainer {
+    display: none !important;
+}
+
+.sidebar-right.collapsed #toggleTotalResumoBtn {
     justify-content: center;
     padding: 15px 5px;
 }

@@ -4,7 +4,6 @@ from fastapi.responses import JSONResponse
 
 from app.api import comandas, produtos, itens_comanda, pagamentos, colaboradores, financeiro, relatorios, clientes, estoque, licenca, configuracao, auth, usuarios, impressoras
 from app.database.init_db import init_db
-from app.license import validar_licenca
 from app.database.connection import get_connection
 from app.auth import buscar_usuario_por_sessao
 
@@ -29,22 +28,6 @@ def _cors_error_response(request: Request, status_code: int, content: dict) -> J
         resp.headers["Access-Control-Allow-Credentials"] = "true"
         resp.headers["Vary"] = "Origin"
     return resp
-
-@app.middleware("http")
-async def enforce_license(request: Request, call_next):
-    if request.method == "OPTIONS":
-        return await call_next(request)
-    if request.url.path in ("/", "/licenca/status", "/licenca/instalar", "/auth/login", "/auth/logout", "/auth/me"):
-        return await call_next(request)
-
-    status = validar_licenca()
-    if not status.valid:
-        return _cors_error_response(
-            request,
-            status_code=403,
-            content={"detail": "Licença expirada ou inválida", "motivo": status.reason},
-        )
-    return await call_next(request)
 
 @app.middleware("http")
 async def enforce_auth(request: Request, call_next):

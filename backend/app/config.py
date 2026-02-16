@@ -48,16 +48,7 @@ def load_config() -> Dict[str, Any]:
         "usuarios": bool(modulos.get("usuarios", True)),
         "relatorios": bool(modulos.get("relatorios", True)),
     }
-    plano = data.get("plano")
-    try:
-        from app.license import validar_licenca
-        status = validar_licenca()
-        if status.valid and status.data:
-            plano = status.data.get("plano", plano)
-    except Exception:
-        pass
-
-    plano = plano or "total"
+    plano = "total"
     return {
         "plano": plano,
         "modulos": _plano_aplicado(normalized, plano),

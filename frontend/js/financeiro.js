@@ -14,6 +14,7 @@ function carregarElementosFinanceiro() {
 let financeiroCache = [];
 let sortFinCol = 'data';
 let sortFinAsc = false;
+let financeiroEmEdicaoId = null;
 
 async function carregarFinanceiro() {
     try {
@@ -88,6 +89,7 @@ function renderizarTabelaFinanceiro(lista) {
                 </div>
             </td>
             <td style="padding: 15px; text-align: center;">
+                <button onclick="editarRegistroFin(${p.id})" style="background:#dbeafe; border:none; color:#1d4ed8; width:28px; height:28px; border-radius:50%; font-size:0.9rem; font-weight:bold; cursor:pointer; margin-right: 6px;" title="Editar">E</button>
                 <button onclick="excluirRegistroFin(${p.id})" style="background:#fee2e2; border:none; color:#ef4444; width:28px; height:28px; border-radius:50%; font-size:1.2rem; font-weight:bold; cursor:pointer;" title="Excluir">×</button>
             </td>
         `;
@@ -148,7 +150,11 @@ async function salvarLancamentoFin() {
     };
 
     try {
-        await createFinanceiro(payload);
+        if (financeiroEmEdicaoId) {
+            await updateFinanceiro(financeiroEmEdicaoId, payload);
+        } else {
+            await createFinanceiro(payload);
+        }
 
         limparFormFinanceiro();
         await carregarFinanceiro();
@@ -164,12 +170,14 @@ async function salvarLancamentoFin() {
 }
 
 function limparFormFinanceiro() {
+    financeiroEmEdicaoId = null;
     configurarDataPadrao();
     if (document.getElementById("finNome")) document.getElementById("finNome").value = "";
     if (document.getElementById("finServico")) document.getElementById("finServico").value = "";
     if (document.getElementById("finValor")) document.getElementById("finValor").value = "";
     if (document.getElementById("finForma")) document.getElementById("finForma").value = "";
     if (document.getElementById("finPago")) document.getElementById("finPago").checked = true;
+    if (btnSalvarFin) btnSalvarFin.innerText = "Salvar Pagamento";
 }
 
 function configurarDataPadrao() {
@@ -190,6 +198,33 @@ async function excluirRegistroFin(id) {
         console.error(err);
         alert(err.message || "Erro ao excluir registro");
     }
+}
+
+function editarRegistroFin(id) {
+    const registro = financeiroCache.find(r => r.id === id);
+    if (!registro) return;
+
+    financeiroEmEdicaoId = id;
+    if (document.getElementById("finData")) {
+        const data = registro.data ? new Date(registro.data) : null;
+        if (data) {
+            const yyyy = data.getFullYear();
+            const mm = String(data.getMonth() + 1).padStart(2, '0');
+            const dd = String(data.getDate()).padStart(2, '0');
+            document.getElementById("finData").value = `${yyyy}-${mm}-${dd}`;
+        }
+    }
+    if (document.getElementById("finNome")) document.getElementById("finNome").value = registro.nome || "";
+    if (document.getElementById("finServico")) document.getElementById("finServico").value = registro.item_servico || "";
+    if (document.getElementById("finValor")) document.getElementById("finValor").value = Number(registro.valor || 0).toFixed(2);
+    if (document.getElementById("finForma")) document.getElementById("finForma").value = registro.forma_pagamento || "";
+    if (document.getElementById("finPago")) document.getElementById("finPago").checked = !!registro.pago;
+
+    const content = document.getElementById('formFinanceiroContent');
+    if (content) content.style.display = 'block';
+    const icon = document.getElementById('iconToggleFin');
+    if (icon) icon.innerText = '➖';
+    if (btnSalvarFin) btnSalvarFin.innerText = "Atualizar Pagamento";
 }
 
 function setupFinanceiroEnterNavigation() {
@@ -283,3 +318,4 @@ window.ordenarFinanceiro = ordenarFinanceiro;
 window.filtrarERenderizarFinanceiro = filtrarERenderizarFinanceiro;
 window.limparFiltrosFinanceiro = limparFiltrosFinanceiro;
 window.toggleStatusPagamento = toggleStatusPagamento;
+window.editarRegistroFin = editarRegistroFin;

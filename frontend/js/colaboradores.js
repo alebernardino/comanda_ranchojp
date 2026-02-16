@@ -14,6 +14,7 @@ function carregarElementosColaboradores() {
 let colaboradoresCache = [];
 let sortColabCol = 'ativo';
 let sortColabAsc = false;
+let colaboradorEmEdicaoId = null;
 
 async function carregarColaboradores() {
     try {
@@ -82,6 +83,7 @@ function renderizarTabelaColaboradores(lista) {
             <td class="colaborador-contatos" title="${pixsStr}">${pixsStr}</td>
             <td class="colaborador-actions">
                 <input type="checkbox" ${c.ativo ? 'checked' : ''} onchange="alterarStatusColaborador(${c.id}, this.checked)">
+                <button onclick="editarColaborador(${c.id})" style="margin-left: 6px; background: #dbeafe; color: #1d4ed8; border: none; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-weight: 700;" title="Editar">Ed</button>
             </td>
         `;
         tabelaColaboradoresBody.appendChild(tr);
@@ -125,11 +127,17 @@ async function salvarColaborador() {
         funcao,
         contatos,
         pixs,
-        ativo: true
+        ativo: colaboradorEmEdicaoId
+            ? !!(colaboradoresCache.find(c => c.id === colaboradorEmEdicaoId)?.ativo)
+            : true
     };
 
     try {
-        await createColaborador(payload);
+        if (colaboradorEmEdicaoId) {
+            await updateColaborador(colaboradorEmEdicaoId, payload);
+        } else {
+            await createColaborador(payload);
+        }
         limparCamposColaborador();
         await carregarColaboradores();
     } catch (err) {
@@ -139,9 +147,11 @@ async function salvarColaborador() {
 }
 
 function limparCamposColaborador() {
+    colaboradorEmEdicaoId = null;
     document.getElementById("colabNome").value = "";
     document.getElementById("colabEndereco").value = "";
     document.getElementById("colabFuncao").value = "";
+    if (btnSalvarColaborador) btnSalvarColaborador.innerText = "Salvar";
 
     document.getElementById("listaInputsContatos").innerHTML = `
         <div class="flex-container">
@@ -155,6 +165,42 @@ function limparCamposColaborador() {
             <button onclick="adicionarInput('listaInputsPix', 'colab-pix')" style="background: #38bdf8; padding: 0 10px; border-radius: 6px;">+</button>
         </div>
     `;
+    setupColaboradoresEnterNavigation();
+}
+
+function editarColaborador(id) {
+    const colaborador = colaboradoresCache.find(c => c.id === id);
+    if (!colaborador) return;
+    const esc = (v) => String(v || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    colaboradorEmEdicaoId = id;
+
+    document.getElementById("colabNome").value = colaborador.nome || "";
+    document.getElementById("colabEndereco").value = colaborador.endereco || "";
+    document.getElementById("colabFuncao").value = colaborador.funcao || "";
+
+    const contatos = (colaborador.contatos && colaborador.contatos.length > 0) ? colaborador.contatos : [""];
+    const pixs = (colaborador.pixs && colaborador.pixs.length > 0) ? colaborador.pixs : [""];
+
+    const contatosHtml = contatos.map((valor, idx) => `
+        <div class="flex-container">
+            <input class="colab-contato" placeholder="(00) 00000-0000" style="flex: 1;" value="${esc(valor)}">
+            <button onclick="adicionarInput('listaInputsContatos', 'colab-contato')" style="background: #38bdf8; padding: 0 10px; border-radius: 6px;">+</button>
+            ${idx > 0 ? '<button onclick="this.parentElement.remove()" style="background:#fee2e2; color:#ef4444; border:none; border-radius:6px; padding:0 10px;">-</button>' : ''}
+        </div>
+    `).join("");
+
+    const pixHtml = pixs.map((valor, idx) => `
+        <div class="flex-container">
+            <input class="colab-pix" placeholder="Email, CPF ou Chave..." style="flex: 1;" value="${esc(valor)}">
+            <button onclick="adicionarInput('listaInputsPix', 'colab-pix')" style="background: #38bdf8; padding: 0 10px; border-radius: 6px;">+</button>
+            ${idx > 0 ? '<button onclick="this.parentElement.remove()" style="background:#fee2e2; color:#ef4444; border:none; border-radius:6px; padding:0 10px;">-</button>' : ''}
+        </div>
+    `).join("");
+
+    document.getElementById("listaInputsContatos").innerHTML = contatosHtml;
+    document.getElementById("listaInputsPix").innerHTML = pixHtml;
+    if (btnSalvarColaborador) btnSalvarColaborador.innerText = "Atualizar";
     setupColaboradoresEnterNavigation();
 }
 
@@ -297,3 +343,4 @@ window.alterarStatusColaborador = alterarStatusColaborador;
 window.ordenarColaboradores = ordenarColaboradores;
 window.filtrarERenderizarColaboradores = filtrarERenderizarColaboradores;
 window.limparFiltrosColaboradores = limparFiltrosColaboradores;
+window.editarColaborador = editarColaborador;

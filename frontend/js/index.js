@@ -11,6 +11,15 @@ const btnToggleRightSidebar = document.getElementById("btnToggleRightSidebar");
 const quickNumeroInput = document.getElementById("quickNumero");
 const btnConfirmarQuick = document.getElementById("btnConfirmarQuick");
 
+function focarCampoQuickComanda() {
+  if (!quickNumeroInput) return;
+  setTimeout(() => {
+    quickNumeroInput.focus();
+    quickNumeroInput.select();
+  }, 60);
+}
+window.focarCampoQuickComanda = focarCampoQuickComanda;
+
 // Variáveis globais compartilhadas entre módulos (Shared State)
 window.currentComandaNumero = null;
 window.totalComandaGlobal = 0;
@@ -37,8 +46,8 @@ async function carregarTemplates() {
   try {
     const [modals, sections, printing] = await Promise.all([
       fetch("templates/modals.html?v=2").then(r => r.text()),
-      fetch("templates/sections.html?v=2").then(r => r.text()),
-      fetch("templates/printing.html?v=2").then(r => r.text())
+      fetch("templates/sections.html?v=10").then(r => r.text()),
+      fetch("templates/printing.html?v=5").then(r => r.text())
     ]);
 
     document.getElementById("modalsContainer").innerHTML = modals;
@@ -167,8 +176,8 @@ async function init() {
   // 2. Inicia os dados
   if (typeof carregarDashboard === "function") await carregarDashboard();
   if (typeof carregarProdutosBase === "function") await carregarProdutosBase();
-  if (typeof carregarVendasHoje === "function") await carregarVendasHoje();
   if (typeof initToggleVendasHoje === "function") initToggleVendasHoje();
+  focarCampoQuickComanda();
 }
 window.startApp = init;
 
@@ -189,6 +198,19 @@ function setupShellListeners() {
     btnToggleRightSidebar.onclick = () => {
       sidebarRight.classList.toggle("collapsed");
     };
+
+    // Se estiver recolhida, um clique nos ícones da barra direita expande primeiro.
+    sidebarRight.addEventListener("click", (e) => {
+      if (!sidebarRight.classList.contains("collapsed")) return;
+
+      const alvoAcao = e.target.closest(
+        ".sidebar-right-action, .stat-card, #toggleVendasHojeBtn, #toggleConsumoAbertoBtn, #toggleTotalResumoBtn"
+      );
+
+      if (!alvoAcao) return;
+      e.preventDefault();
+      sidebarRight.classList.remove("collapsed");
+    });
   }
 
   // Abrir Comanda Rápido (Header)
@@ -253,13 +275,21 @@ document.onkeydown = (e) => {
       }
     }
 
+    const comandaEstavaAberta = modalComanda && !modalComanda.classList.contains("hidden");
+
     // Comportamento padrão: fechar todos os modais
     const modais = document.querySelectorAll(".modal:not(.hidden)");
     modais.forEach(m => m.classList.add("hidden"));
 
     // Caso especial comanda: recarregar dashboard ao fechar
-    if (modalComanda && !modalComanda.classList.contains("hidden")) {
+    if (comandaEstavaAberta) {
       if (typeof carregarDashboard === "function") carregarDashboard();
+    }
+
+    const modalAbertaRestante = document.querySelector(".modal:not(.hidden)");
+    const sectionComandas = document.getElementById("sectionComandas");
+    if (!modalAbertaRestante && sectionComandas && !sectionComandas.classList.contains("hidden")) {
+      focarCampoQuickComanda();
     }
   }
 

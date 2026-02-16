@@ -7,6 +7,7 @@ from app.database.dependencies import get_db, get_comanda_resumo_logic
 from app.models.comanda import ComandaCreate, ComandaResponse
 
 router = APIRouter(prefix="/comandas", tags=["Comandas"])
+EPSILON_CENTAVOS = 0.01
 
 def _normalizar_texto(valor: str | None) -> str | None:
     if not valor:
@@ -227,7 +228,7 @@ def fechar_comanda(numero: int, db: sqlite3.Connection = Depends(get_db)):
     )
     total_pago = cursor.fetchone()["total_pago"]
 
-    if total_pago < total_itens:
+    if (total_itens - total_pago) > EPSILON_CENTAVOS:
         raise HTTPException(
             status_code=400,
             detail="Saldo insuficiente para fechar a comanda"
@@ -277,5 +278,28 @@ def resumo_comanda(numero: int, db: sqlite3.Connection = Depends(get_db)):
         "total_itens": round(total_itens, 2),
         "total_pago": round(total_pago, 2),
         "saldo": round(saldo, 2),
-        "pode_fechar": saldo >= 0
+        "pode_fechar": saldo >= (-EPSILON_CENTAVOS)
     }
+
+
+@router.delete("/{comanda_id}")
+def excluir_comanda_finalizada(comanda_id: int, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
+
+    cursor.execute(
+        "SELECT id, status FROM comandas WHERE id = ?",
+        (comanda_id,),
+    )
+    row = cursor.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Comanda não encontrada")
+
+    if row["status"] != "finalizada":
+        raise HTTPException(status_code=400, detail="Apenas comandas finalizadas podem ser excluídas")
+
+    cursor.execute("DELETE FROM pagamentos WHERE comanda_id = ?", (comanda_id,))
+    cursor.execute("DELETE FROM itens_comanda WHERE comanda_id = ?", (comanda_id,))
+    cursor.execute("DELETE FROM comandas WHERE id = ?", (comanda_id,))
+    db.commit()
+
+    return {"status": "ok"}

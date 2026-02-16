@@ -95,18 +95,28 @@ async function imprimirFechamentoFinal() {
             { forma: "VOUCHER", valor: valVou }
         ];
 
-        // Se QZ Tray está ativo, usa impressão silenciosa
-        if (typeof isQzTrayAtivo === "function" && isQzTrayAtivo()) {
-            const dataFormatada = `${now.toLocaleDateString("pt-BR")} ${now.toLocaleTimeString("pt-BR")}`;
-            const vendas = isVendas ? data.geral.map(v => ({ descricao: v.descricao, quantidade: v.total_qtd })) : [];
-            const pagamentos = isPagamentos ? data.saidas.map(s => ({ fornecedor: s.fornecedor, total: s.total })) : [];
-            const recebimentosSistema = isSistema ? data.fechamento.map(f => ({ forma: f.forma, total: f.total })) : [];
-            const manuais = isManual ? recebimentosManuais : [];
+        // Sempre tenta o fluxo central de impressão primeiro (serial/QZ/backend).
+        const dataFormatada = `${now.toLocaleDateString("pt-BR")} ${now.toLocaleTimeString("pt-BR")}`;
+        const vendas = isVendas
+            ? data.geral
+                .map(v => ({ descricao: v.descricao, quantidade: v.total_qtd }))
+                .sort((a, b) => {
+                    const qtdA = Number(a.quantidade) || 0;
+                    const qtdB = Number(b.quantidade) || 0;
+                    if (qtdA !== qtdB) return qtdB - qtdA;
+                    return String(a.descricao || "").localeCompare(String(b.descricao || ""), "pt-BR");
+                })
+            : [];
+        const pagamentos = isPagamentos ? data.saidas.map(s => ({ fornecedor: s.fornecedor, total: s.total })) : [];
+        const recebimentosSistema = isSistema ? data.fechamento.map(f => ({ forma: f.forma, total: f.total })) : [];
+        const manuais = isManual ? recebimentosManuais : [];
 
-            await imprimirFechamento(dataFormatada, vendas, pagamentos, recebimentosSistema, manuais);
-
-            if (modalImpressaoFechamento) modalImpressaoFechamento.classList.add("hidden");
-            return;
+        if (typeof imprimirFechamento === "function") {
+            const ok = await imprimirFechamento(dataFormatada, vendas, pagamentos, recebimentosSistema, manuais);
+            if (ok) {
+                if (modalImpressaoFechamento) modalImpressaoFechamento.classList.add("hidden");
+                return;
+            }
         }
 
         // Fallback: impressão via navegador
@@ -119,7 +129,13 @@ async function imprimirFechamentoFinal() {
             blocoVendas.style.display = isVendas ? "block" : "none";
             bodyVendas.innerHTML = "";
             if (isVendas) {
-                data.geral.forEach(v => {
+                const vendasOrdenadas = [...(data.geral || [])].sort((a, b) => {
+                    const qtdA = Number(a.total_qtd) || 0;
+                    const qtdB = Number(b.total_qtd) || 0;
+                    if (qtdA !== qtdB) return qtdB - qtdA;
+                    return String(a.descricao || "").localeCompare(String(b.descricao || ""), "pt-BR");
+                });
+                vendasOrdenadas.forEach(v => {
                     const tr = document.createElement("tr");
                     tr.innerHTML = `<td style="padding: 2px 0;">${v.descricao}</td><td style="text-align: right;">${v.total_qtd}</td>`;
                     bodyVendas.appendChild(tr);
@@ -147,11 +163,16 @@ async function imprimirFechamentoFinal() {
             blocoSistema.style.display = isSistema ? "block" : "none";
             bodySistema.innerHTML = "";
             if (isSistema) {
+                let totalSistema = 0;
                 data.fechamento.forEach(f => {
+                    totalSistema += Number(f.total || 0);
                     const tr = document.createElement("tr");
                     tr.innerHTML = `<td style="padding: 2px 0;">${f.forma}</td><td style="text-align: right;">R$ ${formatarMoeda(f.total)}</td>`;
                     bodySistema.appendChild(tr);
                 });
+                const trTotal = document.createElement("tr");
+                trTotal.innerHTML = `<td style="padding: 4px 0; font-weight: 800;">TOTAL</td><td style="text-align: right; font-weight: 800;">R$ ${formatarMoeda(totalSistema)}</td>`;
+                bodySistema.appendChild(trTotal);
             }
         }
 

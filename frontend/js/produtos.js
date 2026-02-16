@@ -4,6 +4,66 @@ let modalCadastroProduto, btnFecharModalCadastro, btnSalvarProdutoModal, btnSalv
 let novoCodigoInput, novaDescricaoInput, valorNovoProdutoInput, prodPageCodigo, prodPageDescricao;
 let sectionProdutos, navProdutosSessao;
 
+function parseValorProdutoInput(valor) {
+    if (typeof valor === "number") return valor;
+    let txt = String(valor ?? "").trim();
+    if (!txt) return NaN;
+    txt = txt.replace(/\s/g, "");
+
+    const hasComma = txt.includes(",");
+    const hasDot = txt.includes(".");
+    if (hasComma && hasDot) {
+        if (txt.lastIndexOf(",") > txt.lastIndexOf(".")) {
+            txt = txt.replace(/\./g, "").replace(",", ".");
+        } else {
+            txt = txt.replace(/,/g, "");
+        }
+    } else if (hasComma) {
+        txt = txt.replace(",", ".");
+    }
+
+    return parseFloat(txt);
+}
+
+function iniciarEdicaoProdutoCampo(el) {
+    if (!el) return;
+    el.dataset.originalValue = el.value;
+    el.dataset.cancelEdit = "0";
+}
+
+function teclaEdicaoProdutoCampo(event, el) {
+    if (!event || !el) return;
+    if (event.key === "Enter") {
+        event.preventDefault();
+        event.stopPropagation();
+        el.blur(); // confirma via onblur
+        return;
+    }
+    if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        const original = el.dataset.originalValue;
+        if (typeof original === "string") el.value = original;
+        el.dataset.cancelEdit = "1";
+        el.blur();
+    }
+}
+
+async function confirmarEdicaoProdutoCampo(id, campo, el) {
+    if (!el) return;
+    const original = el.dataset.originalValue ?? el.value;
+    const cancelou = el.dataset.cancelEdit === "1";
+
+    if (cancelou) {
+        el.value = original;
+        el.dataset.cancelEdit = "0";
+        return;
+    }
+
+    if (el.value === original) return;
+    await editProduto(id, campo, el.value);
+}
+
 function carregarElementosProdutos() {
     prodPageValor = document.getElementById("prodPageValor");
     tabelaProdutosPageBody = document.getElementById("tabelaProdutosPageBody");
@@ -22,6 +82,15 @@ function carregarElementosProdutos() {
 
     sectionProdutos = document.getElementById("sectionProdutos");
     navProdutosSessao = document.getElementById("navProdutosSessao");
+
+    if (prodPageValor) {
+        prodPageValor.readOnly = false;
+        prodPageValor.disabled = false;
+    }
+    if (valorNovoProdutoInput) {
+        valorNovoProdutoInput.readOnly = false;
+        valorNovoProdutoInput.disabled = false;
+    }
 }
 
 // ===============================
@@ -44,8 +113,8 @@ async function carregarProdutosCadastrados() {
             tr.innerHTML = `
           <td style="padding: 10px; font-weight: bold; text-align: center;">${grupo}</td>
           <td>${p.codigo}</td>
-          <td><input class="input-tabela-texto" value="${p.descricao}" onblur="editProduto(${p.id}, 'descricao', this.value)"></td>
-          <td><input class="input-tabela-valor" value="${p.valor.toFixed(2)}" onblur="editProduto(${p.id}, 'valor', this.value)" style="width: 80px; text-align: right;"></td>
+          <td><input class="input-tabela-texto" value="${p.descricao}" onfocus="iniciarEdicaoProdutoCampo(this)" onkeydown="teclaEdicaoProdutoCampo(event, this)" onblur="confirmarEdicaoProdutoCampo(${p.id}, 'descricao', this)"></td>
+          <td><input class="input-tabela-valor" value="${p.valor.toFixed(2)}" onfocus="iniciarEdicaoProdutoCampo(this)" onkeydown="teclaEdicaoProdutoCampo(event, this)" onblur="confirmarEdicaoProdutoCampo(${p.id}, 'valor', this)" style="width: 80px; text-align: right;"></td>
           <td style="text-align: center;"><input type="checkbox" ${p.ativo ? 'checked' : ''} data-produto-id="${p.id}" class="checkbox-ativo"></td>
           <td style="text-align: center;">
             <button onclick="excluirProduto(${p.id})" style="background:#fee2e2; border:none; color:#ef4444; width:28px; height:28px; border-radius:50%; font-size:1.2rem; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;" title="Excluir">×</button>
@@ -93,8 +162,13 @@ function renderizarTabelaProdutosPage(produtos) {
         tr.innerHTML = `
         <td style="padding: 15px; text-align: center; font-weight: bold; color: #3b82f6;">${grupo}</td>
         <td style="padding: 15px;">${p.codigo}</td>
-        <td style="padding: 15px;"><input class="input-tabela-texto" value="${p.descricao}" onblur="editProduto(${p.id}, 'descricao', this.value)" style="width: 100%; border:none; background:transparent;"></td>
-        <td style="padding: 15px; text-align: right;"><input class="input-tabela-valor" value="${p.valor.toFixed(2)}" onblur="editProduto(${p.id}, 'valor', this.value)" style="width: 80px; text-align: right; border:none; background:transparent;"></td>
+        <td style="padding: 15px;"><input class="input-tabela-texto" value="${p.descricao}" onfocus="iniciarEdicaoProdutoCampo(this)" onkeydown="teclaEdicaoProdutoCampo(event, this)" onblur="confirmarEdicaoProdutoCampo(${p.id}, 'descricao', this)" style="width: 100%; border:none; background:transparent;"></td>
+        <td style="padding: 15px; text-align: right;">
+          <div class="valor-edit-box">
+            <span class="valor-prefix">R$</span>
+            <input class="input-tabela-valor input-tabela-valor-box" value="${p.valor.toFixed(2)}" onfocus="iniciarEdicaoProdutoCampo(this)" onkeydown="teclaEdicaoProdutoCampo(event, this)" onblur="confirmarEdicaoProdutoCampo(${p.id}, 'valor', this)">
+          </div>
+        </td>
         <td style="padding: 15px; text-align: center;"><input type="checkbox" ${p.ativo ? 'checked' : ''} data-produto-id="${p.id}" class="checkbox-ativo-page"></td>
         <td style="padding: 15px; text-align: center;">
           <button onclick="excluirProduto(${p.id})" style="background:#fee2e2; border:none; color:#ef4444; width:28px; height:28px; border-radius:50%; font-size:1.2rem; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;" title="Excluir">×</button>
@@ -170,17 +244,6 @@ function filtrarERenderizarProdutosPage() {
 
     const fCod = prodPageCodigo ? prodPageCodigo.value.trim() : "";
     const fDesc = prodPageDescricao ? prodPageDescricao.value.toLowerCase().trim() : "";
-
-    // Validação de código duplicado ao atingir 3 dígitos
-    if (fCod.length === 3) {
-        const existe = produtosCache.find(p => String(p.codigo) === fCod);
-        if (existe) {
-            alert(`O código ${fCod} já está em uso pelo produto: ${existe.descricao}`);
-            if (prodPageCodigo) prodPageCodigo.value = "";
-            filtrarERenderizarProdutosPage();
-            return;
-        }
-    }
 
     let filtrados = produtosCache.filter(p => {
         const matchCod = !fCod || p.codigo.includes(fCod);
@@ -265,10 +328,15 @@ function abrirModalCadastroProdutos() {
 async function salvarNovoProduto() {
     const cod = novoCodigoInput ? novoCodigoInput.value.trim() : "";
     const desc = novaDescricaoInput ? novaDescricaoInput.value.trim() : "";
-    const val = parseFloat(valorNovoProdutoInput ? valorNovoProdutoInput.value : 0);
+    const val = parseValorProdutoInput(valorNovoProdutoInput ? valorNovoProdutoInput.value : 0);
 
     if (!/^\d{3}$/.test(cod)) {
         return alert("O código do produto deve ter exatamente 3 dígitos numéricos (ex: 001, 123)");
+    }
+
+    const duplicadoModal = produtosCache.find(p => String(p.codigo) === cod);
+    if (duplicadoModal) {
+        return alert(`Já existe um produto cadastrado com o código ${cod}: ${duplicadoModal.descricao}`);
     }
 
     if (!cod || !desc || isNaN(val)) return alert("Dados inválidos");
@@ -288,10 +356,17 @@ async function salvarNovoProduto() {
 async function salvarNovoProdutoSessao() {
     const cod = prodPageCodigo ? prodPageCodigo.value.trim() : "";
     const desc = prodPageDescricao ? prodPageDescricao.value.trim() : "";
-    const val = parseFloat(prodPageValor ? prodPageValor.value : 0);
+    const val = parseValorProdutoInput(prodPageValor ? prodPageValor.value : 0);
 
     if (!/^\d{3}$/.test(cod)) {
         alert("O código do produto deve ter exatamente 3 dígitos numéricos.");
+        setTimeout(() => prodPageCodigo.focus(), 10);
+        return;
+    }
+
+    const duplicado = produtosCache.find(p => String(p.codigo) === cod);
+    if (duplicado) {
+        alert(`Já existe um produto cadastrado com o código ${cod}: ${duplicado.descricao}`);
         setTimeout(() => prodPageCodigo.focus(), 10);
         return;
     }
@@ -339,9 +414,14 @@ async function editProduto(id, campo, novoValor) {
     const body = {
         codigo: produto.codigo,
         descricao: campo === "descricao" ? String(novoValor) : produto.descricao,
-        valor: campo === "valor" ? parseFloat(novoValor) : produto.valor,
+        valor: campo === "valor" ? parseValorProdutoInput(novoValor) : produto.valor,
         ativo: produto.ativo
     };
+
+    if (campo === "valor" && (Number.isNaN(body.valor) || body.valor <= 0)) {
+        alert("Valor inválido");
+        return;
+    }
 
     try {
         await updateProduto(id, body);
@@ -414,16 +494,6 @@ function setupProdutosEnterNavigation() {
     if (prodPageDescricao) prodPageDescricao.oninput = filtrarERenderizarProdutosPage;
 
     if (novoCodigoInput) {
-        novoCodigoInput.oninput = () => {
-            const cod = novoCodigoInput.value.trim();
-            if (cod.length === 3) {
-                const existe = produtosCache.find(p => String(p.codigo) === cod);
-                if (existe) {
-                    alert(`O código ${cod} já está em uso pelo produto: ${existe.descricao}`);
-                    novoCodigoInput.value = "";
-                }
-            }
-        };
         novoCodigoInput.onblur = () => {
             const cod = novoCodigoInput.value.trim();
             if (cod && !/^\d{3}$/.test(cod)) {
@@ -507,5 +577,8 @@ window.abrirModalCadastroProdutos = abrirModalCadastroProdutos;
 window.salvarNovoProduto = salvarNovoProduto;
 window.salvarNovoProdutoSessao = salvarNovoProdutoSessao;
 window.editProduto = editProduto;
+window.iniciarEdicaoProdutoCampo = iniciarEdicaoProdutoCampo;
+window.teclaEdicaoProdutoCampo = teclaEdicaoProdutoCampo;
+window.confirmarEdicaoProdutoCampo = confirmarEdicaoProdutoCampo;
 window.excluirProduto = excluirProduto;
 window.alternarParaProdutos = alternarParaProdutos;

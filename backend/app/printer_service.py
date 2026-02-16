@@ -96,6 +96,13 @@ class PrinterService:
 
         self.open_port()
         try:
+            # Inicializa modo ESC/POS
+            self._serial.write(b"\x1b\x40")
+
+            if not text.endswith("\n"):
+                text += "\n"
+            text += "\n\n"
+
             encoding = self.config.get("encoding", "cp860")
             payload = text.encode(encoding, errors="replace")
             bytes_written = self._serial.write(payload)

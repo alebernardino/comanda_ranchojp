@@ -63,8 +63,8 @@ async function atualizarListaPortas() {
 async function carregarConfigImpressora() {
     try {
         const cfg = await getPrinterConfig();
-        if (printerMode) printerMode.value = cfg.mode || "qz";
-        if (printerPort) printerPort.value = cfg.port || "";
+        if (printerMode) printerMode.value = cfg.mode || "serial";
+        if (printerPort) printerPort.value = cfg.port || "COM3";
         if (printerBaudrate) printerBaudrate.value = String(cfg.baudrate || 9600);
         if (printerPaperWidth) printerPaperWidth.value = String(cfg.paperWidth || 80);
         if (printerEncoding) printerEncoding.value = cfg.encoding || "cp860";
@@ -78,8 +78,8 @@ async function carregarConfigImpressora() {
 
 async function salvarConfigImpressora() {
     const payload = {
-        mode: printerMode ? printerMode.value : "qz",
-        port: printerPort ? printerPort.value.trim() : "",
+        mode: printerMode ? printerMode.value : "serial",
+        port: printerPort ? printerPort.value.trim() : "COM3",
         baudrate: printerBaudrate ? parseInt(printerBaudrate.value || "9600", 10) : 9600,
         paperWidth: printerPaperWidth ? parseInt(printerPaperWidth.value || "80", 10) : 80,
         encoding: printerEncoding ? printerEncoding.value : "cp860",

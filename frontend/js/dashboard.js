@@ -24,6 +24,11 @@ async function carregarDashboard() {
 
         renderizarGrid(mapaAbertas);
         atualizarStats(abertasArray);
+        const [vendidosHoje, consumoAberto] = await Promise.all([
+            carregarVendasHoje(),
+            carregarConsumoAberto()
+        ]);
+        carregarTotalResumo(vendidosHoje || [], consumoAberto || []);
     } catch (err) {
         console.error("Erro ao carregar dashboard:", err);
     }
@@ -94,7 +99,7 @@ async function carregarVendasHoje() {
 
         if (!dados || dados.length === 0) {
             tbody.innerHTML = '<tr><td colspan="2" style="padding: 15px; text-align: center; color: #94a3b8;">Nenhuma venda hoje</td></tr>';
-            return;
+            return [];
         }
 
         // Ordenar por quantidade decrescente
@@ -109,30 +114,36 @@ async function carregarVendasHoje() {
       `;
             tbody.appendChild(tr);
         });
+        return dados;
     } catch (err) {
         console.error("Erro ao carregar vendas de hoje:", err);
         tbody.innerHTML = '<tr><td colspan="2" style="padding: 15px; text-align: center; color: #ef4444;">Erro ao carregar</td></tr>';
+        return [];
     }
 }
 
 function initToggleVendasHoje() {
-    const btn = document.getElementById("toggleVendasHojeBtn");
-    const container = document.getElementById("vendasHojeContainer");
-    const icon = document.getElementById("toggleVendasIcon");
+    const bindToggle = (btnId, containerId, iconId, openHeight = "400px") => {
+        const btn = document.getElementById(btnId);
+        const container = document.getElementById(containerId);
+        const icon = document.getElementById(iconId);
+        if (!btn || !container || !icon) return;
 
-    if (!btn || !container || !icon) return;
-
-    btn.onclick = () => {
-        const isOpen = container.style.maxHeight && container.style.maxHeight !== "0px";
-
-        if (isOpen) {
-            container.style.maxHeight = "0";
-            icon.style.transform = "rotate(0deg)";
-        } else {
-            container.style.maxHeight = "400px";
-            icon.style.transform = "rotate(180deg)";
-        }
+        btn.onclick = () => {
+            const isOpen = container.style.maxHeight && container.style.maxHeight !== "0px";
+            if (isOpen) {
+                container.style.maxHeight = "0";
+                icon.style.transform = "rotate(0deg)";
+            } else {
+                container.style.maxHeight = openHeight;
+                icon.style.transform = "rotate(180deg)";
+            }
+        };
     };
+
+    bindToggle("toggleVendasHojeBtn", "vendasHojeContainer", "toggleVendasIcon");
+    bindToggle("toggleConsumoAbertoBtn", "consumoAbertoContainer", "toggleConsumoAbertoIcon");
+    bindToggle("toggleTotalResumoBtn", "totalResumoContainer", "toggleTotalResumoIcon");
 }
 
 function setupDashboardListeners() {
@@ -172,6 +183,117 @@ function alternarParaDashboard() {
     if (document.getElementById("navFechamento")) document.getElementById("navFechamento").classList.remove("active");
 
     carregarDashboard();
+    if (typeof focarCampoQuickComanda === "function") focarCampoQuickComanda();
+}
+
+function formatarQtdResumo(valor) {
+    const n = Number(valor) || 0;
+    if (Math.abs(n - Math.round(n)) < 0.0001) return String(Math.round(n));
+    return n.toFixed(2).replace(".", ",");
+}
+
+async function carregarConsumoAberto() {
+    const tbody = document.getElementById("tbodyConsumoAberto");
+    if (!tbody) return;
+
+    try {
+        const comandasAbertas = await getComandas();
+        tbody.innerHTML = "";
+
+        if (!comandasAbertas || comandasAbertas.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="2" style="padding: 12px; text-align: center; color: #94a3b8;">Sem consumo em aberto</td></tr>';
+            return [];
+        }
+
+        const itensPorComanda = await Promise.allSettled(
+            comandasAbertas.map(c => getItensComanda(c.numero))
+        );
+
+        const mapa = {};
+        itensPorComanda.forEach(resultado => {
+            if (resultado.status !== "fulfilled") return;
+
+            (resultado.value || []).forEach(item => {
+                const qtdTotal = Number(item.quantidade) || 0;
+                const qtdPaga = Number(item.quantidade_paga) || 0;
+                const qtdAberta = Math.max(0, qtdTotal - qtdPaga);
+                if (qtdAberta <= 0) return;
+
+                const codigo = item.codigo || "";
+                const descricao = item.descricao || "";
+                const chave = `${codigo}__${descricao}`;
+
+                if (!mapa[chave]) {
+                    mapa[chave] = { descricao, total_qtd: 0 };
+                }
+                mapa[chave].total_qtd += qtdAberta;
+            });
+        });
+
+        const dados = Object.values(mapa).sort((a, b) => b.total_qtd - a.total_qtd);
+
+        if (!dados.length) {
+            tbody.innerHTML = '<tr><td colspan="2" style="padding: 12px; text-align: center; color: #94a3b8;">Sem consumo em aberto</td></tr>';
+            return [];
+        }
+
+        dados.forEach(item => {
+            const tr = document.createElement("tr");
+            tr.classList.add("table-row");
+            tr.innerHTML = `
+        <td style="padding: 8px; color: #1e293b;">${item.descricao}</td>
+        <td style="padding: 8px; text-align: center; font-weight: 700; color: #f59e0b;">${formatarQtdResumo(item.total_qtd)}</td>
+      `;
+            tbody.appendChild(tr);
+        });
+        return dados;
+    } catch (err) {
+        console.error("Erro ao carregar consumo em aberto:", err);
+        tbody.innerHTML = '<tr><td colspan="2" style="padding: 12px; text-align: center; color: #ef4444;">Erro ao carregar</td></tr>';
+        return [];
+    }
+}
+
+function carregarTotalResumo(vendidosHoje, consumoAberto) {
+    const tbody = document.getElementById("tbodyTotalResumo");
+    if (!tbody) return;
+
+    const mapa = {};
+
+    (vendidosHoje || []).forEach(item => {
+        const desc = item.descricao || "";
+        const qtd = Number(item.total_qtd) || 0;
+        if (!mapa[desc]) mapa[desc] = 0;
+        mapa[desc] += qtd;
+    });
+
+    (consumoAberto || []).forEach(item => {
+        const desc = item.descricao || "";
+        const qtd = Number(item.total_qtd) || 0;
+        if (!mapa[desc]) mapa[desc] = 0;
+        mapa[desc] += qtd;
+    });
+
+    const dados = Object.entries(mapa)
+        .map(([descricao, total_qtd]) => ({ descricao, total_qtd }))
+        .sort((a, b) => b.total_qtd - a.total_qtd);
+
+    tbody.innerHTML = "";
+
+    if (!dados.length) {
+        tbody.innerHTML = '<tr><td colspan="2" style="padding: 12px; text-align: center; color: #94a3b8;">Sem dados</td></tr>';
+        return;
+    }
+
+    dados.forEach(item => {
+        const tr = document.createElement("tr");
+        tr.classList.add("table-row");
+        tr.innerHTML = `
+      <td style="padding: 8px; color: #1e293b;">${item.descricao}</td>
+      <td style="padding: 8px; text-align: center; font-weight: 700; color: #334155;">${formatarQtdResumo(item.total_qtd)}</td>
+    `;
+        tbody.appendChild(tr);
+    });
 }
 
 // ===============================

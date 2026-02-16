@@ -99,7 +99,7 @@ async function loadBackendPrinterConfig() {
 }
 
 function getBackendPrinterMode() {
-  return backendPrinterConfig?.mode || "qz";
+  return backendPrinterConfig?.mode || null;
 }
 
 function shouldUseBackendPrinter() {
@@ -111,9 +111,18 @@ function shouldUseBackendPrinter() {
 // FUNÇÃO PRINCIPAL DE IMPRESSÃO
 // ===============================
 
-async function imprimirSilencioso(conteudoHTML, titulo = "Impressão", conteudoTexto = null) {
-  if (shouldUseBackendPrinter() && conteudoTexto) {
-    return await imprimirViaBackend(conteudoTexto, titulo);
+async function imprimirSilencioso(conteudoHTML, titulo = "Impressão", conteudoTexto = null, backendDoc = null) {
+  if (!backendPrinterConfig) {
+    await loadBackendPrinterConfig();
+  }
+
+  if (shouldUseBackendPrinter()) {
+    if (backendDoc) {
+      return await imprimirViaBackendDocumento(backendDoc, titulo);
+    }
+    if (conteudoTexto) {
+      return await imprimirViaBackend(conteudoTexto, titulo);
+    }
   }
 
   // Se QZ Tray está conectado, usa impressão silenciosa
@@ -131,7 +140,7 @@ async function imprimirSilencioso(conteudoHTML, titulo = "Impressão", conteudoT
 
   // Fallback final: usa window.print()
   console.warn("QZ Tray não disponível. Usando impressão padrão.");
-  return imprimirViaBrowser();
+  return imprimirViaBrowser(conteudoHTML, titulo);
 }
 
 async function imprimirViaQZ(conteudoHTML, titulo) {
@@ -161,12 +170,45 @@ async function imprimirViaQZ(conteudoHTML, titulo) {
   } catch (err) {
     console.error("Erro na impressão QZ:", err);
     // Fallback para impressão do navegador
-    return imprimirViaBrowser();
+    return imprimirViaBrowser(conteudoHTML, titulo);
   }
 }
 
-function imprimirViaBrowser() {
-  window.print();
+function imprimirViaBrowser(conteudoHTML, titulo = "Impressao") {
+  if (!conteudoHTML || typeof conteudoHTML !== "string") {
+    window.print();
+    return true;
+  }
+
+  const iframe = document.createElement("iframe");
+  iframe.style.position = "fixed";
+  iframe.style.right = "0";
+  iframe.style.bottom = "0";
+  iframe.style.width = "0";
+  iframe.style.height = "0";
+  iframe.style.border = "0";
+  iframe.setAttribute("aria-hidden", "true");
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow?.document;
+  if (!doc || !iframe.contentWindow) {
+    document.body.removeChild(iframe);
+    window.print();
+    return true;
+  }
+
+  doc.open();
+  doc.write(conteudoHTML);
+  doc.title = titulo;
+  doc.close();
+
+  setTimeout(() => {
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+    setTimeout(() => {
+      if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+    }, 1200);
+  }, 180);
   return true;
 }
 
@@ -183,6 +225,19 @@ async function imprimirViaBackend(texto, titulo) {
   }
 }
 
+async function imprimirViaBackendDocumento(doc, titulo) {
+  if (typeof printDocument !== "function") return false;
+  try {
+    await printDocument(doc);
+    console.log("✅ Impressão serial enviada (documento):", titulo);
+    return true;
+  } catch (err) {
+    console.error("Erro na impressão serial (documento):", err);
+    alert("Impressora não conectada ou porta indisponível.");
+    return false;
+  }
+}
+
 // ===============================
 // FUNÇÕES DE IMPRESSÃO ESPECÍFICAS
 // ===============================
@@ -190,25 +245,45 @@ async function imprimirViaBackend(texto, titulo) {
 async function imprimirComanda(comandaNumero, nomeCliente, telefone, itens, total) {
   const html = gerarHTMLComanda(comandaNumero, nomeCliente, telefone, itens, total);
   const texto = gerarTextoComanda(comandaNumero, nomeCliente, telefone, itens, total);
-  return await imprimirSilencioso(html, `Comanda ${comandaNumero}`, texto);
+  const doc = {
+    kind: "comanda",
+    data: { comandaNumero, nomeCliente, telefone, itens, total },
+    cut: true
+  };
+  return await imprimirSilencioso(html, `Comanda ${comandaNumero}`, texto, doc);
 }
 
 async function imprimirItensParciais(comandaNumero, itens, total) {
   const html = gerarHTMLItensParciais(comandaNumero, itens, total);
   const texto = gerarTextoItensParciais(comandaNumero, itens, total);
-  return await imprimirSilencioso(html, `Parcial Comanda ${comandaNumero}`, texto);
+  const doc = {
+    kind: "parcial",
+    data: { comandaNumero, itens, total },
+    cut: true
+  };
+  return await imprimirSilencioso(html, `Parcial Comanda ${comandaNumero}`, texto, doc);
 }
 
 async function imprimirResumoPag(comandaNumero, pagamentos, total) {
   const html = gerarHTMLResumoPagamento(comandaNumero, pagamentos, total);
   const texto = gerarTextoResumoPagamento(comandaNumero, pagamentos, total);
-  return await imprimirSilencioso(html, `Pagamento Comanda ${comandaNumero}`, texto);
+  const doc = {
+    kind: "pagamento",
+    data: { comandaNumero, pagamentos, total },
+    cut: true
+  };
+  return await imprimirSilencioso(html, `Pagamento Comanda ${comandaNumero}`, texto, doc);
 }
 
 async function imprimirFechamento(data, vendas, pagamentos, recebimentosSistema, recebimentosManuais) {
   const html = gerarHTMLFechamento(data, vendas, pagamentos, recebimentosSistema, recebimentosManuais);
   const texto = gerarTextoFechamento(data, vendas, pagamentos, recebimentosSistema, recebimentosManuais);
-  return await imprimirSilencioso(html, `Fechamento ${data}`, texto);
+  const doc = {
+    kind: "fechamento",
+    data: { data, vendas, pagamentos, recebimentosSistema, recebimentosManuais },
+    cut: true
+  };
+  return await imprimirSilencioso(html, `Fechamento ${data}`, texto, doc);
 }
 
 // ===============================
@@ -235,12 +310,15 @@ function gerarRodapeHTML() {
 function gerarHTMLComanda(comandaNumero, nomeCliente, telefone, itens, total) {
   let itensHTML = "";
   itens.forEach(item => {
+    const qtd = Number(item.quantidade || 0);
+    const valorUnitario = Number(item.valor || 0);
+    const valorTotalItem = Number(item.subtotal || (qtd * valorUnitario));
     itensHTML += `
       <tr>
-        <td class="print-table">${item.codigo}</td>
         <td>${item.descricao}</td>
-        <td class="text-center">${item.quantidade}</td>
-        <td class="text-right">R$ ${formatarMoeda(item.subtotal)}</td>
+        <td class="text-center">${qtd}</td>
+        <td class="text-right">R$ ${formatarMoeda(valorUnitario)}</td>
+        <td class="text-right">R$ ${formatarMoeda(valorTotalItem)}</td>
       </tr>
     `;
   });
@@ -269,10 +347,10 @@ function gerarHTMLComanda(comandaNumero, nomeCliente, telefone, itens, total) {
       <table class="print-table">
         <thead>
           <tr>
-            <th>CÓD</th>
-            <th>ITEM</th>
-            <th class="text-center">QTD</th>
-            <th class="text-right">VALOR</th>
+            <th>Descrição</th>
+            <th class="text-center">Qtd</th>
+            <th class="text-right">Valor</th>
+            <th class="text-right">Sub Total</th>
           </tr>
         </thead>
         <tbody>
@@ -280,7 +358,7 @@ function gerarHTMLComanda(comandaNumero, nomeCliente, telefone, itens, total) {
         </tbody>
       </table>
       <div class="print-total">
-        TOTAL: R$ ${formatarMoeda(total)}
+        <strong>TOTAL: R$ ${formatarMoeda(total)}</strong>
       </div>
       ${gerarRodapeHTML()}
     </body>
@@ -291,11 +369,15 @@ function gerarHTMLComanda(comandaNumero, nomeCliente, telefone, itens, total) {
 function gerarHTMLItensParciais(comandaNumero, itens, total) {
   let itensHTML = "";
   itens.forEach(item => {
+    const qtd = Number(item.quantidade || 0);
+    const valorUnitario = Number(item.valor || 0);
+    const valorTotalItem = Number(item.subtotal || (qtd * valorUnitario));
     itensHTML += `
       <tr>
         <td class="print-table">${item.descricao}</td>
-        <td class="text-center">${item.quantidade}</td>
-        <td class="text-right">R$ ${formatarMoeda(item.subtotal)}</td>
+        <td class="text-center">${qtd}</td>
+        <td class="text-right">R$ ${formatarMoeda(valorUnitario)}</td>
+        <td class="text-right">R$ ${formatarMoeda(valorTotalItem)}</td>
       </tr>
     `;
   });
@@ -319,9 +401,10 @@ function gerarHTMLItensParciais(comandaNumero, itens, total) {
       <table class="print-table">
         <thead>
           <tr>
-            <th>ITEM</th>
-            <th class="text-center">QTD</th>
-            <th class="text-right">VALOR</th>
+            <th>Descrição</th>
+            <th class="text-center">Qtd</th>
+            <th class="text-right">Valor</th>
+            <th class="text-right">Sub Total</th>
           </tr>
         </thead>
         <tbody>
@@ -329,7 +412,7 @@ function gerarHTMLItensParciais(comandaNumero, itens, total) {
         </tbody>
       </table>
       <div class="print-total">
-        TOTAL: R$ ${formatarMoeda(total)}
+        <strong>TOTAL: R$ ${formatarMoeda(total)}</strong>
       </div>
       ${gerarRodapeHTML()}
     </body>
@@ -380,7 +463,7 @@ function gerarHTMLResumoPagamento(comandaNumero, pagamentos, total) {
         </tbody>
       </table>
       <div class="print-total">
-        TOTAL: R$ ${formatarMoeda(total)}
+        <strong>TOTAL: R$ ${formatarMoeda(total)}</strong>
       </div>
       ${gerarRodapeHTML()}
     </body>
@@ -389,8 +472,14 @@ function gerarHTMLResumoPagamento(comandaNumero, pagamentos, total) {
 }
 
 function gerarHTMLFechamento(data, vendas, pagamentos, recebimentosSistema, recebimentosManuais) {
+  const vendasOrdenadas = [...(vendas || [])].sort((a, b) => {
+    const qtdA = Number(a.quantidade) || 0;
+    const qtdB = Number(b.quantidade) || 0;
+    if (qtdA !== qtdB) return qtdB - qtdA;
+    return String(a.descricao || "").localeCompare(String(b.descricao || ""), "pt-BR");
+  });
   let vendasHTML = "";
-  vendas.forEach(v => {
+  vendasOrdenadas.forEach(v => {
     vendasHTML += `<tr><td class="print-table">${v.descricao}</td><td class="text-right">${v.quantidade}</td></tr>`;
   });
 
@@ -400,9 +489,14 @@ function gerarHTMLFechamento(data, vendas, pagamentos, recebimentosSistema, rece
   });
 
   let sistemaHTML = "";
+  let sistemaTotal = 0;
   recebimentosSistema.forEach(r => {
+    sistemaTotal += Number(r.total || 0);
     sistemaHTML += `<tr><td class="print-table">${r.forma}</td><td class="text-right">R$ ${formatarMoeda(r.total)}</td></tr>`;
   });
+  if (recebimentosSistema.length > 0) {
+    sistemaHTML += `<tr><td class="print-table"><strong>TOTAL</strong></td><td class="text-right"><strong>R$ ${formatarMoeda(sistemaTotal)}</strong></td></tr>`;
+  }
 
   let manualHTML = "";
   recebimentosManuais.forEach(m => {
@@ -432,14 +526,6 @@ function gerarHTMLFechamento(data, vendas, pagamentos, recebimentosSistema, rece
         DATA: ${data}
       </p>
 
-      ${vendas.length > 0 ? `
-        <h3>VENDAS POR ITEM</h3>
-        <table class="print-table">
-          <thead><tr><th>ITEM</th><th class="text-right">QTD</th></tr></thead>
-          <tbody>${vendasHTML}</tbody>
-        </table>
-      ` : ""}
-
       ${pagamentos.length > 0 ? `
         <h3>PAGAMENTOS (SAÍDAS)</h3>
         <table class="print-table">
@@ -464,9 +550,14 @@ function gerarHTMLFechamento(data, vendas, pagamentos, recebimentosSistema, rece
         </table>
       ` : ""}
 
-      <div class="print-closing-signature">
-        <p>Conferido por: __________________</p>
-      </div>
+      ${vendasOrdenadas.length > 0 ? `
+        <h3>VENDAS POR ITEM</h3>
+        <table class="print-table">
+          <thead><tr><th>ITEM</th><th class="text-right">QTD</th></tr></thead>
+          <tbody>${vendasHTML}</tbody>
+        </table>
+      ` : ""}
+
       ${gerarRodapeHTML()}
     </body>
     </html>
@@ -514,25 +605,29 @@ function gerarTextoComanda(comandaNumero, nomeCliente, telefone, itens, total) {
   linhas.push(`DATA: ${new Date().toLocaleString("pt-BR")}`);
   linhas.push(linhaSeparadora(cols));
 
-  const colCodigo = 6;
-  const colQtd = 4;
-  const colValor = 10;
-  const colDesc = cols - colCodigo - colQtd - colValor - 3;
+  const colQtd = cols <= 32 ? 3 : 4;
+  const colUnit = cols <= 32 ? 8 : 10;
+  const colTotal = cols <= 32 ? 8 : 10;
+  const colDesc = Math.max(8, cols - colQtd - colUnit - colTotal - 9);
   linhas.push(
-    padRight("COD", colCodigo) + " " +
-    padRight("ITEM", colDesc) + " " +
-    padLeft("QTD", colQtd) + " " +
-    padLeft("VALOR", colValor)
+    padRight("Descricao", colDesc) + " | " +
+    padLeft("Qtd", colQtd) + " | " +
+    padLeft("Valor", colUnit) + " | " +
+    padLeft("Sub Total", colTotal)
   );
   linhas.push(linhaSeparadora(cols));
 
   itens.forEach(item => {
-    const valor = `R$ ${formatarMoeda(item.subtotal)}`;
+    const qtd = Number(item.quantidade || 0);
+    const valorUnitario = Number(item.valor || 0);
+    const valorTotalItem = Number(item.subtotal || (qtd * valorUnitario));
+    const unit = `R$ ${formatarMoeda(valorUnitario)}`;
+    const totalItem = `R$ ${formatarMoeda(valorTotalItem)}`;
     linhas.push(
-      padRight(String(item.codigo || ""), colCodigo) + " " +
-      padRight(String(item.descricao || ""), colDesc) + " " +
-      padLeft(String(item.quantidade || ""), colQtd) + " " +
-      padLeft(valor, colValor)
+      padRight(String(item.descricao || ""), colDesc) + " | " +
+      padLeft(String(qtd), colQtd) + " | " +
+      padLeft(unit, colUnit) + " | " +
+      padLeft(totalItem, colTotal)
     );
   });
 
@@ -552,22 +647,29 @@ function gerarTextoItensParciais(comandaNumero, itens, total) {
   linhas.push(centerText(`COMANDA ${comandaNumero}`, cols));
   linhas.push(linhaSeparadora(cols));
 
-  const colQtd = 4;
-  const colValor = 10;
-  const colDesc = cols - colQtd - colValor - 2;
+  const colQtd = cols <= 32 ? 3 : 4;
+  const colValor = cols <= 32 ? 8 : 10;
+  const colSubtotal = cols <= 32 ? 8 : 10;
+  const colDesc = Math.max(8, cols - colQtd - colValor - colSubtotal - 9);
   linhas.push(
-    padRight("ITEM", colDesc) + " " +
-    padLeft("QTD", colQtd) + " " +
-    padLeft("VALOR", colValor)
+    padRight("Descricao", colDesc) + " | " +
+    padLeft("Qtd", colQtd) + " | " +
+    padLeft("Valor", colValor) + " | " +
+    padLeft("Sub Total", colSubtotal)
   );
   linhas.push(linhaSeparadora(cols));
 
   itens.forEach(item => {
-    const valor = `R$ ${formatarMoeda(item.subtotal)}`;
+    const qtd = Number(item.quantidade || 0);
+    const valorUnitario = Number(item.valor || 0);
+    const subtotal = Number(item.subtotal || (qtd * valorUnitario));
+    const valor = `R$ ${formatarMoeda(valorUnitario)}`;
+    const subTotal = `R$ ${formatarMoeda(subtotal)}`;
     linhas.push(
-      padRight(String(item.descricao || ""), colDesc) + " " +
-      padLeft(String(item.quantidade || ""), colQtd) + " " +
-      padLeft(valor, colValor)
+      padRight(String(item.descricao || ""), colDesc) + " | " +
+      padLeft(String(qtd), colQtd) + " | " +
+      padLeft(valor, colValor) + " | " +
+      padLeft(subTotal, colSubtotal)
     );
   });
 
@@ -607,17 +709,15 @@ function gerarTextoResumoPagamento(comandaNumero, pagamentos, total) {
 function gerarTextoFechamento(data, vendas, pagamentos, recebimentosSistema, recebimentosManuais) {
   const cols = getTextColumns();
   const linhas = [];
+  const vendasOrdenadas = [...(vendas || [])].sort((a, b) => {
+    const qtdA = Number(a.quantidade) || 0;
+    const qtdB = Number(b.quantidade) || 0;
+    if (qtdA !== qtdB) return qtdB - qtdA;
+    return String(a.descricao || "").localeCompare(String(b.descricao || ""), "pt-BR");
+  });
   linhas.push(centerText("FECHAMENTO DIARIO", cols));
   linhas.push(`DATA: ${data}`);
   linhas.push(linhaSeparadora(cols));
-
-  if (vendas.length > 0) {
-    linhas.push("VENDAS POR ITEM");
-    vendas.forEach(v => {
-      linhas.push(padRight(String(v.descricao || ""), cols - 6) + padLeft(String(v.quantidade || ""), 6));
-    });
-    linhas.push(linhaSeparadora(cols));
-  }
 
   if (pagamentos.length > 0) {
     linhas.push("PAGAMENTOS (SAIDAS)");
@@ -630,10 +730,13 @@ function gerarTextoFechamento(data, vendas, pagamentos, recebimentosSistema, rec
 
   if (recebimentosSistema.length > 0) {
     linhas.push("RECEBIMENTOS (SISTEMA)");
+    let totalSistema = 0;
     recebimentosSistema.forEach(r => {
+      totalSistema += Number(r.total || 0);
       const valor = `R$ ${formatarMoeda(r.total)}`;
       linhas.push(padRight(String(r.forma || ""), cols - 12) + padLeft(valor, 12));
     });
+    linhas.push(padRight("TOTAL", cols - 12) + padLeft(`R$ ${formatarMoeda(totalSistema)}`, 12));
     linhas.push(linhaSeparadora(cols));
   }
 
@@ -647,7 +750,14 @@ function gerarTextoFechamento(data, vendas, pagamentos, recebimentosSistema, rec
     linhas.push(linhaSeparadora(cols));
   }
 
-  linhas.push("Conferido por: __________________");
+  if (vendasOrdenadas.length > 0) {
+    linhas.push("VENDAS POR ITEM");
+    vendasOrdenadas.forEach(v => {
+      linhas.push(padRight(String(v.descricao || ""), cols - 6) + padLeft(String(v.quantidade || ""), 6));
+    });
+    linhas.push(linhaSeparadora(cols));
+  }
+
   linhas.push("");
   return linhas.join("\n");
 }
@@ -657,7 +767,9 @@ function gerarTextoFechamento(data, vendas, pagamentos, recebimentosSistema, rec
 // ===============================
 
 function isQzTrayAtivo() {
-  return qzConnected && qzAvailable;
+  // Mantem compatibilidade com chamadas antigas: "ativo" agora inclui
+  // impressao via backend (serial/simulado), alem do QZ Tray.
+  return shouldUseBackendPrinter() || (qzConnected && qzAvailable);
 }
 
 function getStatusImpressora() {

@@ -1,6 +1,6 @@
 {
-  "mode": "simulado",
-  "port": "",
+  "mode": "serial",
+  "port": "COM3",
   "baudrate": 9600,
   "bytesize": 8,
   "parity": "N",

@@ -15,7 +15,23 @@ async function apiRequest(path, method = "GET", body = null) {
     options.body = JSON.stringify(body);
   }
 
-  const res = await fetch(API_URL + path, options);
+  let res;
+  try {
+    res = await fetch(API_URL + path, options);
+  } catch (err) {
+    // Retry apenas para leitura, para não duplicar operações de escrita.
+    const isReadOnly = method === "GET" || method === "HEAD";
+    if (isReadOnly) {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      try {
+        res = await fetch(API_URL + path, options);
+      } catch (err2) {
+        throw new Error("Falha de conexão com o servidor. Verifique se o backend está ativo.");
+      }
+    } else {
+      throw new Error("Falha de conexão com o servidor. Verifique se o backend está ativo.");
+    }
+  }
 
   // Se for 204 No Content, retorna null ou vazio
   if (res.status === 204) return null;
@@ -194,6 +210,10 @@ async function printRawText(payload) {
   return apiPost("/printer/print", payload);
 }
 
+async function printDocument(payload) {
+  return apiPost("/printer/print-document", payload);
+}
+
 // ===============================
 // API DE USUARIOS
 // ===============================
@@ -228,6 +248,10 @@ async function deletePagamento(id) {
 
 async function finalizarComanda(numero) {
   return apiPost(`/comandas/${numero}/fechar`);
+}
+
+async function deleteComandaFinalizada(comandaId) {
+  return apiDelete(`/comandas/${comandaId}`);
 }
 
 // ===============================

@@ -1,4 +1,4 @@
-<!-- SESSÃO DE GERENCIAMENTO DE PRODUTOS -->
+﻿<!-- SESSÃO DE GERENCIAMENTO DE PRODUTOS -->
 <div id="sectionProdutos" class="hidden" style="padding: 20px;">
     <div class="page-title">
         <h1 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.8rem; color: #1e293b; font-weight: 800;">
@@ -31,7 +31,7 @@
                 <label
                     style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Valor
                     (R$)</label>
-                <input id="prodPageValor" placeholder="0,00" type="number" step="0.01" style="width: 100%;">
+                <input id="prodPageValor" placeholder="0,00" type="text" inputmode="decimal" style="width: 100%;">
             </div>
             <button id="btnSalvarProdutoPage" style="background: #10b981; padding: 12px 24px; font-weight: 700;">Salvar
                 Produto</button>
@@ -696,12 +696,12 @@
                         <table style="width: 100%; border-collapse: collapse;">
                             <thead style="background:#f8fafc; position:sticky; top:0; z-index: 10;">
                                 <tr>
-                                    <th style="padding:10px; text-align:left; cursor:pointer;"
-                                        onclick="ordenarGeralVendas('descricao')">Produto ↕️</th>
-                                    <th style="padding:10px; text-align:center; cursor:pointer;"
-                                        onclick="ordenarGeralVendas('total_qtd')">Qtd ↕️</th>
-                                    <th style="padding:10px; text-align:right; padding-right:10px; cursor:pointer;"
-                                        onclick="ordenarGeralVendas('total_valor')">Total ↕️</th>
+                                    <th style="padding:10px; text-align:left; cursor:pointer; white-space: nowrap;"
+                                        onclick="ordenarGeralVendas('descricao')">Produto <i class="fas fa-sort" style="font-size: 0.75rem; color: #64748b;"></i></th>
+                                    <th style="padding:10px; text-align:center; cursor:pointer; white-space: nowrap;"
+                                        onclick="ordenarGeralVendas('total_qtd')">Qtd <i class="fas fa-sort" style="font-size: 0.75rem; color: #64748b;"></i></th>
+                                    <th style="padding:10px; text-align:right; padding-right:10px; cursor:pointer; white-space: nowrap;"
+                                        onclick="ordenarGeralVendas('total_valor')">Total <i class="fas fa-sort" style="font-size: 0.75rem; color: #64748b;"></i></th>
                                 </tr>
                             </thead>
                             <tbody id="tabelaRelVendasBody"></tbody>
@@ -728,12 +728,14 @@
                         <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 10;">
                             <tr>
                                 <th style="padding: 10px; text-align: left; cursor: pointer; width: 150px; white-space: nowrap;"
-                                    onclick="ordenarAnaliticoVendas('data')">Data ↕️</th>
-                                <th style="padding: 10px; text-align: center; width: 90px; cursor: pointer;"
-                                    onclick="ordenarAnaliticoVendas('comanda_numero')">Comanda ↕️</th>
-                                <th style="padding: 10px; text-align: left;">Produto</th>
-                                <th style="padding: 10px; text-align: center; width: 60px;">Qtd</th>
-                                <th style="padding: 10px; text-align: right; width: 120px;">Valor (R$)</th>
+                                    onclick="ordenarAnaliticoVendas('data')">Data <i class="fas fa-sort" style="font-size: 0.75rem; color: #64748b;"></i></th>
+                                <th style="padding: 10px; text-align: center; width: 90px; cursor: pointer; white-space: nowrap;"
+                                    onclick="ordenarAnaliticoVendas('comanda_numero')">Comanda <i class="fas fa-sort" style="font-size: 0.75rem; color: #64748b;"></i></th>
+                                <th style="padding: 10px; text-align: left; cursor: pointer; white-space: nowrap;"
+                                    onclick="ordenarAnaliticoVendas('descricao')">Produto <i class="fas fa-sort" style="font-size: 0.75rem; color: #64748b;"></i></th>
+                                <th style="padding: 10px; text-align: center; width: 60px; cursor: pointer; white-space: nowrap;" onclick="ordenarAnaliticoVendas('quantidade')">Qtd <i class="fas fa-sort" style="font-size: 0.75rem; color: #64748b;"></i></th>
+                                <th style="padding: 10px; text-align: right; width: 120px; cursor: pointer; white-space: nowrap;"
+                                    onclick="ordenarAnaliticoVendas('valor')">Valor (R$) <i class="fas fa-sort" style="font-size: 0.75rem; color: #64748b;"></i></th>
                             </tr>
                         </thead>
                         <tbody id="tabelaRelVendasAnaliticoBody"></tbody>
@@ -747,12 +749,14 @@
                         <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 10;">
                             <tr>
                                 <th style="padding: 10px; text-align: left; cursor: pointer; width: 150px; white-space: nowrap;"
-                                    onclick="ordenarComandasVendas('data')">Data ↕️</th>
-                                <th style="padding: 10px; text-align: center; width: 100px; cursor: pointer;"
-                                    onclick="ordenarComandasVendas('numero')">Nrº Comanda ↕️</th>
-                                <th style="padding: 10px; text-align: left;">Métodos</th>
-                                <th style="padding: 10px; text-align: right; cursor: pointer; width: 120px;"
-                                    onclick="ordenarComandasVendas('total')">Total (R$) ↕️</th>
+                                    onclick="ordenarComandasVendas('data')">Data <i class="fas fa-sort" style="font-size: 0.75rem; color: #64748b;"></i></th>
+                                <th style="padding: 10px; text-align: center; width: 100px; cursor: pointer; white-space: nowrap;"
+                                    onclick="ordenarComandasVendas('numero')">Nrº Comanda <i class="fas fa-sort" style="font-size: 0.75rem; color: #64748b;"></i></th>
+                                <th style="padding: 10px; text-align: left; white-space: nowrap; cursor: pointer;"
+                                    onclick="ordenarComandasVendas('formas')">Métodos <i class="fas fa-sort" style="font-size: 0.75rem; color: #64748b;"></i></th>
+                                <th style="padding: 10px; text-align: right; cursor: pointer; width: 120px; white-space: nowrap;"
+                                    onclick="ordenarComandasVendas('total')">Total (R$) <i class="fas fa-sort" style="font-size: 0.75rem; color: #64748b;"></i></th>
+                                <th style="padding: 10px; text-align: center; width: 90px; white-space: nowrap;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="tabelaRelVendasComandasBody"></tbody>
@@ -765,8 +769,10 @@
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 10;">
                             <tr>
-                                <th style="padding: 10px; text-align: left;">Método de Pagamento</th>
-                                <th style="padding: 10px; text-align: right; width: 200px;">Total (R$)</th>
+                                <th style="padding: 10px; text-align: left; white-space: nowrap; cursor: pointer;"
+                                    onclick="ordenarFechamentoVendas('forma')">Método de Pagamento <i class="fas fa-sort" style="font-size: 0.75rem; color: #64748b;"></i></th>
+                                <th style="padding: 10px; text-align: right; width: 200px; white-space: nowrap; cursor: pointer;"
+                                    onclick="ordenarFechamentoVendas('total')">Total (R$) <i class="fas fa-sort" style="font-size: 0.75rem; color: #64748b;"></i></th>
                             </tr>
                         </thead>
                         <tbody id="tabelaRelVendasFechamentoBody"></tbody>
@@ -786,8 +792,10 @@
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 10;">
                             <tr>
-                                <th style="padding: 10px; text-align: left;">Fornecedor / Nome</th>
-                                <th style="padding: 10px; text-align: right; width: 200px;">Total Pago (R$)</th>
+                                <th style="padding: 10px; text-align: left; white-space: nowrap; cursor: pointer;"
+                                    onclick="ordenarPagamentosVendas('fornecedor')">Fornecedor / Nome <i class="fas fa-sort" style="font-size: 0.75rem; color: #64748b;"></i></th>
+                                <th style="padding: 10px; text-align: right; width: 200px; white-space: nowrap; cursor: pointer;"
+                                    onclick="ordenarPagamentosVendas('total')">Total Pago (R$) <i class="fas fa-sort" style="font-size: 0.75rem; color: #64748b;"></i></th>
                             </tr>
                         </thead>
                         <tbody id="tabelaRelVendasPagamentosBody"></tbody>
@@ -973,3 +981,5 @@
         </div>
     </div>
 </div>
+
+
