@@ -16,6 +16,17 @@ let sortColabCol = 'ativo';
 let sortColabAsc = false;
 let colaboradorEmEdicaoId = null;
 
+function abrirFormularioColaborador(modoEdicao = false, id = null) {
+    const content = document.getElementById("formColaboradorContent");
+    const icon = document.getElementById("iconToggleColab");
+    const titulo = document.getElementById("tituloFormColaborador");
+    if (content) content.style.display = "block";
+    if (icon) icon.innerText = "➖";
+    if (titulo) {
+        titulo.innerText = modoEdicao && id ? `Editar Colaborador #${id}` : "Novo Colaborador";
+    }
+}
+
 async function carregarColaboradores() {
     try {
         colaboradoresCache = await getColaboradores();
@@ -68,6 +79,7 @@ function renderizarTabelaColaboradores(lista) {
         const tr = document.createElement("tr");
         tr.classList.add("table-row");
         if (!c.ativo) tr.classList.add("colaborador-row-inactive");
+        const esc = (v) => String(v || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
         const contatosStr = c.contatos.join(", ") || "-";
         const pixsStr = c.pixs.join(", ") || "-";
@@ -75,19 +87,116 @@ function renderizarTabelaColaboradores(lista) {
         tr.innerHTML = `
             <td class="colaborador-id">#${c.id}</td>
             <td class="colaborador-nome-container">
-                <div class="colaborador-nome">${c.nome}</div>
-                <div class="colaborador-endereco">${c.endereco || ''}</div>
+                <input class="input-tabela-texto" value="${esc(c.nome)}"
+                    onfocus="iniciarEdicaoColaboradorCampo(this)"
+                    onkeydown="teclaEdicaoColaboradorCampo(event, ${c.id}, 'nome', this)"
+                    onblur="confirmarEdicaoColaboradorCampo(${c.id}, 'nome', this)"
+                    style="width: 100%; border: none; background: transparent; font-weight: 700;">
+                <input class="input-tabela-texto" value="${esc(c.endereco || "")}"
+                    onfocus="iniciarEdicaoColaboradorCampo(this)"
+                    onkeydown="teclaEdicaoColaboradorCampo(event, ${c.id}, 'endereco', this)"
+                    onblur="confirmarEdicaoColaboradorCampo(${c.id}, 'endereco', this)"
+                    placeholder="Endereço"
+                    style="width: 100%; border: none; background: transparent; color: #64748b; font-size: 0.85rem; margin-top: 2px;">
             </td>
-            <td class="colaborador-funcao">${c.funcao || '-'}</td>
-            <td class="colaborador-contatos" title="${contatosStr}">${contatosStr}</td>
-            <td class="colaborador-contatos" title="${pixsStr}">${pixsStr}</td>
+            <td class="colaborador-funcao">
+                <input class="input-tabela-texto" value="${esc(c.funcao || "")}"
+                    onfocus="iniciarEdicaoColaboradorCampo(this)"
+                    onkeydown="teclaEdicaoColaboradorCampo(event, ${c.id}, 'funcao', this)"
+                    onblur="confirmarEdicaoColaboradorCampo(${c.id}, 'funcao', this)"
+                    placeholder="-"
+                    style="width: 100%; border: none; background: transparent;">
+            </td>
+            <td class="colaborador-contatos" title="${contatosStr}">
+                <input class="input-tabela-texto" value="${esc(contatosStr === "-" ? "" : contatosStr)}"
+                    onfocus="iniciarEdicaoColaboradorCampo(this)"
+                    onkeydown="teclaEdicaoColaboradorCampo(event, ${c.id}, 'contatos', this)"
+                    onblur="confirmarEdicaoColaboradorCampo(${c.id}, 'contatos', this)"
+                    placeholder="-"
+                    style="width: 100%; border: none; background: transparent;">
+            </td>
+            <td class="colaborador-contatos" title="${pixsStr}">
+                <input class="input-tabela-texto" value="${esc(pixsStr === "-" ? "" : pixsStr)}"
+                    onfocus="iniciarEdicaoColaboradorCampo(this)"
+                    onkeydown="teclaEdicaoColaboradorCampo(event, ${c.id}, 'pixs', this)"
+                    onblur="confirmarEdicaoColaboradorCampo(${c.id}, 'pixs', this)"
+                    placeholder="-"
+                    style="width: 100%; border: none; background: transparent;">
+            </td>
             <td class="colaborador-actions">
                 <input type="checkbox" ${c.ativo ? 'checked' : ''} onchange="alterarStatusColaborador(${c.id}, this.checked)">
-                <button onclick="editarColaborador(${c.id})" style="margin-left: 6px; background: #dbeafe; color: #1d4ed8; border: none; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-weight: 700;" title="Editar">Ed</button>
             </td>
         `;
         tabelaColaboradoresBody.appendChild(tr);
     });
+}
+
+function iniciarEdicaoColaboradorCampo(el) {
+    el.dataset.originalValue = el.value;
+    el.dataset.cancelEdit = "0";
+}
+
+function teclaEdicaoColaboradorCampo(event, id, campo, el) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        el.blur();
+        return;
+    }
+    if (event.key === "Escape") {
+        event.preventDefault();
+        el.dataset.cancelEdit = "1";
+        el.value = el.dataset.originalValue || "";
+        el.blur();
+    }
+}
+
+async function confirmarEdicaoColaboradorCampo(id, campo, el) {
+    const cancelou = el.dataset.cancelEdit === "1";
+    const valorOriginal = el.dataset.originalValue || "";
+    if (cancelou) {
+        el.dataset.cancelEdit = "0";
+        el.value = valorOriginal;
+        return;
+    }
+
+    const valorAtual = (el.value || "").trim();
+    if (valorAtual === valorOriginal.trim()) return;
+
+    const colaborador = colaboradoresCache.find(c => c.id === id);
+    if (!colaborador) return;
+
+    const payload = {};
+    if (campo === "nome") {
+        if (!valorAtual) {
+            alert("O nome é obrigatório.");
+            el.value = valorOriginal;
+            return;
+        }
+        payload.nome = valorAtual;
+    } else if (campo === "endereco") {
+        payload.endereco = valorAtual;
+    } else if (campo === "funcao") {
+        payload.funcao = valorAtual;
+    } else if (campo === "contatos") {
+        payload.contatos = valorAtual
+            ? valorAtual.split(",").map(v => v.trim()).filter(Boolean)
+            : [];
+    } else if (campo === "pixs") {
+        payload.pixs = valorAtual
+            ? valorAtual.split(",").map(v => v.trim()).filter(Boolean)
+            : [];
+    } else {
+        return;
+    }
+
+    try {
+        await updateColaborador(id, payload);
+        await carregarColaboradores();
+    } catch (err) {
+        console.error(err);
+        alert(err.message || "Erro ao atualizar colaborador");
+        el.value = valorOriginal;
+    }
 }
 
 function ordenarColaboradores(coluna) {
@@ -151,7 +260,8 @@ function limparCamposColaborador() {
     document.getElementById("colabNome").value = "";
     document.getElementById("colabEndereco").value = "";
     document.getElementById("colabFuncao").value = "";
-    if (btnSalvarColaborador) btnSalvarColaborador.innerText = "Salvar";
+    if (btnSalvarColaborador) btnSalvarColaborador.innerText = "Salvar Colaborador";
+    abrirFormularioColaborador(false);
 
     document.getElementById("listaInputsContatos").innerHTML = `
         <div class="flex-container">
@@ -200,7 +310,13 @@ function editarColaborador(id) {
 
     document.getElementById("listaInputsContatos").innerHTML = contatosHtml;
     document.getElementById("listaInputsPix").innerHTML = pixHtml;
-    if (btnSalvarColaborador) btnSalvarColaborador.innerText = "Atualizar";
+    if (btnSalvarColaborador) btnSalvarColaborador.innerText = "Atualizar Colaborador";
+    abrirFormularioColaborador(true, id);
+    const inputNome = document.getElementById("colabNome");
+    if (inputNome) {
+        inputNome.focus();
+        inputNome.select();
+    }
     setupColaboradoresEnterNavigation();
 }
 
@@ -344,3 +460,6 @@ window.ordenarColaboradores = ordenarColaboradores;
 window.filtrarERenderizarColaboradores = filtrarERenderizarColaboradores;
 window.limparFiltrosColaboradores = limparFiltrosColaboradores;
 window.editarColaborador = editarColaborador;
+window.iniciarEdicaoColaboradorCampo = iniciarEdicaoColaboradorCampo;
+window.teclaEdicaoColaboradorCampo = teclaEdicaoColaboradorCampo;
+window.confirmarEdicaoColaboradorCampo = confirmarEdicaoColaboradorCampo;

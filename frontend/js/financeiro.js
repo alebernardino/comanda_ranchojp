@@ -1,6 +1,6 @@
-// financeiro.js
+﻿// financeiro.js
 
-// Variáveis de elementos DOM do Financeiro
+// VariÃ¡veis de elementos DOM do Financeiro
 let sectionFinanceiro, navFinanceiro, tabelaFinanceiroBody, btnSalvarFin, finDataInput;
 
 function carregarElementosFinanceiro() {
@@ -37,7 +37,7 @@ function filtrarERenderizarFinanceiro() {
         return matchNome && matchServico;
     });
 
-    // Ordenação
+    // OrdenaÃ§Ã£o
     lista.sort((a, b) => {
         let valA = a[sortFinCol];
         let valB = b[sortFinCol];
@@ -72,29 +72,143 @@ function renderizarTabelaFinanceiro(lista) {
         tr.style.borderBottom = "1px solid #f1f5f9";
 
         const dataExibicao = p.data ? new Date(p.data).toLocaleDateString('pt-BR') : '-';
+        const dataInput = p.data ? new Date(p.data).toISOString().slice(0, 10) : '';
+        const esc = (v) => String(v || "").replace(/&/g, "&amp;").replace(/\"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
         const tagStatus = p.pago
             ? `<span style="background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 999px; font-size: 0.7rem; font-weight: 800; border: 1px solid #bbf7d0; cursor: pointer; display: inline-block; width: 60px; text-align: center;">SIM</span>`
             : `<span style="background: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 999px; font-size: 0.7rem; font-weight: 800; border: 1px solid #fecaca; cursor: pointer; display: inline-block; width: 60px; text-align: center;">NÃO</span>`;
 
         tr.innerHTML = `
-            <td style="padding: 15px; color: #64748b;">${dataExibicao}</td>
-            <td style="padding: 15px; font-weight: 600; color: #1e293b;">${p.nome}</td>
-            <td style="padding: 15px; color: #64748b;">${p.item_servico}</td>
-            <td style="padding: 15px; color: #64748b;">${p.forma_pagamento || '-'}</td>
-            <td style="padding: 15px; text-align: right; font-weight: 700; color: #ef4444;">R$ ${formatarMoeda(p.valor)}</td>
+            <td style="padding: 10px 15px; color: #64748b;">
+                <input type="date" class="input-tabela-texto" value="${dataInput}"
+                    onfocus="iniciarEdicaoFinanceiroCampo(this)"
+                    onkeydown="teclaEdicaoFinanceiroCampo(event, ${p.id}, 'data', this)"
+                    onblur="confirmarEdicaoFinanceiroCampo(${p.id}, 'data', this)"
+                    title="${dataExibicao}"
+                    style="width: 100%; border: none; background: transparent;">
+            </td>
+            <td style="padding: 10px 15px; font-weight: 600; color: #1e293b;">
+                <input class="input-tabela-texto" value="${esc(p.nome)}"
+                    onfocus="iniciarEdicaoFinanceiroCampo(this)"
+                    onkeydown="teclaEdicaoFinanceiroCampo(event, ${p.id}, 'nome', this)"
+                    onblur="confirmarEdicaoFinanceiroCampo(${p.id}, 'nome', this)"
+                    style="width: 100%; border: none; background: transparent; font-weight: 600;">
+            </td>
+            <td style="padding: 10px 15px; color: #64748b;">
+                <input class="input-tabela-texto" value="${esc(p.item_servico)}"
+                    onfocus="iniciarEdicaoFinanceiroCampo(this)"
+                    onkeydown="teclaEdicaoFinanceiroCampo(event, ${p.id}, 'item_servico', this)"
+                    onblur="confirmarEdicaoFinanceiroCampo(${p.id}, 'item_servico', this)"
+                    style="width: 100%; border: none; background: transparent;">
+            </td>
+            <td style="padding: 10px 15px; color: #64748b;">
+                <input class="input-tabela-texto" value="${esc(p.forma_pagamento || '')}"
+                    onfocus="iniciarEdicaoFinanceiroCampo(this)"
+                    onkeydown="teclaEdicaoFinanceiroCampo(event, ${p.id}, 'forma_pagamento', this)"
+                    onblur="confirmarEdicaoFinanceiroCampo(${p.id}, 'forma_pagamento', this)"
+                    placeholder="-"
+                    style="width: 100%; border: none; background: transparent;">
+            </td>
+            <td style="padding: 10px 15px; text-align: right; font-weight: 700; color: #ef4444;">
+                <input class="input-tabela-valor" value="${Number(p.valor || 0).toFixed(2)}"
+                    onfocus="iniciarEdicaoFinanceiroCampo(this)"
+                    onkeydown="teclaEdicaoFinanceiroCampo(event, ${p.id}, 'valor', this)"
+                    onblur="confirmarEdicaoFinanceiroCampo(${p.id}, 'valor', this)"
+                    style="width: 110px; border: none; background: transparent; text-align: right; font-weight: 700; color: #ef4444;">
+            </td>
             <td style="padding: 15px; text-align: center;">
                 <div onclick="toggleStatusPagamento(${p.id}, ${p.pago})" title="Clique para alterar status">
                     ${tagStatus}
                 </div>
             </td>
             <td style="padding: 15px; text-align: center;">
-                <button onclick="editarRegistroFin(${p.id})" style="background:#dbeafe; border:none; color:#1d4ed8; width:28px; height:28px; border-radius:50%; font-size:0.9rem; font-weight:bold; cursor:pointer; margin-right: 6px;" title="Editar">E</button>
                 <button onclick="excluirRegistroFin(${p.id})" style="background:#fee2e2; border:none; color:#ef4444; width:28px; height:28px; border-radius:50%; font-size:1.2rem; font-weight:bold; cursor:pointer;" title="Excluir">×</button>
             </td>
         `;
         tabelaFinanceiroBody.appendChild(tr);
     });
+}
+
+function iniciarEdicaoFinanceiroCampo(el) {
+    el.dataset.originalValue = el.value;
+    el.dataset.cancelEdit = "0";
+}
+
+function teclaEdicaoFinanceiroCampo(event, id, campo, el) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        el.blur();
+        return;
+    }
+    if (event.key === "Escape") {
+        event.preventDefault();
+        el.dataset.cancelEdit = "1";
+        el.value = el.dataset.originalValue || "";
+        el.blur();
+    }
+}
+
+function parseValorFinanceiroInline(valor) {
+    const txt = String(valor || "").trim().replace(/\s/g, "").replace(",", ".");
+    const num = Number(txt);
+    return Number.isFinite(num) ? num : NaN;
+}
+
+async function confirmarEdicaoFinanceiroCampo(id, campo, el) {
+    const cancelou = el.dataset.cancelEdit === "1";
+    const original = el.dataset.originalValue || "";
+    if (cancelou) {
+        el.dataset.cancelEdit = "0";
+        el.value = original;
+        return;
+    }
+
+    const atual = (el.value || "").trim();
+    if (atual === original.trim()) return;
+
+    const registro = financeiroCache.find(r => r.id === id);
+    if (!registro) return;
+
+    const payload = {};
+    if (campo === "data") {
+        payload.data = atual ? new Date(`${atual}T12:00:00`).toISOString() : null;
+    } else if (campo === "nome") {
+        if (!atual) {
+            alert("Nome é obrigatório.");
+            el.value = original;
+            return;
+        }
+        payload.nome = atual;
+    } else if (campo === "item_servico") {
+        if (!atual) {
+            alert("Serviço/Produto é obrigatório.");
+            el.value = original;
+            return;
+        }
+        payload.item_servico = atual;
+    } else if (campo === "forma_pagamento") {
+        payload.forma_pagamento = atual;
+    } else if (campo === "valor") {
+        const valor = parseValorFinanceiroInline(atual);
+        if (!Number.isFinite(valor) || valor < 0) {
+            alert("Valor inválido.");
+            el.value = original;
+            return;
+        }
+        payload.valor = valor;
+    } else {
+        return;
+    }
+
+    try {
+        await updateFinanceiro(id, payload);
+        await carregarFinanceiro();
+    } catch (err) {
+        console.error(err);
+        alert(err.message || "Erro ao atualizar lançamento");
+        el.value = original;
+    }
 }
 
 async function toggleStatusPagamento(id, statusAtual) {
@@ -132,7 +246,7 @@ async function salvarLancamentoFin() {
     const pago = document.getElementById("finPago").checked;
 
     if (!nome || !servico || isNaN(valor)) {
-        return alert("Por favor, preencha o Nome, Serviço e Valor.");
+        return alert("Por favor, preencha o Nome, ServiÃ§o e Valor.");
     }
 
     let payload_data = null;
@@ -162,10 +276,10 @@ async function salvarLancamentoFin() {
         const content = document.getElementById('formFinanceiroContent');
         if (content) content.style.display = 'none';
         const icon = document.getElementById('iconToggleFin');
-        if (icon) icon.innerText = '➕';
+        if (icon) icon.innerText = 'âž•';
     } catch (err) {
         console.error("Erro ao salvar:", err);
-        alert(err.message || "Erro de conexão ao salvar");
+        alert(err.message || "Erro de conexÃ£o ao salvar");
     }
 }
 
@@ -182,7 +296,7 @@ function limparFormFinanceiro() {
 
 function configurarDataPadrao() {
     if (finDataInput) {
-        // Usar data local para evitar problema de fuso horário
+        // Usar data local para evitar problema de fuso horÃ¡rio
         const agora = new Date();
         const hoje = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
         finDataInput.value = hoje;
@@ -223,7 +337,7 @@ function editarRegistroFin(id) {
     const content = document.getElementById('formFinanceiroContent');
     if (content) content.style.display = 'block';
     const icon = document.getElementById('iconToggleFin');
-    if (icon) icon.innerText = '➖';
+    if (icon) icon.innerText = 'âž–';
     if (btnSalvarFin) btnSalvarFin.innerText = "Atualizar Pagamento";
 }
 
@@ -259,7 +373,7 @@ function setupFinanceiroEnterNavigation() {
         btnSalvar.onkeydown = (e) => {
             if (e.key === "Tab") {
                 e.preventDefault();
-                if (confirm("Deseja salvar este lançamento financeiro?")) {
+                if (confirm("Deseja salvar este lanÃ§amento financeiro?")) {
                     salvarLancamentoFin();
                 }
             }
@@ -293,7 +407,7 @@ function alternarParaFinanceiro() {
     configurarDataPadrao();
     carregarFinanceiro();
 
-    // Focar no campo de nome (ou data se preferir, mas nome é mais comum)
+    // Focar no campo de nome (ou data se preferir, mas nome Ã© mais comum)
     setTimeout(() => {
         const inputNome = document.getElementById("finNome");
         if (inputNome) inputNome.focus();
@@ -319,3 +433,7 @@ window.filtrarERenderizarFinanceiro = filtrarERenderizarFinanceiro;
 window.limparFiltrosFinanceiro = limparFiltrosFinanceiro;
 window.toggleStatusPagamento = toggleStatusPagamento;
 window.editarRegistroFin = editarRegistroFin;
+window.iniciarEdicaoFinanceiroCampo = iniciarEdicaoFinanceiroCampo;
+window.teclaEdicaoFinanceiroCampo = teclaEdicaoFinanceiroCampo;
+window.confirmarEdicaoFinanceiroCampo = confirmarEdicaoFinanceiroCampo;
+

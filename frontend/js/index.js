@@ -46,7 +46,7 @@ async function carregarTemplates() {
   try {
     const [modals, sections, printing] = await Promise.all([
       fetch("templates/modals.html?v=2").then(r => r.text()),
-      fetch("templates/sections.html?v=10").then(r => r.text()),
+      fetch("templates/sections.html?v=11").then(r => r.text()),
       fetch("templates/printing.html?v=7").then(r => r.text())
     ]);
 
