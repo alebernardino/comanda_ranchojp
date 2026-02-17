@@ -97,6 +97,7 @@ async function imprimirFechamentoFinal() {
 
         // Sempre tenta o fluxo central de impressão primeiro (serial/QZ/backend).
         const dataFormatada = `${now.toLocaleDateString("pt-BR")} ${now.toLocaleTimeString("pt-BR")}`;
+<<<<<<< HEAD
         const vendas = isVendas
             ? data.geral
                 .map(v => ({ descricao: v.descricao, quantidade: v.total_qtd }))
@@ -107,6 +108,9 @@ async function imprimirFechamentoFinal() {
                     return String(a.descricao || "").localeCompare(String(b.descricao || ""), "pt-BR");
                 })
             : [];
+=======
+        const vendas = isVendas ? data.geral.map(v => ({ descricao: v.descricao, quantidade: v.total_qtd })) : [];
+>>>>>>> 9099b41094357b03608056559d9d191b58d7a433
         const pagamentos = isPagamentos ? data.saidas.map(s => ({ fornecedor: s.fornecedor, total: s.total })) : [];
         const recebimentosSistema = isSistema ? data.fechamento.map(f => ({ forma: f.forma, total: f.total })) : [];
         const manuais = isManual ? recebimentosManuais : [];

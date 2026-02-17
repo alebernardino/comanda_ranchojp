@@ -66,12 +66,21 @@ async function imprimirComandaAcao() {
     const linhas = tabelaItensBody.querySelectorAll("tr");
     linhas.forEach(tr => {
         const tds = tr.querySelectorAll("td");
+<<<<<<< HEAD
         if (tds.length >= 7) {
             const codigo = tds[0].innerText.trim();
             const descricao = tds[1].innerText.trim();
             const quantidade = parseFloat(tds[2].querySelector(".qtd-item")?.innerText || tds[2].innerText) || 0;
             const valor = parseMoeda(tds[5].innerText);
             const subtotal = parseMoeda(tds[6].innerText);
+=======
+        if (tds.length >= 5) {
+            const codigo = tds[0].innerText.trim();
+            const descricao = tds[1].innerText.trim();
+            const quantidade = parseFloat(tds[2].querySelector(".qtd-item")?.innerText || tds[2].innerText) || 0;
+            const valor = parseMoeda(tds[3].innerText);
+            const subtotal = parseMoeda(tds[4].innerText);
+>>>>>>> 9099b41094357b03608056559d9d191b58d7a433
             itens.push({ codigo, descricao, quantidade, valor, subtotal });
             totalVal += subtotal;
         }
