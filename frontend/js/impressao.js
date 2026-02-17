@@ -66,21 +66,14 @@ async function imprimirComandaAcao() {
     const linhas = tabelaItensBody.querySelectorAll("tr");
     linhas.forEach(tr => {
         const tds = tr.querySelectorAll("td");
-<<<<<<< HEAD
         if (tds.length >= 7) {
             const codigo = tds[0].innerText.trim();
             const descricao = tds[1].innerText.trim();
             const quantidade = parseFloat(tds[2].querySelector(".qtd-item")?.innerText || tds[2].innerText) || 0;
-            const valor = parseMoeda(tds[5].innerText);
+            const inputValor = tds[5].querySelector("input");
+            const textoValor = inputValor ? inputValor.value : tds[5].innerText;
+            const valor = parseMoeda(textoValor);
             const subtotal = parseMoeda(tds[6].innerText);
-=======
-        if (tds.length >= 5) {
-            const codigo = tds[0].innerText.trim();
-            const descricao = tds[1].innerText.trim();
-            const quantidade = parseFloat(tds[2].querySelector(".qtd-item")?.innerText || tds[2].innerText) || 0;
-            const valor = parseMoeda(tds[3].innerText);
-            const subtotal = parseMoeda(tds[4].innerText);
->>>>>>> 9099b41094357b03608056559d9d191b58d7a433
             itens.push({ codigo, descricao, quantidade, valor, subtotal });
             totalVal += subtotal;
         }
@@ -167,11 +160,15 @@ async function imprimirDivisaoAcao(itensParaImprimir = null, totalParaImprimir =
 
     printBody.innerHTML = "";
     itensParaImprimir.forEach(item => {
+        const qtd = Number(item.quantidade || 0);
+        const valorUnitario = Number(item.valor || 0);
+        const subtotal = Number(item.subtotal || (qtd * valorUnitario));
         const tr = document.createElement("tr");
         tr.innerHTML = `
-      <td style="padding: 1mm 2mm; border-bottom: 0.5pt dashed #ccc;">${item.descricao}</td>
-      <td style="padding: 1mm 2mm; text-align: center; border-bottom: 0.5pt dashed #ccc;">${item.quantidade}</td>
-      <td style="padding: 1mm 2mm; text-align: right; border-bottom: 0.5pt dashed #ccc;">R$ ${formatarMoeda(item.subtotal)}</td>
+      <td style="padding: 1mm 2mm; border-bottom: 0.5pt dashed #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.descricao}</td>
+      <td style="padding: 1mm 2mm; text-align: center; border-bottom: 0.5pt dashed #ccc; white-space: nowrap;">${qtd}</td>
+      <td style="padding: 1mm 2mm; text-align: right; border-bottom: 0.5pt dashed #ccc; white-space: nowrap;">R$ ${formatarMoeda(valorUnitario)}</td>
+      <td style="padding: 1mm 2mm; text-align: right; border-bottom: 0.5pt dashed #ccc; white-space: nowrap;">R$ ${formatarMoeda(subtotal)}</td>
     `;
         printBody.appendChild(tr);
     });

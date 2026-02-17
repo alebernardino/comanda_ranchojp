@@ -47,7 +47,7 @@ async function carregarTemplates() {
     const [modals, sections, printing] = await Promise.all([
       fetch("templates/modals.html?v=2").then(r => r.text()),
       fetch("templates/sections.html?v=10").then(r => r.text()),
-      fetch("templates/printing.html?v=5").then(r => r.text())
+      fetch("templates/printing.html?v=7").then(r => r.text())
     ]);
 
     document.getElementById("modalsContainer").innerHTML = modals;
