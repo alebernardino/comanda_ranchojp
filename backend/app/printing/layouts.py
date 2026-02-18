@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from datetime import datetime
 from typing import Any
@@ -63,17 +63,10 @@ def cupom_comanda(data: dict, paper_width: int | None = 80) -> str:
     itens = data.get("itens", []) or []
     total = data.get("total", 0)
 
-<<<<<<< HEAD
     col_qtd = 3 if cols <= 32 else 4
     col_unit = 8 if cols <= 32 else 10
     col_total = 8 if cols <= 32 else 10
     col_desc = max(8, cols - col_qtd - col_unit - col_total - 9)
-=======
-    col_codigo = 6
-    col_qtd = 4
-    col_valor = 12
-    col_desc = max(8, cols - col_codigo - col_qtd - col_valor - 3)
->>>>>>> 9099b41094357b03608056559d9d191b58d7a433
 
     linhas = [
         _center("RESTAURANTE RANCHO JP", cols),
@@ -87,22 +80,14 @@ def cupom_comanda(data: dict, paper_width: int | None = 80) -> str:
     linhas.append(f"DATA: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
     linhas.append(_line(cols))
     linhas.append(
-<<<<<<< HEAD
         _pad_right("Descricao", col_desc) + " | "
         + _pad_left("Qtd", col_qtd) + " | "
         + _pad_left("Valor", col_unit) + " | "
         + _pad_left("Sub Total", col_total)
-=======
-        _pad_right("COD", col_codigo) + " "
-        + _pad_right("ITEM", col_desc) + " "
-        + _pad_left("QTD", col_qtd) + " "
-        + _pad_left("VALOR", col_valor)
->>>>>>> 9099b41094357b03608056559d9d191b58d7a433
     )
     linhas.append(_line(cols))
 
     for item in itens:
-<<<<<<< HEAD
         qtd = float(item.get("quantidade", 0) or 0)
         valor_unit = float(item.get("valor", 0) or 0)
         subtotal = float(item.get("subtotal", qtd * valor_unit) or 0)
@@ -111,13 +96,6 @@ def cupom_comanda(data: dict, paper_width: int | None = 80) -> str:
             + _pad_left(str(int(qtd) if qtd.is_integer() else qtd), col_qtd) + " | "
             + _pad_left(_money(valor_unit), col_unit) + " | "
             + _pad_left(_money(subtotal), col_total)
-=======
-        linhas.append(
-            _pad_right(str(item.get("codigo", "")), col_codigo) + " "
-            + _pad_right(str(item.get("descricao", "")), col_desc) + " "
-            + _pad_left(str(item.get("quantidade", "")), col_qtd) + " "
-            + _pad_left(_money(item.get("subtotal", 0)), col_valor)
->>>>>>> 9099b41094357b03608056559d9d191b58d7a433
         )
 
     linhas.append(_line(cols))
@@ -133,21 +111,14 @@ def cupom_parcial(data: dict, paper_width: int | None = 80) -> str:
     itens = data.get("itens", []) or []
     total = data.get("total", 0)
 
-<<<<<<< HEAD
     col_qtd = 3 if cols <= 32 else 4
     col_valor = 8 if cols <= 32 else 10
     col_subtotal = 8 if cols <= 32 else 10
     col_desc = max(8, cols - col_qtd - col_valor - col_subtotal - 9)
-=======
-    col_qtd = 4
-    col_valor = 12
-    col_desc = max(10, cols - col_qtd - col_valor - 2)
->>>>>>> 9099b41094357b03608056559d9d191b58d7a433
     linhas = [
         _center("ITENS PARCIAIS", cols),
         _center(f"COMANDA {numero}", cols),
         _line(cols),
-<<<<<<< HEAD
         _pad_right("Descricao", col_desc) + " | "
         + _pad_left("Qtd", col_qtd) + " | "
         + _pad_left("Valor", col_valor) + " | "
@@ -163,16 +134,6 @@ def cupom_parcial(data: dict, paper_width: int | None = 80) -> str:
             + _pad_left(str(int(qtd) if qtd.is_integer() else qtd), col_qtd) + " | "
             + _pad_left(_money(valor_unit), col_valor) + " | "
             + _pad_left(_money(subtotal), col_subtotal)
-=======
-        _pad_right("ITEM", col_desc) + " " + _pad_left("QTD", col_qtd) + " " + _pad_left("VALOR", col_valor),
-        _line(cols),
-    ]
-    for item in itens:
-        linhas.append(
-            _pad_right(str(item.get("descricao", "")), col_desc) + " "
-            + _pad_left(str(item.get("quantidade", "")), col_qtd) + " "
-            + _pad_left(_money(item.get("subtotal", 0)), col_valor)
->>>>>>> 9099b41094357b03608056559d9d191b58d7a433
         )
     linhas.append(_line(cols))
     linhas.append(_pad_left(f"TOTAL: {_money(total)}", cols))
@@ -212,7 +173,6 @@ def cupom_fechamento(data: dict, paper_width: int | None = 80) -> str:
 
     linhas = [_center("FECHAMENTO DIARIO", cols), f"DATA: {data_ref}", _line(cols)]
 
-<<<<<<< HEAD
     vendas_ordenadas = sorted(
         vendas,
         key=lambda x: (
@@ -220,14 +180,7 @@ def cupom_fechamento(data: dict, paper_width: int | None = 80) -> str:
             str(x.get("descricao", "")),
         ),
     )
-=======
-    if vendas:
-        linhas.append("VENDAS POR ITEM")
-        for v in vendas:
-            linhas.append(_pad_right(str(v.get("descricao", "")), cols - 6) + _pad_left(str(v.get("quantidade", "")), 6))
-        linhas.append(_line(cols))
 
->>>>>>> 9099b41094357b03608056559d9d191b58d7a433
     if pagamentos:
         linhas.append("PAGAMENTOS (SAIDAS)")
         for p in pagamentos:
@@ -236,16 +189,11 @@ def cupom_fechamento(data: dict, paper_width: int | None = 80) -> str:
 
     if recebimentos_sistema:
         linhas.append("RECEBIMENTOS (SISTEMA)")
-<<<<<<< HEAD
         total_sistema = 0.0
         for r in recebimentos_sistema:
             total_sistema += float(r.get("total", 0) or 0)
             linhas.append(_pad_right(str(r.get("forma", "")), cols - 12) + _pad_left(_money(r.get("total", 0)), 12))
         linhas.append(_pad_right("TOTAL", cols - 12) + _pad_left(_money(total_sistema), 12))
-=======
-        for r in recebimentos_sistema:
-            linhas.append(_pad_right(str(r.get("forma", "")), cols - 12) + _pad_left(_money(r.get("total", 0)), 12))
->>>>>>> 9099b41094357b03608056559d9d191b58d7a433
         linhas.append(_line(cols))
 
     manuais_filtrados = []
@@ -262,16 +210,12 @@ def cupom_fechamento(data: dict, paper_width: int | None = 80) -> str:
             linhas.append(_pad_right(str(m.get("forma", "")), cols - 12) + _pad_left(_money(m.get("valor", 0)), 12))
         linhas.append(_line(cols))
 
-<<<<<<< HEAD
     if vendas_ordenadas:
         linhas.append("VENDAS POR ITEM")
         for v in vendas_ordenadas:
             linhas.append(_pad_right(str(v.get("descricao", "")), cols - 6) + _pad_left(str(v.get("quantidade", "")), 6))
         linhas.append(_line(cols))
 
-=======
-    linhas.append("Conferido por: __________________")
->>>>>>> 9099b41094357b03608056559d9d191b58d7a433
     linhas.append("")
     return "\n".join(linhas)
 

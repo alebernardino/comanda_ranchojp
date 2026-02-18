@@ -88,3 +88,10 @@ Todos os scripts devem ser executados a partir da pasta `backend/`:
 cd /caminho/para/comanda_ranchojp/backend
 python scripts/nome_do_script.py
 ```
+
+### 📝 Exemplos de Uso
+
+```bash
+cd backend
+python scripts/check_db.py
+```
