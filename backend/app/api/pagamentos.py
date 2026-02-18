@@ -74,15 +74,34 @@ def adicionar_pagamento(numero: int, pagamento: PagamentoCreate, db: sqlite3.Con
     )
     
     # Se houver detalhamento de itens pagos, atualiza a tabela itens_comanda
-    if pagamento.itens:
-        for item_pago in pagamento.itens:
+    itens_pagamento = pagamento.itens if isinstance(pagamento.itens, list) else []
+    if itens_pagamento:
+        for item_pago in itens_pagamento:
+            if item_pago is None:
+                continue
+            if isinstance(item_pago, dict):
+                item_id = item_pago.get("id")
+                quantidade = item_pago.get("quantidade")
+            else:
+                item_id = getattr(item_pago, "id", None)
+                quantidade = getattr(item_pago, "quantidade", None)
+
+            try:
+                item_id = int(item_id)
+                quantidade = float(quantidade)
+            except (TypeError, ValueError):
+                continue
+
+            if item_id <= 0 or quantidade <= 0:
+                continue
+
             cursor.execute(
                 """
                 UPDATE itens_comanda
                 SET quantidade_paga = quantidade_paga + ?
                 WHERE id = ?
                 """,
-                (item_pago["quantidade"], item_pago["id"]),
+                (quantidade, item_id),
             )
             cursor.execute(
                 """
@@ -95,7 +114,7 @@ def adicionar_pagamento(numero: int, pagamento: PagamentoCreate, db: sqlite3.Con
                     WHERE ic.id = ?
                 )
                 """,
-                (item_pago["quantidade"], item_pago["id"]),
+                (quantidade, item_id),
             )
             cursor.execute(
                 """
@@ -105,7 +124,7 @@ def adicionar_pagamento(numero: int, pagamento: PagamentoCreate, db: sqlite3.Con
                 JOIN itens_comanda ic ON ic.codigo = p.codigo
                 WHERE ic.id = ?
                 """,
-                (item_pago["quantidade"], f"comanda:{numero}", item_pago["id"]),
+                (quantidade, f"comanda:{numero}", item_id),
             )
             
     pagamento_id = cursor.lastrowid
@@ -113,6 +132,8 @@ def adicionar_pagamento(numero: int, pagamento: PagamentoCreate, db: sqlite3.Con
 
     cursor.execute("SELECT * FROM pagamentos WHERE id = ?", (pagamento_id,))
     row = cursor.fetchone()
+    if not row:
+        raise HTTPException(status_code=500, detail="Falha ao confirmar pagamento")
 
     return dict(row)
 
